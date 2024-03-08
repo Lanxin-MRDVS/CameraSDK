@@ -1,0 +1,35 @@
+{
+	"Auxiliary" : 
+	{
+		"EagleSDK" : 1,
+		"Web3D" : 1
+	},
+	"Configs" : 
+	{
+		"http_host" : "192.168.1.229",
+		"http_port" : 8060,
+		"http_sever_host" : "192.168.1.229",
+		"http_sever_port" : 8060,
+		"mqtt_host" : "192.168.1.229",
+		"mqtt_port" : 1884,
+		"poll_host" : "192.168.1.227",
+		"poll_port" : 502,
+		"salve_host" : "192.168.1.229",
+		"salve_port" : 1236
+	},
+	"Global" : 
+	{
+		"Http" : 1,
+		"ModbusPoll" : 0,
+		"ModbusSlave" : 0,
+		"Mqtt" : 0
+	},
+	"time" : 
+	{
+		"correct_retry_time" : 3,
+		"correct_time_s" : 180,
+		"wait_arm_respond" : 15,
+		"wait_http_reply" : 3,
+		"wait_inference_reply" : 3
+	}
+}

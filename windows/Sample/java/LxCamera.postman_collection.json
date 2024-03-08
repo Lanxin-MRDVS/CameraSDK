@@ -1,0 +1,127 @@
+{
+	"info": {
+		"_postman_id": "5cb582c2-bbf7-4ec7-a7ce-b292bcd13542",
+		"name": "LxCamera",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "192.168.1.229:8060/LxCamera/DcGetApiVersion",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": "192.168.1.234:8060/LxCamera/DcGetApiVersion"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.1.229:8060/LxCamera/DcSetInfoOutput",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"log_path\" : \"./\",\r\n\"print_level\" : 2,\r\n\"enable_screen_print\" : 0\r\n}"
+				},
+				"url": "192.168.1.234:8060/LxCamera/DcSetInfoOutput"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.1.229:8060/LxCamera/DcLog",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": "192.168.1.229:8060/LxCamera/DcLog"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.1.229:8060/LxCamera/DcGetDeviceList",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": "192.168.1.234:8060/LxCamera/DcGetDeviceList"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.1.229:8060/LxCamera/DcOpenDevice",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"open_mode\" : 0,\r\n\"param\" : \"0\"\r\n}"
+				},
+				"url": "192.168.1.234:8060/LxCamera/DcOpenDevice"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.1.229:8060/LxCamera/DcStartStream",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"handle\" : 174539057817095\r\n}"
+				},
+				"url": "192.168.1.234:8060/LxCamera/DcStartStream"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.1.229:8060/LxCamera/DcSetCmd",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"handle\" : 174539057817095,\r\n\"cmd\" : 5001\r\n}"
+				},
+				"url": "192.168.1.234:8060/LxCamera/DcSetCmd"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.1.229:8060/LxCamera/DcGetPtrValue",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"handle\" : 174539057817095,\r\n\"cmd\" : 6001\r\n}"
+				},
+				"url": "192.168.1.234:8060/LxCamera/DcGetPtrValue"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.1.229:8060/LxCamera/DcSetIntValue",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"handle\" : 174539057817095,\r\n\"cmd\" : 1001,\r\n\"value\": 100\r\n}"
+				},
+				"url": "192.168.1.229:8060/LxCamera/DcSetIntValue"
+			},
+			"response": []
+		},
+		{
+			"name": "192.168.1.229:8060/LxCamera/DcGetIntValue",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"handle\" : 174539057817095,\r\n\"cmd\" : 1001\r\n}"
+				},
+				"url": "192.168.1.229:8060/LxCamera/DcGetIntValue"
+			},
+			"response": []
+		}
+	]
+}

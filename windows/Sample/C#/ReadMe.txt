@@ -1,0 +1,4 @@
+使用说明
+工程中加载LxCameraApiNet.dll，会在路径中自动查找并调用C++的链接库LxCameraApi.dll
+LxCameraApi.cs是根据LxCameraApi.dll生成LxCameraApiNet.dll的代码，可自己根据头文件LxCameraApi.h改写
+demo.cs是调用LxCameraApiNet.dll的示例代码

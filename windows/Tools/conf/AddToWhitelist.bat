@@ -1,0 +1,1 @@
+netsh advfirewall firewall add rule name="LxCameraViewer.exe" dir=in action=allow program="%cd%\LxCameraViewer.exe"
