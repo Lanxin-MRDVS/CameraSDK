@@ -213,7 +213,7 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
 #endif
 
     //process application
-    if (frame_ptr->app_data.frame_data == nullptr)
+    if (frame_ptr->app_data.frame_data != nullptr)
     {
         if (frame_ptr->app_data.frame_data_type == LX_DATA_PALLET)
         {

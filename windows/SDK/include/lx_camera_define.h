@@ -45,7 +45,7 @@ typedef enum LX_STATE
     LX_E_NETWORK_ERROR = -3,        //网络通讯错误
     LX_E_INPUT_ILLEGAL = -4,        //入参非法
     LX_E_RECONNECTING = -5,         //设备重连中
-    LX_E_DEVICE_ERROR = -6,         //设备故障
+    LX_E_DEVICE_ERROR = -6,         //设备故障或设备响应失败
     LX_E_DEVICE_NEED_UPDATE = -7,   //设备版本过低，需升级
     LX_E_API_NEED_UPDATE = -8,      //API版本过低
     LX_E_CTRL_PERMISS_ERROR = -9,   //独占控制权限失败
@@ -85,6 +85,8 @@ typedef enum LX_DEVICE_TYPE {
     LX_DEVICE_M4,
     LX_DEVICE_S1 = 2001,
     LX_DEVICE_S2,
+    LX_DEVICE_S2MaxV1,
+    LX_DEVICE_S2MaxV2,
     LX_DEVICE_I1 = 3001,
     LX_DEVICE_I2,
     LX_DEVICE_T1 = 4001,
@@ -155,25 +157,16 @@ typedef enum LX_OPEN_MODE
 typedef enum LX_DATA_TYPE
 {
     LX_DATA_UNSIGNED_CHAR = 0,
-    LX_DATA_SIGNED_SHORT = 1,
     LX_DATA_UNSIGNED_SHORT = 2,
+    LX_DATA_SIGNED_SHORT = 3,
     LX_DATA_FLOAT = 5,
     LX_DATA_OBSTACLE = 16,
     LX_DATA_PALLET = 17,
     LX_DATA_LOCATION =18,
+    LX_DATA_OBSTACLE2 = 19,
 }LX_DATA_TYPE;
 
-//2D数据流支持不同的压缩格式
-typedef enum LX_STREAM_ENCODE_MODE
-{
-    LX_STREAM_RAW = 0,
-    LX_STREAM_H264 = 1,
-    LX_STREAM_H265 = 2,
-    LX_STREAM_MJPEG = 3,
-    LX_STREAM_JPEG = 4,
-
-}LX_STREAM_ENCODE_MODE;
-
+//图像binning模式
 typedef enum LX_BINNING_MODE
 {
     LX_BINNING_1X1 = 0,
@@ -196,6 +189,7 @@ typedef enum LX_ALGORITHM_MODE
     MODE_AVOID_OBSTACLE = 1,          //内置避障算法
     MODE_PALLET_LOCATE = 2,           //内置托盘对接算法
     MODE_VISION_LOCATION = 3,         //内置视觉定位算法
+    MODE_AVOID_OBSTACLE2 = 4,         //内置避障算法V2
 }LX_ALGORITHM_MODE;
 
 //相机工作模式
@@ -212,6 +206,29 @@ typedef enum LX_TRIGGER_MODE
     LX_TRIGGER_SOFTWARE,          //软触发模式
     LX_TRIGGER_HARDWARE,          //硬触发模式
 }LX_TRIGGER_MODE;
+
+//IO工作模式
+typedef enum LX_IO_WORK_MODE {
+    ALGORITHM_IO_MODE = 0,  //IO作为内置应用算法的输入输出
+    USER_IO_MODE = 1,       //用户可以自己控制IO状态，参考LX_IO_OUT_USERCTRL_MODE
+    TRIGGER_IO_MODE = 2,    //IO作为触发信号输出，仅触发模式下有效
+}LX_IO_WORK_MODE;
+
+//自定义IO输出状态
+typedef enum LX_IO_OUTPUT_STATE {
+    OUT1_0_OUT2_0 = 0,
+    OUT1_0_OUT2_1 = 1,
+    OUT1_1_OUT2_0 = 2,
+    OUT1_1_OUT2_1 = 3,
+}LX_IO_OUTPUT_STATE;
+
+//滤波设置模式
+typedef enum {
+    FILTER_SIMPLE = 1,
+    FILTER_NORMAL = 2,
+    FILTER_EXPERT = 3,
+}LX_FILTER_MODE;
+
 
 //图像显示相关信息
 typedef struct FrameDataInfo
@@ -277,8 +294,8 @@ typedef enum LX_CAMERA_FEATURE
     /*int feature*/
     LX_INT_FIRST_EXPOSURE = 1001,   //默认高积分曝光值，单位us, 针对多积分情况为第一个积分的曝光时间
     LX_INT_SECOND_EXPOSURE = 1002,  //默认低积分曝光值，单位us, 针对多积分情况为第二个积分的曝光时间
-    LX_INT_THIRD_EXPOSURE = 1003,   //默认中积分曝光值，单位us, 针对多积分情况为第三个积分的曝光时间
-    LX_INT_FOURTH_EXPOSURE = 1004,  //针对多积分情况为第四个积分的曝光时间
+    LX_INT_THIRD_EXPOSURE = 1003,   //针对多积分情况为第三个积分的曝光时间，单位us
+    LX_INT_FOURTH_EXPOSURE = 1004,  //针对多积分情况为第四个积分的曝光时间，单位us
     LX_INT_GAIN = 1005,             //增益，与曝光效果等价。会引入噪声，可适当调节增益防止曝光参数过大
 
     LX_INT_MIN_DEPTH = 1011,        //最小深度值
@@ -298,12 +315,11 @@ typedef enum LX_CAMERA_FEATURE
     LX_INT_3D_DEPTH_DATA_TYPE = 1026,   //深度图像数据格式，只能获取，对应的值参考LX_DATA_TYPE
 
     //3D强度图像，尺寸与3D深度图一致
-    LX_INT_3D_AMPLITUDE_CHANNEL = 1031,  //3D强度图像通道数，单色为1，彩色为3
-    LX_INT_3D_AMPLITUDE_GET_TYPE = 1032, //获取强度图像的方式，参考LX_GET_AMPLITUDE_MODE(部分型号支持)
-    LX_INT_3D_AMPLITUDE_EXPOSURE = 1033, //LX_INT_3D_AMPLITUDE_GET_TYPE为MANUAL_EXPOSURE时的曝光值
-    LX_INT_3D_AMPLITUDE_INTENSITY = 1034,//LX_INT_3D_AMPLITUDE_GET_TYPE为AUTO_EXPOSURE时的目标亮度
+    LX_INT_3D_AMPLITUDE_CHANNEL = 1031,  //3D强度图像通道数，与深度图通道共用,单色为1，彩色为3
     LX_INT_3D_AMPLITUDE_DATA_TYPE = 1035,//强度图像数据格式，只能获取，对应的值参考LX_DATA_TYPE
     LX_INT_3D_AUTO_EXPOSURE_LEVEL = 1036,//3D自动曝光开启时的曝光等级,期间不允许设置曝光值与增益
+    LX_INT_3D_AUTO_EXPOSURE_MAX = 1037,  //3D自动曝光上限值
+    LX_INT_3D_AUTO_EXPOSURE_MIN = 1038,  //3D自动曝光下限值
 
     //2D图像
     LX_INT_2D_IMAGE_WIDTH = 1041,       //2D图像分辨率宽度,(ROI或Binning后会变化)
@@ -316,24 +332,38 @@ typedef enum LX_CAMERA_FEATURE
 
     LX_INT_2D_MANUAL_EXPOSURE = 1051,   //2D手动曝光时的曝光值
     LX_INT_2D_MANUAL_GAIN = 1052,       //2D手动曝光时的增益值
-    LX_INT_2D_ENCODE_TYPE = 1053,       //2D图像压缩格式，对应的值参考LX_STREAM_ENCODE_MODE
     LX_INT_2D_AUTO_EXPOSURE_LEVEL = 1054,//2D图像自动曝光时曝光等级[0-100], 0-整体更暗， 100-整体更亮
 
     LX_INT_TOF_GLOBAL_OFFSET = 1061,    //TOF深度数据偏移
-    LX_INT_3D_UNDISTORT_SCALE = 1062,   //TOF图像反畸变系数
+    LX_INT_3D_UNDISTORT_SCALE = 1062,   //3D图像反畸变系数，[0,100]，值越大，保留数据越多，但是边缘会有黑色填充
+    LX_INT_2D_UNDISTORT_SCALE = 1520,   //2D图像反畸变系数，[0,100]，值越大，保留数据越多，但是边缘会有黑色填充
     LX_INT_ALGORITHM_MODE = 1065,       //设置内置应用算法, 部分型号支持,对应的值参考LX_ALGORITHM_MODE
                                         //算法上移时（LX_INT_CALCULATE_UP），不允许开启内置应用算法
     LX_INT_MODBUS_ADDR = 1066,          //modbus地址，部分型号支持MODBUS协议通过串口输出
     LX_INT_HEART_TIME = 1067,           //与设备间心跳时间,单位ms
     LX_INT_GVSP_PACKET_SIZE = 1068,     //GVSP单包数据分包大小, 单位字节
-    LX_INT_TRIGGER_MODE = 1069,         //触发模式,对应的值参考LX_TRIGGER_MODE
     LX_INT_CALCULATE_UP = 1070,         //允许tof或rgb算法上下移，节省上位机或相机算力，可能影响帧率和延时
                                         //0-0xFFFF，四个F代表意义：保留位，滤波上移，RGB上移，TOF上移
                                         //内置应用算法（LX_INT_ALGORITHM_MODE）开启时不允许上移
-    LX_INT_CAN_BAUD_RATE = 1072,         //can的波特率值, 单位bps
+    LX_INT_CAN_BAUD_RATE = 1072,         //can的波特率值, 单位bps 
+    LX_INT_SAVE_PARAMS_GROUP = 1075,    //将相机当前配置保存为指定的参数组
+    LX_INT_LOAD_PARAMS_GROUP = 1076,     //一键加载指定索引的参数组
+
+    LX_INT_TRIGGER_MODE = 1069,         //触发模式,对应的值参考LX_TRIGGER_MODE
+    LX_INT_HARDWARE_TRIGGER_FILTER_TIME = 1085, //硬触发滤波时间, 单位us
+    LX_INT_TRIGGER_MIN_PERIOD_TIME = 1086,      //触发最小时间间隔, 单位us
+    LX_INT_TRIGGER_DELAY_TIME = 1087,           //触发延迟时间,单位us, 当值<=1000时表示立刻生效(预留功能,若大于1000时表示延时生效)
+    LX_INT_TRIGGER_FRAME_COUNT = 1088,          //单次触发帧数
+    LX_INT_IO_WORK_MODE = 1530,           //GPIO信号输出控制模式, 参考LX_IO_WORK_MODE
+    LX_INT_IO_OUTPUT_STATE = 1531,       //GPIO信号输出的用户控制模式, 参考LX_IO_OUTPUT_STATE
+
+    LX_INT_FILTER_MODE = 1090,          //滤波模式,参考LX_FILTER_MODE
+    LX_INT_FILTER_SMOOTH_LEVEL = 1091,  //当LX_INT_FILTER_MODE为FILTER_NORMAL时,可设置滤波平滑等级，[0, 3]，值越大，滤波越强
+    LX_INT_FILTER_NOISE_LEVEL = 1092,   //当LX_INT_FILTER_MODE为FILTER_NORMAL时,可设置滤波噪声等级，[0, 3]，值越大，滤波越强
+    LX_INT_FILTER_TIME_LEVEL = 1093,    //当LX_INT_FILTER_MODE为FILTER_NORMAL时,可设置滤波时域等级，[0, 3]，值越大，滤波越强
 
     /*float feature*/
-    LX_FLOAT_FILTER_LEVEL = 2001,      //滤波等级，[0, 1]，值越大，滤波越强，等于0表示关闭滤波，//更详细滤波配置参考功能枚举LX_STRING_FILTER_PARAMS
+    LX_FLOAT_FILTER_LEVEL = 2001,      //当LX_INT_FILTER_MODE为FILTER_SIMPLE时,可设置滤波等级，[0, 1]，值越大，滤波越强，等于0表示关闭滤波，
     LX_FLOAT_EST_OUT_EXPOSURE = 2002,  //是否评估过曝数据，[0, 1]，为1则过曝数据无效
     LX_FLOAT_LIGHT_INTENSITY = 2003,   //光强度，[0, 1]，部分型号支持
     LX_FLOAT_3D_DEPTH_FPS = 2004,      //深度图当前帧率，只可获取
@@ -360,15 +390,17 @@ typedef enum LX_CAMERA_FEATURE
 
     /*string feature*/
     LX_STRING_DEVICE_VERSION = 4001,        //设备版本号
-    LX_STRING_DEVICE_LOG_NAME = 4002,       //日志文件名，用于获取设备日志
     LX_STRING_FIRMWARE_NAME = 4003,         //固件文件名，用于升级设备版本，部分型号需要重新打开相机
-    LX_STRING_FILTER_PARAMS = 4004,         //滤波算法参数,json格式的字符串，//关闭滤波或配置简单的滤波参考功能枚举LX_FLOAT_FILTER_LEVEL
-    LX_STRING_ALGORITHM_PARAMS = 4005,      //内置算法参数,不同的开启模式，对应不同的json格式字符串,前提需要设置过LX_ALGORITHM_MODE
-    LX_STRING_ALGORITHM_VERSION = 4006,     //内置算法版本号,不同的开启模式，返回对应的版本号,只能获取,前提需要设置过LX_ALGORITHM_MODE
+    LX_STRING_FILTER_PARAMS = 4004,         //滤波算法参数,json格式的字符串
+    LX_STRING_ALGORITHM_PARAMS = 4005,      //内置算法参数，根据当前设置的LX_ALGORITHM_MODE，返回对应的json格式字符串
+    LX_STRING_ALGORITHM_VERSION = 4006,     //内置算法版本号，根据当前设置的LX_ALGORITHM_MODE，返回对应的版本号
     LX_STRING_DEVICE_OS_VERSION = 4007,     //设备系统镜像版本号
+    LX_STRING_IMPORT_PARAMS_FROM_FILE = 4008,   //从本地文件加载参数到相机
+    LX_STRING_EXPORT_PARAMS_TO_FILE = 4009,      //将相机当前参数导出到本地文件
 
     /*command feature*/
-    LX_CMD_GET_NEW_FRAME = 5001,    //主动更新当前最新数据，调用之后才可以获取相关数据指针。回调方式不需调用
+    LX_CMD_GET_NEW_FRAME = 5001,    //主动更新当前最新数据，调用之后才可以获取相关数据指针。
+                                    //建议采用回调方式DcRegisterFrameCallback更新数据，此时不需调用此接口
     LX_CMD_RETURN_VERSION = 5002,   //回退上一版本
     LX_CMD_RESTART_DEVICE = 5003,   //重启相机，部分型号需要重新打开相机
     LX_CMD_WHITE_BALANCE = 5004,    //自动白平衡
@@ -385,7 +417,9 @@ typedef enum LX_CAMERA_FEATURE
     LX_PTR_3D_EXTRIC_PARAM = 6007, //获取3D图像外参，float*类型指针 ，长度固定为12*sizeof(float)(前9个表示旋转矩阵，后3个表示平移向量)
     LX_PTR_ALGORITHM_OUTPUT = 6008, //获取内置算法输出
                                     //当开启模式为MODE_AVOID_OBSTACLE，输出结果为LxAvoidanceOutput指针，参考struct LxAvoidanceOutput，
-                                    //当开启模式为MODE_PALLET_LOCATE，输出结果为LxPalletPose指针，参考struct LxPalletPose
+                                    //当开启模式为MODE_PALLET_LOCATE，输出结果为LxPalletPose指针，参考struct LxPalletPose,
+                                    //当开启模式为MODE_VISION_LOCATION，输出结果为LxLocation指针，参考struct LxLocation
+                                    //当开启模式为MODE_AVOID_OBSTACLE2，输出结果为LxAvoidanceOutputN指针，参考struct LxAvoidanceOutputN
     LX_PTR_FRAME_DATA = 6009,       //获取完整一帧数据，输出结果参考结构体FrameInfo
 }LX_CAMERA_FEATURE;
 

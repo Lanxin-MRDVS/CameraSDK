@@ -39,7 +39,7 @@ LX_API DcGetDeviceList(LxDeviceInfo** devlist, int* devnum);
 
 //功能：连接设备
 //参数：[in]open_mode           打开方式, 具体说明见LX_OPEN_MODE
-//      [in]param               不同的打开方式，填写不同的参数(当sdk与相机端程序运行在同一主机情况下，此处填写"127.0.0.1")
+//      [in]param               不同的打开方式，填写不同的参数(当sdk运行在相机内部时，此处填写"127.0.0.1")
 //      [out]handle             连接成功后返回的设备句柄,后续所有接口访问都依赖该handle字段
 //      [out]info               连接成功后返回的相机详细信息
 LX_API DcOpenDevice(LX_OPEN_MODE open_mode, const char* param, DcHandle* handle, LxDeviceInfo* info);
@@ -56,11 +56,6 @@ LX_API DcStartStream(DcHandle handle);
 //功能: 关闭数据流
 //参数：[in]handle  设备句柄
 LX_API DcStopStream(DcHandle handle);
-
-//功能: 保存点云，可直接调用
-//参数：[in]handle                设备句柄
-//      [in]filename              文件名，支持txt,ply和pcd格式。txt格式按图像顺序保存所有数据，ply和pcd仅保存非零数据
-LX_API DcSaveXYZ(DcHandle handle, const char* filename);
 
 //功能: 设置相机IP相关参数
 //      修改完之后设备列表会变化，需重新调用DcGetDeviceList接口重新获取新的设备列表
@@ -183,6 +178,25 @@ LX_API DcRegisterCameraStatusCallback(DcHandle handle, LX_CAMERA_STATUS_CALLBACK
 //参数：[in]handle      设备句柄
 LX_API DcUnregisterCameraStatusCallback(DcHandle handle);
 
+//功能：往设备写入自定义内容
+//参数：[in]handle             设备句柄
+//      [in]start_addr         起始地址，从0开始
+//      [in]data               写入内存的内容，最大支持128kb内容
+//      [in]data_size          写入内存的内容长度，最大不超过128kb
+LX_API DcWriteUserData(DcHandle handle, int start_address, char* data, int data_size);
+
+//功能：从设备读取自定义内容,无需外部分配内存，但每次调用读取前会重置上次读取时分配的内存
+//参数：[in]handle             设备句柄
+//      [in]start_addr         起始地址，从0开始
+//      [out]data              读取内存的内容，最大支持128kb内容
+//      [out]data_size         读取的内容长度，最大不超过128kb
+LX_API DcReadUserData(DcHandle handle, int start_address, char** data, int& data_size);
+
+//功能: 保存点云，可直接调用
+//参数：[in]handle                设备句柄
+//      [in]filename              文件名，支持txt,ply和pcd格式。txt格式按图像顺序保存所有数据，ply和pcd仅保存非零数据
+LX_API DcSaveXYZ(DcHandle handle, const char* filename);
+
 //功能：设置参数路径
 //参数：[in]handle                  设备句柄
 //      [in]filepath                参数文件路径，不包含文件名(大部分情况不需要调用，仅部分相型号机打开时需要参数，如M3，I2等)
@@ -191,5 +205,6 @@ LX_API DcSetParamPath(DcHandle handle, const char* filepath);
 //功能: 获取函数返回状态对应的说明
 //参数：[in]state  函数接口返回的状态
 LX_API_STR DcGetErrorString(LX_STATE state);
+
 
 #endif

@@ -1,10 +1,7 @@
-//ROS节点创建步骤：
-Step1: mkdir build
-Step2: cd build
-Step3: cmake .. && make
-//配置 launch/includes/lx_camera_ros.launch.xml 文件
-//其中 ip 字段为需要打开的相机 IP ，若为空则默认打开第一个相机
-//is_show 字段为是否在界面上显示图像，0为不显示，1为显示
-//配置节点环境后再 build 目录下运行以下命令
-Step4: source devel/setup.bash
-Step5: roslaunch ../launch/lx_camera_ros.launch
+
+//How to building and use lx_camera_node node
+step 0: roscore
+step 1: cd lx_camera_node_ws
+step 2: catkin_make
+step 3: source devel/setup.bash
+step 4: roslaunch src/launch/lx_camera_ros.launch

@@ -73,57 +73,57 @@ namespace demo
             }
 
             //设置Int参数数据
-            if (DcSetIntValue(handle, 1001, 1001) == LX_STATE.LX_SUCCESS)
-                Console.WriteLine("SetIntValue success");
-            else Console.WriteLine("SetIntValue failed");
+            //if (DcSetIntValue(handle, 1001, 1001) == LX_STATE.LX_SUCCESS)
+            //    Console.WriteLine("SetIntValue success");
+            //else Console.WriteLine("SetIntValue failed");
 
             //获取Int参数数据
-            LxIntValueInfo i_value = new LxIntValueInfo();
-            if (DcGetIntValue(handle, 1001, ref i_value) == LX_STATE.LX_SUCCESS)
-                Console.WriteLine("DcGetIntValue success:\nis enable:{0}\nmin:{1}\nmax:{2}\ncurrect:{3}\n",
-                    i_value.set_available, i_value.min_value, i_value.max_value, i_value.cur_value);
-            else Console.WriteLine("DcGetIntValue failed");
+            //LxIntValueInfo i_value = new LxIntValueInfo();
+            //if (DcGetIntValue(handle, 1001, ref i_value) == LX_STATE.LX_SUCCESS)
+            //    Console.WriteLine("DcGetIntValue success:\nis enable:{0}\nmin:{1}\nmax:{2}\ncurrect:{3}\n",
+            //        i_value.set_available, i_value.min_value, i_value.max_value, i_value.cur_value);
+            //else Console.WriteLine("DcGetIntValue failed");
 
             //设置float参数数据
-            if (DcSetFloatValue(handle, 2001, (float)0.25) == LX_STATE.LX_SUCCESS)
-                Console.WriteLine("DcSetFloatValue success");
-            else Console.WriteLine("DcSetFloatValue failed");
+            //if (DcSetFloatValue(handle, 2001, (float)0.25) == LX_STATE.LX_SUCCESS)
+            //    Console.WriteLine("DcSetFloatValue success");
+            //else Console.WriteLine("DcSetFloatValue failed");
 
             //获取float参数数据
-            LxFloatValueInfo f_value = new LxFloatValueInfo();
-            if (DcGetFloatValue(handle, 2001, ref f_value) == LX_STATE.LX_SUCCESS)
-                Console.WriteLine("DcSetFloatValue success:is enable:{0}\nmin:{1}\nmax:{2}\ncurrect:{3}\n",
-                    f_value.set_available, f_value.min_value, f_value.max_value, f_value.cur_value);
-            else Console.WriteLine("DcSetFloatValue failed");
+            //LxFloatValueInfo f_value = new LxFloatValueInfo();
+            //if (DcGetFloatValue(handle, 2001, ref f_value) == LX_STATE.LX_SUCCESS)
+            //    Console.WriteLine("DcSetFloatValue success:is enable:{0}\nmin:{1}\nmax:{2}\ncurrect:{3}\n",
+            //        f_value.set_available, f_value.min_value, f_value.max_value, f_value.cur_value);
+            //else Console.WriteLine("DcSetFloatValue failed");
 
             //设置bool参数数据
-            if (DcSetBoolValue(handle, 3002, false) == LX_STATE.LX_SUCCESS)
-                Console.WriteLine("DcSetBoolValue success");
-            else Console.WriteLine("DcSetBoolValue failed");
+            //if (DcSetBoolValue(handle, 3002, false) == LX_STATE.LX_SUCCESS)
+            //    Console.WriteLine("DcSetBoolValue success");
+            //else Console.WriteLine("DcSetBoolValue failed");
 
             //获取bool参数数据
-            bool b_value = false;
-            if (DcGetBoolValue(handle, 3002, ref b_value) == LX_STATE.LX_SUCCESS)
-                Console.WriteLine("DcGetBoolValue success");
-            else Console.WriteLine("DcGetBoolValue failed");
+            //bool b_value = false;
+            //if (DcGetBoolValue(handle, 3002, ref b_value) == LX_STATE.LX_SUCCESS)
+            //    Console.WriteLine("DcGetBoolValue success");
+            //else Console.WriteLine("DcGetBoolValue failed");
 
             //设置string参数数据
-            LX_STATE fin = DcSetStringValue(handle, 4003, "123");
-            if (fin == LX_STATE.LX_SUCCESS) Console.WriteLine("DcSetStringValue success");
-            else Console.WriteLine("DcSetStringValue failed,{0}", fin);
+            //LX_STATE fin = DcSetStringValue(handle, 4003, "123");
+            //if (fin == LX_STATE.LX_SUCCESS) Console.WriteLine("DcSetStringValue success");
+            //else Console.WriteLine("DcSetStringValue failed,{0}", fin);
 
             //获取string参数数据
-            IntPtr cv = new IntPtr();
-            fin = DcGetStringValue(handle, 4001, out cv);
-            string str = Marshal.PtrToStringAnsi(cv);
-            if (fin == LX_STATE.LX_SUCCESS)
-                Console.WriteLine("DcGetStringValue success:{0}", str);
-            else Console.WriteLine("DcGetStringValue failed,{0}", fin);
+            //IntPtr cv = new IntPtr();
+            //fin = DcGetStringValue(handle, 4001, out cv);
+            //string str = Marshal.PtrToStringAnsi(cv);
+            //if (fin == LX_STATE.LX_SUCCESS)
+            //    Console.WriteLine("DcGetStringValue success:{0}", str);
+            //else Console.WriteLine("DcGetStringValue failed,{0}", fin);
 
             //设置命令参数数据
-            if (DcSetCmd(handle, 5006) == LX_STATE.LX_SUCCESS)
-                Console.WriteLine("DcSetCmd success");
-            else Console.WriteLine("DcSetCmd failed");
+            //if (DcSetCmd(handle, 5006) == LX_STATE.LX_SUCCESS)
+            //    Console.WriteLine("DcSetCmd success");
+            //else Console.WriteLine("DcSetCmd failed");
 
             //开始取流
             if (DcStartStream(handle) == LX_STATE.LX_SUCCESS) Console.WriteLine("start stream success");

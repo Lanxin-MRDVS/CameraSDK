@@ -18,14 +18,14 @@ elseif (UNIX)
 	list(APPEND LIBS ${LIBS} pthread)
 endif ()
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 
 #opencv
 find_package(OpenCV)
 if(${OpenCV_FOUND})
 	message("find opencv " ${OpenCV_VERSION})
-	set(CMAKE_CXX_STANDARD 11)
-	set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 	include_directories(${OpenCV_INCLUDE_DIRS})
 	link_directories(${OpenCV_LIB_DIR})
 	list(APPEND LIBS ${LIBS} ${OpenCV_LIBS})

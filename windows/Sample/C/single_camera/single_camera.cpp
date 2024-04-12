@@ -53,7 +53,6 @@ void WaitKey()
 
 int main(int argc, char** argv)
 {
-    checkTC(DcSetInfoOutput(1, true, "./"));
     std::cout << " call api version:" << DcGetApiVersion() << std::endl;
 
     //查找相机

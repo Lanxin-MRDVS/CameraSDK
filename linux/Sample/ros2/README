@@ -1,7 +1,6 @@
-//ROS节点创建步骤：
-Step1: colcon build
-Step2: source /opt/ros/eloquent/local_setup.bash && source ~/.bashrc && source install/local_setup.bash   //"eloquent"需切换为本机对应的ros的版本
-//配置 code/launch/lx_parameters_launch.py 文件
-//其中 ip 字段为需要打开的相机 IP ，若为空则默认打开第一个相机
-//is_show 字段为是否在界面上显示图像，0为不显示，1为显示
-Step3: ros2 launch lx_camera_ros2 lx_parameters_launch.py
+
+//How to building and use lx_camera_node node
+step 0: cd lx_camera_node_ws
+step 1: colcon build
+step 2: source install/setup.bash
+Step 3: ros2 launch lx_camera_ros2 src/launch/lx_parameters_launch.py

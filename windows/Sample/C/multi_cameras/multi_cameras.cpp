@@ -113,7 +113,7 @@ int thread_work(std::string ip)
 
     while (true)
     {
-        if (wait_key != '0')
+        if (wait_key == 'q')
             break;
         //刷新数据
         auto ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
@@ -129,6 +129,8 @@ int thread_work(std::string ip)
         cv::Mat depth_image = cv::Mat(tof_height, tof_width, CV_MAKETYPE(tof_data_type, 1), depth_data_ptr);
         cv::Mat depth_show;
         depth_image.convertTo(depth_show, CV_8U, 1.0 / 16);
+        cv::namedWindow("depth" + ip, 0);
+        cv::resizeWindow("depth" + ip, 640, 480);
         cv::imshow("depth" + ip, depth_show);
         wait_key = cv::waitKey(1);
 #endif

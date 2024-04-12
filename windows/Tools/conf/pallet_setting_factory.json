@@ -1,0 +1,27 @@
+{
+  "mode_a": {
+    "min_leg": 55,
+    "max_leg": 210
+  }, 
+  "mode_b": {
+    "min_leg": 66,
+    "max_leg": 220
+  }, 
+  "mode_c": {
+    "min_leg": 88,
+    "max_leg": 200,
+    "min_hole": 400
+  }, 
+  "mode_d": {
+    "min_leg": 99,
+    "max_leg": 210
+  }, 
+  "mode_e": {
+    "min_leg": 100,
+    "max_leg": 210
+  }, 
+  "mode_f": {
+    "min_leg": 110,
+    "max_leg": 210
+  }
+}

@@ -43,6 +43,23 @@ typedef struct {
     LxVelocity velocity;         //!< 障碍物速度，暂未实现
 } LxObstacleBox;
 
+typedef struct {
+    LxPose pose;                 //!< 障碍物 Box 中心和旋转矩阵
+    float width, height, depth;  //!< 障碍物 Box 宽、高、深
+    LxTranslation center;        //!< 障碍物质心
+    int32_t type_idx;            //!< 障碍物语义 idx
+    int64_t id;                  //!< 障碍物 ID
+    int64_t prev_id;             //!< 障碍物 Prev_ID
+    float box_2d_x_min;          //!< 障碍物在2D图上左上角点的X坐标与图像宽度的比值
+    float box_2d_y_min;          //!< 障碍物在2D图上左上角点的Y坐标与图像高度的比值
+    float box_2d_x_max;          //!< 障碍物在2D图上右下角点的X坐标与图像宽度的比值
+    float box_2d_y_max;          //!< 障碍物在2D图上右下角点的Y坐标与图像高度的比值
+    LxVelocity velocity;         //!< 障碍物速度，暂未实现
+    int32_t type_name_len;       //!< 障碍物语义类别长度
+    char type_name[512];         //!< 障碍物语义类别
+    char reserved[1024];         //!< 预留位
+} LxObstacleBoxN;
+
 
 typedef enum {
     //! 执行成功
@@ -74,6 +91,16 @@ typedef struct {
   LxObstacleBox* obstacleBoxs;     //!< 障碍物 Box
 } LxAvoidanceOutput;
 
+//! V2避障输出结构体
+typedef struct {
+    LxAvState state;                 //!< 返回状态
+    LxGroundPlane groundPlane;       //!< 检测到的距离最近的地面
+    uint32_t number_3d;              //!< 输出点个数
+    LxPoint3dWithRGB* cloud_output;  //!< 输出点云（已过滤地面与噪声）
+    uint32_t number_box;             //!< 障碍物个数
+    LxObstacleBoxN* obstacleBoxs;     //!< 障碍物 Box
+    char resveredData[4096];          //!< 预留位置
+} LxAvoidanceOutputN;
 
 //! 托盘定位结构体
 //@Update Since 0.1.2: add return value and a float-array
@@ -88,22 +115,45 @@ typedef struct {
     int extents[8192];
 } LxPalletPose;
 
+
+//重定位pose结构体
 typedef struct {
     double x, y, theta;
 }LxRelocPose;
 
+//odom结构体
 typedef struct {
     int64_t timestamp;
     double x, y, theta;
 }LxOdomData;
 
+//激光数据结构体
+typedef struct {
+    int64_t timestamp;       //时间戳
+    float time_increment;    //扫描时间间隔
+    float angle_min;        //开始扫描的角度(角度)
+    float angle_max;        //结束扫描的角度(角度)
+    float angle_increment;  //每一次扫描增加的角度(角度)
+    float range_min;        //距离最小值(m)
+    float range_max;        //距离最大值(m)
+    float reserved;         //预留字段
+    float range_size;       //距离数组大小
+    float* ranges;          //距离数组
+}LxLaser;
+
+//激光pose结构体
+typedef struct {
+    int64_t timestamp;
+    double x, y, theta;
+}LxLaserPose;
+
+
+//! 定位算法输出结果结构体
 typedef struct {
     int64_t timestamp;  //时间戳
     int32_t status;     //算法返回值:正在加载地图，加载地图错误，正在重定位，重定位错误，初始化错误，参数异常，图像异常，识别异常等
     float x, y, theta;
     int32_t extents[8192]; //自定义内容，扩展信息
 }LxLocation;
-
-
 
 #endif

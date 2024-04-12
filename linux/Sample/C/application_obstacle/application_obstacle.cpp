@@ -23,12 +23,12 @@ using namespace std;
     }                                                                  \
 }
 
-int PrintData(void* data_ptr);
+int PrintData(void* data_ptr, int obstacle_mode);
 
 int main(int argc, char** argv)
 {
     DcHandle handle = 0;
-    checkTC(DcSetInfoOutput(1, false, "./"));
+    checkTC(DcSetInfoOutput(1, true, "./"));
     std::cout << " call api version:" << DcGetApiVersion() << std::endl;
 
     int device_num = 0;
@@ -73,7 +73,14 @@ int main(int argc, char** argv)
     checkTC(DcGetIntValue(handle, LX_INT_ALGORITHM_MODE, &algor_info));
     std::cout << " current LX_INT_ALGORITHM_MODE:" << algor_info.cur_value << std::endl;
 
-    checkTC(DcSetIntValue(handle, LX_INT_ALGORITHM_MODE, MODE_AVOID_OBSTACLE));
+    int algor_mode = 0;
+
+    //老版本, 是否支持取决于设备端
+    //algor_mode = MODE_AVOID_OBSTACLE;
+    
+    //V2版本
+    algor_mode = MODE_AVOID_OBSTACLE2;
+    checkTC(DcSetIntValue(handle, LX_INT_ALGORITHM_MODE, algor_mode));
 
     //算法版本号
     char* algor_ver = nullptr;
@@ -151,7 +158,7 @@ int main(int argc, char** argv)
             //获取数据
             void* algordata = nullptr;
             checkTC(DcGetPtrValue(handle, LX_PTR_ALGORITHM_OUTPUT, &algordata));
-            PrintData(algordata);
+            PrintData(algordata, algor_mode);
         }
     }
 
@@ -161,39 +168,76 @@ int main(int argc, char** argv)
     return 0;
 }
 
-int PrintData(void* data_ptr)
+int PrintData(void* data_ptr, int obstacle_mode)
 {
     if (data_ptr == nullptr)
         return 0;
 
     std::stringstream algor_ss;
-    LxAvoidanceOutput* obstacle = (LxAvoidanceOutput*)data_ptr;
-    if (obstacle->state != LxAvSuccess) {
-        std::cout << " state is not success" << std::endl;
-        return 0;
-    }
 
-    algor_ss << " groundPlane.a:" << obstacle->groundPlane.a << " number_3d:" << obstacle->number_3d << " number_box:" << obstacle->number_box << std::endl;
-
-    if (obstacle->cloud_output != nullptr)
-    {
-        algor_ss << " cloud data "; //print 前10个
-        auto cloud_num = obstacle->number_3d < 10 ? obstacle->number_3d : 10;
-        for (int i = 0; i < (int)cloud_num; i++)
-        {
-            algor_ss << "index:" << i << " x:" << obstacle->cloud_output[i].x << " y:" << obstacle->cloud_output[i].y << " z:" << obstacle->cloud_output[i].z;
-            algor_ss << " r:" << (int)obstacle->cloud_output[i].r << " g:" << (int)obstacle->cloud_output[i].g << " b:" << (int)obstacle->cloud_output[i].b;
+    if (obstacle_mode == MODE_AVOID_OBSTACLE) {
+        LxAvoidanceOutput* obstacle = (LxAvoidanceOutput*)data_ptr;
+        if (obstacle->state != LxAvSuccess) {
+            std::cout << " state is not success" << std::endl;
+            return 0;
         }
-    }
 
-    if (obstacle->obstacleBoxs != nullptr)
-    {
-        algor_ss << " obstacle data ";
-        auto box_num = obstacle->number_box < 10 ? obstacle->number_box : 10;
-        for (int i = 0; i < (int)box_num; i++)
+        algor_ss << " groundPlane.a:" << obstacle->groundPlane.a << " number_3d:" << obstacle->number_3d << " number_box:" << obstacle->number_box << std::endl;
+
+        if (obstacle->cloud_output != nullptr)
         {
-            algor_ss << "index:" << i << " width:" << obstacle->obstacleBoxs[i].width << " height:" << obstacle->obstacleBoxs[i].height << " depth:" << obstacle->obstacleBoxs[i].depth;
-            algor_ss << " center:" << obstacle->obstacleBoxs[i].center[0] << " " << obstacle->obstacleBoxs[i].center[1] << " " << obstacle->obstacleBoxs[i].center[2];
+            algor_ss << " cloud data "; //print 前10个
+            auto cloud_num = obstacle->number_3d < 10 ? obstacle->number_3d : 10;
+            for (int i = 0; i < (int)cloud_num; i++)
+            {
+                algor_ss << "index:" << i << " x:" << obstacle->cloud_output[i].x << " y:" << obstacle->cloud_output[i].y << " z:" << obstacle->cloud_output[i].z;
+                algor_ss << " r:" << (int)obstacle->cloud_output[i].r << " g:" << (int)obstacle->cloud_output[i].g << " b:" << (int)obstacle->cloud_output[i].b;
+            }
+        }
+
+        if (obstacle->obstacleBoxs != nullptr)
+        {
+            algor_ss << " obstacle data ";
+            auto box_num = obstacle->number_box < 10 ? obstacle->number_box : 10;
+            for (int i = 0; i < (int)box_num; i++)
+            {
+                algor_ss << "index:" << i << " width:" << obstacle->obstacleBoxs[i].width << " height:" << obstacle->obstacleBoxs[i].height << " depth:" << obstacle->obstacleBoxs[i].depth;
+                algor_ss << " center:" << obstacle->obstacleBoxs[i].center[0] << " " << obstacle->obstacleBoxs[i].center[1] << " " << obstacle->obstacleBoxs[i].center[2];
+            }
+        }
+    } else if(obstacle_mode == MODE_AVOID_OBSTACLE2){
+        LxAvoidanceOutputN* obstacle = (LxAvoidanceOutputN*)data_ptr;
+        if (obstacle->state != LxAvSuccess) {
+            std::cout << " state is not success" << std::endl;
+            return 0;
+        }
+
+        algor_ss << " groundPlane.a:" << obstacle->groundPlane.a << " number_3d:" << obstacle->number_3d << " number_box:" << obstacle->number_box << std::endl;
+
+        if (obstacle->cloud_output != nullptr)
+        {
+            algor_ss << " cloud data "; //print 前10个
+            auto cloud_num = obstacle->number_3d < 10 ? obstacle->number_3d : 10;
+            for (int i = 0; i < (int)cloud_num; i++)
+            {
+                algor_ss << "index:" << i << " x:" << obstacle->cloud_output[i].x << " y:" << obstacle->cloud_output[i].y << " z:" << obstacle->cloud_output[i].z;
+                algor_ss << " r:" << (int)obstacle->cloud_output[i].r << " g:" << (int)obstacle->cloud_output[i].g << " b:" << (int)obstacle->cloud_output[i].b;
+            }
+        }
+
+        if (obstacle->obstacleBoxs != nullptr)
+        {
+            algor_ss << " obstacle data ";
+            auto box_num = obstacle->number_box < 10 ? obstacle->number_box : 10;
+            for (int i = 0; i < (int)box_num; i++)
+            {
+                algor_ss << "index:" << i << " width:" << obstacle->obstacleBoxs[i].width << " height:" << obstacle->obstacleBoxs[i].height << " depth:" << obstacle->obstacleBoxs[i].depth;
+                algor_ss << " center:" << obstacle->obstacleBoxs[i].center[0] << " " << obstacle->obstacleBoxs[i].center[1] << " " << obstacle->obstacleBoxs[i].center[2];
+                algor_ss << " type_idx:" << obstacle->obstacleBoxs[i].type_idx << " prev_id:" << obstacle->obstacleBoxs[i].prev_id;
+                algor_ss << " box_2d_x_min:" << obstacle->obstacleBoxs[i].box_2d_x_min << " box_2d_y_min:" << obstacle->obstacleBoxs[i].box_2d_y_min;
+                algor_ss << " box_2d_x_max:" << obstacle->obstacleBoxs[i].box_2d_x_max << " box_2d_y_max:" << obstacle->obstacleBoxs[i].box_2d_y_max;
+                algor_ss << " type_name_len:" << obstacle->obstacleBoxs[i].type_name_len << " type_name:" << obstacle->obstacleBoxs[i].type_name;
+            }
         }
     }
     

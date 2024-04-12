@@ -1,5 +1,0 @@
-<launch>
-
-  <include file="$(find lx_camera_ros)/launch/includes/lx_camera_ros.launch.xml" />
-  
-</launch>

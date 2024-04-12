@@ -37,7 +37,6 @@ void WaitKey()
 int main(int argc, char** argv)
 {
     DcHandle handle = 0;
-    checkTC(DcSetInfoOutput(1, true, "./"));
     printf("call api version: %s\n", DcGetApiVersion());
 
     //查找相机
