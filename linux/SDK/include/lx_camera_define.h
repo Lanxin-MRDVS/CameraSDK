@@ -69,6 +69,8 @@ typedef enum LX_STATE
     LX_E_IPAPPDR_UNREACHABLE_ERROR = -27, //IP不可达或网络配置错误
     LX_E_FRAME_ID_NOT_MATCH        = -28, //超时范围内帧不同步错误
     LX_E_FRAME_MULTI_MACHINE       = -29, //帧中检测到多机干扰信号
+
+    LX_W_LOAD_DATAPROCESSLIB_ERROR = 25, //加载图像处理算法库失败，不影响其他功能
 }LX_STATE;
 
 #define LX_API LX_EXTC LX_EXPORT LX_STATE LX_STDC
@@ -166,17 +168,6 @@ typedef enum LX_DATA_TYPE
     LX_DATA_OBSTACLE2 = 19,
 }LX_DATA_TYPE;
 
-//2D数据流支持不同的压缩格式
-typedef enum LX_STREAM_ENCODE_MODE
-{
-    LX_STREAM_RAW = 0,
-    LX_STREAM_H264 = 1,
-    LX_STREAM_H265 = 2,
-    LX_STREAM_MJPEG = 3,
-    LX_STREAM_JPEG = 4,
-
-}LX_STREAM_ENCODE_MODE;
-
 //图像binning模式
 typedef enum LX_BINNING_MODE
 {
@@ -234,7 +225,7 @@ typedef enum LX_IO_OUTPUT_STATE {
 }LX_IO_OUTPUT_STATE;
 
 //滤波设置模式
-typedef enum {
+typedef enum LX_FILTER_MODE {
     FILTER_SIMPLE = 1,
     FILTER_NORMAL = 2,
     FILTER_EXPERT = 3,
@@ -343,12 +334,11 @@ typedef enum LX_CAMERA_FEATURE
 
     LX_INT_2D_MANUAL_EXPOSURE = 1051,   //2D手动曝光时的曝光值
     LX_INT_2D_MANUAL_GAIN = 1052,       //2D手动曝光时的增益值
-    LX_INT_2D_ENCODE_TYPE = 1053,       //2D图像压缩格式，对应的值参考LX_STREAM_ENCODE_MODE
     LX_INT_2D_AUTO_EXPOSURE_LEVEL = 1054,//2D图像自动曝光时曝光等级[0-100], 0-整体更暗， 100-整体更亮
 
     LX_INT_TOF_GLOBAL_OFFSET = 1061,    //TOF深度数据偏移
-    LX_INT_3D_UNDISTORT_SCALE = 1062,   //3D图像反畸变系数
-    LX_INT_2D_UNDISTORT_SCALE = 1520,   //2D图像反畸变系数
+    LX_INT_3D_UNDISTORT_SCALE = 1062,   //3D图像反畸变系数，[0,100]，值越大，保留数据越多，但是边缘会有黑色填充
+    LX_INT_2D_UNDISTORT_SCALE = 1520,   //2D图像反畸变系数，[0,100]，值越大，保留数据越多，但是边缘会有黑色填充
     LX_INT_ALGORITHM_MODE = 1065,       //设置内置应用算法, 部分型号支持,对应的值参考LX_ALGORITHM_MODE
                                         //算法上移时（LX_INT_CALCULATE_UP），不允许开启内置应用算法
     LX_INT_MODBUS_ADDR = 1066,          //modbus地址，部分型号支持MODBUS协议通过串口输出
@@ -364,7 +354,7 @@ typedef enum LX_CAMERA_FEATURE
     LX_INT_TRIGGER_MODE = 1069,         //触发模式,对应的值参考LX_TRIGGER_MODE
     LX_INT_HARDWARE_TRIGGER_FILTER_TIME = 1085, //硬触发滤波时间, 单位us
     LX_INT_TRIGGER_MIN_PERIOD_TIME = 1086,      //触发最小时间间隔, 单位us
-    LX_INT_TRIGGER_DELAY_TIME = 1087,           //触发延迟时间,单位us, 当值<=1000时表示立刻生效(预留功能,若大于1000时表示延时生效)
+    LX_INT_TRIGGER_DELAY_TIME = 1087,           //触发延迟时间,单位us
     LX_INT_TRIGGER_FRAME_COUNT = 1088,          //单次触发帧数
     LX_INT_IO_WORK_MODE = 1530,           //GPIO信号输出控制模式, 参考LX_IO_WORK_MODE
     LX_INT_IO_OUTPUT_STATE = 1531,       //GPIO信号输出的用户控制模式, 参考LX_IO_OUTPUT_STATE
@@ -402,7 +392,6 @@ typedef enum LX_CAMERA_FEATURE
 
     /*string feature*/
     LX_STRING_DEVICE_VERSION = 4001,        //设备版本号
-    LX_STRING_DEVICE_LOG_NAME = 4002,       //日志文件名，用于获取设备日志
     LX_STRING_FIRMWARE_NAME = 4003,         //固件文件名，用于升级设备版本，部分型号需要重新打开相机
     LX_STRING_FILTER_PARAMS = 4004,         //滤波算法参数,json格式的字符串
     LX_STRING_ALGORITHM_PARAMS = 4005,      //内置算法参数，根据当前设置的LX_ALGORITHM_MODE，返回对应的json格式字符串
@@ -412,11 +401,13 @@ typedef enum LX_CAMERA_FEATURE
     LX_STRING_EXPORT_PARAMS_TO_FILE = 4009,      //将相机当前参数导出到本地文件
 
     /*command feature*/
-    LX_CMD_GET_NEW_FRAME = 5001,    //主动更新当前最新数据，调用之后才可以获取相关数据指针。回调方式不需调用
+    LX_CMD_GET_NEW_FRAME = 5001,    //主动更新当前最新数据，调用之后才可以获取相关数据指针。
+                                    //建议采用回调方式DcRegisterFrameCallback更新数据，此时不需调用此接口
     LX_CMD_RETURN_VERSION = 5002,   //回退上一版本
     LX_CMD_RESTART_DEVICE = 5003,   //重启相机，部分型号需要重新打开相机
     LX_CMD_WHITE_BALANCE = 5004,    //自动白平衡
     LX_CMD_RESET_PARAM = 5007,      //恢复默认参数
+    LX_CMD_SOFTWARE_TRIGGER = 5008, //软触发执行指令
 
     /*ptr feature*/
     LX_PTR_2D_IMAGE_DATA = 6001, //获取2D图像数据指针，数据长度由2D图像尺寸、通道数和数据格式（LX_INT_2D_IMAGE_DATA_TYPE）确定

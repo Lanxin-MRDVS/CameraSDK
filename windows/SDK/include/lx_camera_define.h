@@ -69,6 +69,8 @@ typedef enum LX_STATE
     LX_E_IPAPPDR_UNREACHABLE_ERROR = -27, //IP不可达或网络配置错误
     LX_E_FRAME_ID_NOT_MATCH        = -28, //超时范围内帧不同步错误
     LX_E_FRAME_MULTI_MACHINE       = -29, //帧中检测到多机干扰信号
+
+    LX_W_LOAD_DATAPROCESSLIB_ERROR = 25, //加载图像处理算法库失败，不影响其他功能
 }LX_STATE;
 
 #define LX_API LX_EXTC LX_EXPORT LX_STATE LX_STDC
@@ -223,7 +225,7 @@ typedef enum LX_IO_OUTPUT_STATE {
 }LX_IO_OUTPUT_STATE;
 
 //滤波设置模式
-typedef enum {
+typedef enum LX_FILTER_MODE {
     FILTER_SIMPLE = 1,
     FILTER_NORMAL = 2,
     FILTER_EXPERT = 3,
@@ -352,7 +354,7 @@ typedef enum LX_CAMERA_FEATURE
     LX_INT_TRIGGER_MODE = 1069,         //触发模式,对应的值参考LX_TRIGGER_MODE
     LX_INT_HARDWARE_TRIGGER_FILTER_TIME = 1085, //硬触发滤波时间, 单位us
     LX_INT_TRIGGER_MIN_PERIOD_TIME = 1086,      //触发最小时间间隔, 单位us
-    LX_INT_TRIGGER_DELAY_TIME = 1087,           //触发延迟时间,单位us, 当值<=1000时表示立刻生效(预留功能,若大于1000时表示延时生效)
+    LX_INT_TRIGGER_DELAY_TIME = 1087,           //触发延迟时间,单位us
     LX_INT_TRIGGER_FRAME_COUNT = 1088,          //单次触发帧数
     LX_INT_IO_WORK_MODE = 1530,           //GPIO信号输出控制模式, 参考LX_IO_WORK_MODE
     LX_INT_IO_OUTPUT_STATE = 1531,       //GPIO信号输出的用户控制模式, 参考LX_IO_OUTPUT_STATE
@@ -405,6 +407,7 @@ typedef enum LX_CAMERA_FEATURE
     LX_CMD_RESTART_DEVICE = 5003,   //重启相机，部分型号需要重新打开相机
     LX_CMD_WHITE_BALANCE = 5004,    //自动白平衡
     LX_CMD_RESET_PARAM = 5007,      //恢复默认参数
+    LX_CMD_SOFTWARE_TRIGGER = 5008, //软触发执行指令
 
     /*ptr feature*/
     LX_PTR_2D_IMAGE_DATA = 6001, //获取2D图像数据指针，数据长度由2D图像尺寸、通道数和数据格式（LX_INT_2D_IMAGE_DATA_TYPE）确定
