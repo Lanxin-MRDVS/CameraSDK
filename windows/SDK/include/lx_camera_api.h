@@ -488,4 +488,17 @@ LX_API DcSetParamPath(DcHandle handle, const char* filepath);
 LX_API_STR DcGetErrorString(LX_STATE state);
 
 
+//~chinese:
+//功能: 算法库使用GPU加速，打开相机前必须先调用，否则无效。默认关闭。部分GPU设备可能不支持，如果出现异常，建议关闭。
+//参数：[in]is_enable     是否使能
+//~english:
+/**
+ * @brief Use gpu to accelerate, must call first. Recommend to set false if it works abnormally.
+ *
+ * @param is_enable [bool]
+ * @return LX_API
+ */
+LX_API DcSetGpuEnable(bool is_enable);
+LX_API DcGetGpuEnable(bool* is_enable);
+
 #endif

@@ -236,6 +236,12 @@ typedef enum LX_FILTER_MODE {
     FILTER_EXPERT = 3,
 }LX_FILTER_MODE;
 
+typedef enum LX_CAN_PROTOCOL_TYPE 
+{
+    CAN_MRDVS = 0,
+    CAN_KECONG = 1,
+}LX_CAN_PROTOCOL_TYPE;
+
 
 //图像显示相关信息
 typedef struct FrameDataInfo
@@ -353,8 +359,11 @@ typedef enum LX_CAMERA_FEATURE
                                         //0-0xFFFF，四个F代表意义：保留位，滤波上移，RGB上移，TOF上移
                                         //内置应用算法（LX_INT_ALGORITHM_MODE）开启时不允许上移
     LX_INT_CAN_BAUD_RATE = 1072,         //can的波特率值, 单位bps 
+    LX_INT_CAN_NODE_ID = 1073,           //can地址 
+    LX_INT_CAN_PROTOCOL_TYPE = 1074,     //can协议类型, 参考枚举LX_CAN_PROTOCOL_TYPE 
     LX_INT_SAVE_PARAMS_GROUP = 1075,    //将相机当前配置保存为指定的参数组
     LX_INT_LOAD_PARAMS_GROUP = 1076,     //一键加载指定索引的参数组
+
 
     LX_INT_TRIGGER_MODE = 1069,         //触发模式,对应的值参考LX_TRIGGER_MODE
     LX_INT_HARDWARE_TRIGGER_FILTER_TIME = 1085, //硬触发滤波时间, 单位us
@@ -368,6 +377,7 @@ typedef enum LX_CAMERA_FEATURE
     LX_INT_FILTER_SMOOTH_LEVEL = 1091,  //当LX_INT_FILTER_MODE为FILTER_NORMAL时,可设置滤波平滑等级，[0, 3]，值越大，滤波越强
     LX_INT_FILTER_NOISE_LEVEL = 1092,   //当LX_INT_FILTER_MODE为FILTER_NORMAL时,可设置滤波噪声等级，[0, 3]，值越大，滤波越强
     LX_INT_FILTER_TIME_LEVEL = 1093,    //当LX_INT_FILTER_MODE为FILTER_NORMAL时,可设置滤波时域等级，[0, 3]，值越大，滤波越强
+    LX_INT_FILTER_DETECT_LOW_SIGNAL = 1094, //小信号测量，可能检测到信噪比较低的数据，包括远距离数据导致多周期问题
 
     /*float feature*/
     LX_FLOAT_FILTER_LEVEL = 2001,      //当LX_INT_FILTER_MODE为FILTER_SIMPLE时,可设置滤波等级，[0, 1]，值越大，滤波越强，等于0表示关闭滤波，

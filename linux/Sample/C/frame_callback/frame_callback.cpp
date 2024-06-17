@@ -115,17 +115,18 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
     }
     if (frame_ptr->frame_state != LX_SUCCESS)
     {
-        printf("frame_state:%d\n", frame_ptr->frame_state);
-
         if (frame_ptr->frame_state == LX_E_FRAME_ID_NOT_MATCH) {
             printf("is enabled sync frame, but frame_state:%d\n", frame_ptr->frame_state);
+            //return;
+        }
+        else if (frame_ptr->frame_state == LX_E_FRAME_MULTI_MACHINE) {
+            printf("recv multi machine singal, frame_state:%d\n", frame_ptr->frame_state);
+            //return;
+        }
+        else {
+            printf("frame_state:%d\n", frame_ptr->frame_state);
             return;
         }
-
-        if(frame_ptr->frame_state == LX_E_FRAME_MULTI_MACHINE)
-            printf("recv multi machine singal, frame_state:%d\n", frame_ptr->frame_state);
-        else
-            return;
     }
 
     //若需要帧id信息,可选通过此结构体获取, 若需要帧同步, 则可通过将此处接收到的数据缓存到队列中,后续在队列中匹配帧id方式实现

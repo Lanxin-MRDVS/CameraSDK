@@ -15,6 +15,7 @@ using namespace std;
 static char wait_key = '0';
 static DcHandle handle = 0;
 
+static bool is_show = true;
 static int tof_width = 0;
 static int tof_height = 0;
 static int tof_depth_type = LX_DATA_TYPE::LX_DATA_UNSIGNED_SHORT;
@@ -26,13 +27,8 @@ static int rgb_data_type = LX_DATA_TYPE::LX_DATA_UNSIGNED_CHAR;
 
 #define checkTC(state) {LX_STATE val=state;                            \
     if(val != LX_SUCCESS){                                             \
-        if(val == LX_E_RECONNECTING){                                  \
-            std::cout << " device reconnecting" << std::endl;}         \
-        else if(val == LX_E_NOT_SUPPORT){                              \
-            std::cout << " not support" << std::endl;}                 \
-        else{                                                          \
-            std::cout << DcGetErrorString(val)<<std::endl;             \
-            std::cout << " press any key to exit!" << std::endl;       \
+        std::cout << DcGetErrorString(val)<<std::endl;                  \
+        if(val != LX_E_RECONNECTING && val != LX_E_NOT_SUPPORT){        \
             DcCloseDevice(handle);                                     \
             wait_key = getchar();                                      \
             return -1;                                                 \
@@ -207,7 +203,8 @@ int TestDepth(bool is_enable, DcHandle handle)
         return 0;
 
     void* data_ptr = nullptr;
-    checkTC(DcGetPtrValue(handle, LX_PTR_3D_DEPTH_DATA, &data_ptr));
+    if (LX_SUCCESS != DcGetPtrValue(handle, LX_PTR_3D_DEPTH_DATA, &data_ptr))
+        return -1;
 
     //第yRows行xCol列深度数据
     //TOF相机深度数据为unsigned short类型，结构光相机（LX_DEVICE_H3)为float类型
@@ -228,19 +225,22 @@ int TestDepth(bool is_enable, DcHandle handle)
 
     //第yRows行xCol列点云数据
     float* xyz_data = nullptr;
-    checkTC(DcGetPtrValue(handle, LX_PTR_XYZ_DATA, (void**)&xyz_data));
+    if (LX_SUCCESS != DcGetPtrValue(handle, LX_PTR_XYZ_DATA, (void**)&xyz_data))
+        return -1;
     float x = xyz_data[pose * 3];
     float y = xyz_data[pose * 3 + 1];
     float z = xyz_data[pose * 3 + 2];
 
 #ifdef HAS_OPENCV
     cv::Mat depth_image = cv::Mat(tof_height, tof_width, CV_MAKETYPE(tof_depth_type, 1), data_ptr);
-    cv::Mat depth_show;
-    depth_image.convertTo(depth_show, CV_8U, 1.0 / 16);
-    cv::namedWindow("depth", 0);
-    cv::resizeWindow("depth", 640, 480);
-    cv::imshow("depth", depth_show);
-    cv::waitKey(1);
+    if (is_show) {
+        cv::Mat depth_show;
+        depth_image.convertTo(depth_show, CV_8U, 1.0 / 16);
+        cv::namedWindow("depth", 0);
+        cv::resizeWindow("depth", 640, 480);
+        cv::imshow("depth", depth_show);
+        cv::waitKey(1);
+    }
 #endif
     return 0;
 }
@@ -251,7 +251,8 @@ int TestAmp(bool is_enable, DcHandle handle)
         return 0;
 
     void* data_ptr = nullptr;
-    checkTC(DcGetPtrValue(handle, LX_PTR_3D_AMP_DATA, &data_ptr));
+    if (LX_SUCCESS != DcGetPtrValue(handle, LX_PTR_3D_AMP_DATA, &data_ptr))
+        return -1;
 
     //第yRows行xCol列数据
     //TOF相机强度数据为unsigned short类型，结构光相机（LX_DEVICE_WK)为unsigned char类型
@@ -269,10 +270,12 @@ int TestAmp(bool is_enable, DcHandle handle)
 
 #ifdef HAS_OPENCV
     cv::Mat amp_image = cv::Mat(tof_height, tof_width, CV_MAKETYPE(tof_amp_type, 1), data_ptr);
-    cv::Mat amp_show;
-    amp_image.convertTo(amp_show, CV_8U, 0.25);
-    cv::imshow("amptitude", amp_show);
-    cv::waitKey(1);
+    if (is_show) {
+        cv::Mat amp_show;
+        amp_image.convertTo(amp_show, CV_8U, 0.25);
+        cv::imshow("amptitude", amp_show);
+        cv::waitKey(1);
+    }
 #endif
     return 0;
 }
@@ -283,7 +286,8 @@ int TestRgb(bool is_enable, DcHandle handle)
         return 0;
 
     unsigned char* data_ptr = nullptr;
-    checkTC(DcGetPtrValue(handle, LX_PTR_2D_IMAGE_DATA, (void**)&data_ptr));
+    if (LX_SUCCESS != DcGetPtrValue(handle, LX_PTR_2D_IMAGE_DATA, (void**)&data_ptr))
+        return -1;
 
     //第yRows行xCol列数据
     //2D图像目前只有unsigned char格式
@@ -303,10 +307,12 @@ int TestRgb(bool is_enable, DcHandle handle)
 
 #ifdef HAS_OPENCV
     cv::Mat rgb_show = cv::Mat(rgb_height, rgb_width, CV_MAKETYPE(rgb_data_type, rgb_channles), data_ptr);
-    cv::namedWindow("rgb", 0);
-    cv::resizeWindow("rgb", 640, 480);
-    cv::imshow("rgb", rgb_show);
-    cv::waitKey(1);
+    if (is_show) {
+        cv::namedWindow("rgb", 0);
+        cv::resizeWindow("rgb", 640, 480);
+        cv::imshow("rgb", rgb_show);
+        cv::waitKey(1);
+    }
 #endif
     return 0;
 }
