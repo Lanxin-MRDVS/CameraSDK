@@ -88,7 +88,7 @@ LX_STATE Start(){
         DcGetPtrValue(handle, LX_PTR_2D_INTRIC_PARAM, (void**)&intr);
         double d[5]{ intr[4], intr[5], intr[6], intr[7], intr[8]};
         double k[9]{intr[0], 0, intr[2],0, intr[1], intr[3],0, 0, 1};
-        for(int i=0;i<9;i++)tof_info.k[i] = k[i], tof_info.d.push_back(d[i]);
+        for(int i=0;i<9;i++)rgb_info.k[i] = k[i], rgb_info.d.push_back(d[i]);
         rgb_info.header.frame_id = "intrinsic_rgb";
     }
 
@@ -472,7 +472,11 @@ LxCamera::LxCamera(DcLib* _lib) : Node("lx_camera_node"){
     Check("LX_BOOL_ENABLE_2D_STREAM", DcSetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, is_rgb));
     Check("LX_INT_WORK_MODE", DcSetIntValue(handle, LX_INT_WORK_MODE, lx_work_mode));
 
-    run();
+    std::thread ros2_work(&LxCamera::run, this);
+    
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
 }
 
 void LxCamera::SearchAndOpenDevice(){
@@ -514,8 +518,12 @@ void LxCamera::run(){
     while(!is_start) Start();
     rclcpp::Node::SharedPtr node_(this);
     while (rclcpp::ok()){
+        FrameInfo* one_frame = nullptr;
         if(!is_start){rclcpp::spin_some(node_);continue; }
-        if (Check("LX_CMD_GET_NEW_FRAME", DcSetCmd(handle, LX_CMD_GET_NEW_FRAME))) continue;
+        auto sret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
+	    if ((LX_SUCCESS != sret) && (LX_E_FRAME_ID_NOT_MATCH != sret) && (LX_E_FRAME_MULTI_MACHINE != sret)) continue;
+
+        if (Check("LX_PTR_FRAME_DATA", DcGetPtrValue(handle, LX_PTR_FRAME_DATA, (void**)&one_frame))) continue;
         rclcpp::Time now = this->get_clock()->now();
         float dep(0),amp(0),rgb(0),temp(0);
         LxFloatValueInfo f_val;
@@ -546,7 +554,8 @@ void LxCamera::run(){
                     cld = pt_cg;
                 }
                 pcl::toROSMsg(*cld, pcl2);
-                pcl2.header.stamp = now;
+                pcl2.header.stamp.nanosec = one_frame->depth_data.sensor_timestamp%1000000;
+                pcl2.header.stamp.sec = one_frame->depth_data.sensor_timestamp/1000000;
                 pcl2.header.frame_id = "mrdvs";
                 pub_cloud->publish(pcl2);
             }
@@ -554,13 +563,13 @@ void LxCamera::run(){
 		}
 		
         if (is_depth){
-            void* dep_data = nullptr;
-            if (DcGetPtrValue(handle, LX_PTR_3D_DEPTH_DATA, &dep_data) == LX_SUCCESS){
-                cv::Mat dep_img(tof_info.height, tof_info.width, CV_16UC1, dep_data);
-
-                sensor_msgs::msg::Image msg_depth;
+            void* dep_data = one_frame->depth_data.frame_data;
+            if (dep_data){
                 cv_bridge::CvImage cv_img;
-                cv_img.header.stamp = now;
+                sensor_msgs::msg::Image msg_depth;
+                cv::Mat dep_img(one_frame->depth_data.frame_height, one_frame->depth_data.frame_width, CV_16UC1, dep_data);
+                cv_img.header.stamp.nanosec = one_frame->amp_data.sensor_timestamp%1000000;
+                cv_img.header.stamp.sec = one_frame->amp_data.sensor_timestamp/1000000;
                 cv_img.header.frame_id = "mrdvs";
                 cv_img.encoding = "mono16";
                 cv_img.image = dep_img;
@@ -573,13 +582,13 @@ void LxCamera::run(){
         }
 
         if (is_amp){
-            void* amp_data = nullptr;
-            if (DcGetPtrValue(handle, LX_PTR_3D_AMP_DATA, &amp_data) == LX_SUCCESS){
-                cv::Mat amp_img(tof_info.height, tof_info.width, CV_16UC1, amp_data);
-
-                sensor_msgs::msg::Image msg_amp;
+            void* amp_data = one_frame->amp_data.frame_data;
+            if (amp_data){
                 cv_bridge::CvImage cv_img;
-                cv_img.header.stamp = now;
+                sensor_msgs::msg::Image msg_amp;
+                cv::Mat amp_img(one_frame->amp_data.frame_height, one_frame->amp_data.frame_width, CV_16UC1, amp_data);
+                cv_img.header.stamp.nanosec = one_frame->amp_data.sensor_timestamp%1000000;
+                cv_img.header.stamp.sec = one_frame->amp_data.sensor_timestamp/1000000;
                 cv_img.header.frame_id = "mrdvs";
                 cv_img.encoding = "mono16";
                 cv_img.image = amp_img;
@@ -592,16 +601,18 @@ void LxCamera::run(){
         }
 
         if (is_rgb){
-            void* rgb_data = nullptr;
-            if (DcGetPtrValue(handle, LX_PTR_2D_IMAGE_DATA, &rgb_data) == LX_SUCCESS){
+            void* rgb_data = one_frame->rgb_data.frame_data;
+            if (rgb_data){
                 cv::Mat rgb_pub;
-                cv::Mat rgb_img(rgb_info.height, rgb_info.width, CV_MAKETYPE(rgb_type, rgb_channel), rgb_data);
+                cv_bridge::CvImage cv_img;
+                sensor_msgs::msg::Image msg_rgb;
+                auto _type = CV_MAKETYPE(rgb_type, rgb_channel);
+                cv::Mat rgb_img(one_frame->rgb_data.frame_height, one_frame->rgb_data.frame_width, _type, rgb_data);
                 rgb_img.convertTo(rgb_pub, CV_8UC1, rgb_type == CV_16U ? 0.25 : 1);
                 std::string type = rgb_channel == 3 ? "bgr8" : "mono8";
 
-                sensor_msgs::msg::Image msg_rgb;
-                cv_bridge::CvImage cv_img;
-                cv_img.header.stamp = now;
+                cv_img.header.stamp.nanosec = one_frame->amp_data.sensor_timestamp%1000000;
+                cv_img.header.stamp.sec = one_frame->amp_data.sensor_timestamp/1000000;
                 cv_img.header.frame_id = "mrdvs";
                 cv_img.encoding = type;
                 cv_img.image = rgb_pub;
@@ -628,19 +639,20 @@ void LxCamera::run(){
         pub_temper->publish(fr);
 
         int ret = 0;
-        void* app_ptr = nullptr;
-        if(inside_app) ret = Check("ALGORITHM_OUTPUT", DcGetPtrValue(handle, LX_PTR_ALGORITHM_OUTPUT, &app_ptr));
-        if(ret || !app_ptr){
-            rclcpp::spin_some(node_);
-            continue;
-        }
+        void* app_ptr = one_frame->app_data.frame_data;
 
         switch(inside_app){
             case MODE_AVOID_OBSTACLE:{
                 lx_camera_ros::msg::Obstacle result;
                 result.header.frame_id = "mrdvs";
-                result.header.stamp = now;
+                result.header.stamp.sec = one_frame->app_data.sensor_timestamp/1000000;
+                result.header.stamp.nanosec = one_frame->app_data.sensor_timestamp%1000000;
                 Check("GetObstacleIO", DcSpecialControl(handle, "GetObstacleIO", (void*)&result.io_output));
+            	if(ret || !app_ptr){
+                    result.status = -1;
+                    pub_obstacle->publish(result);
+                    break;
+                }
                 LxAvoidanceOutput* lao = (LxAvoidanceOutput*)app_ptr;
                 result.status = lao->state;
                 result.box_number = lao->number_box;
@@ -659,9 +671,11 @@ void LxCamera::run(){
                 break;
             }
             case MODE_PALLET_LOCATE:{
+                if(ret || !app_ptr)break;
                 lx_camera_ros::msg::Pallet result;
                 result.header.frame_id = "mrdvs";
-                result.header.stamp = now;
+                result.header.stamp.sec = one_frame->app_data.sensor_timestamp/1000000;
+                result.header.stamp.nanosec = one_frame->app_data.sensor_timestamp%1000000;
                 LxPalletPose* lao = (LxPalletPose*)app_ptr;
                 result.status = lao->return_val;
                 result.x = lao->x;
@@ -671,10 +685,12 @@ void LxCamera::run(){
                 break;
             }
             case MODE_VISION_LOCATION:{
+                if(ret || !app_ptr)break;
                 LxLocation* __val = (LxLocation*)app_ptr;
                 if(!__val->status){
                     geometry_msgs::msg::PoseStamped alg_val;
-                    alg_val.header.stamp = now;
+                    alg_val.header.stamp.sec = one_frame->app_data.sensor_timestamp/1000000;
+                    alg_val.header.stamp.nanosec = one_frame->app_data.sensor_timestamp%1000000;
                     alg_val.header.frame_id = "mrdvs";
                     auto qua_res = ToQuaternion(__val->theta,0,0);
                     alg_val.pose.position.x = __val->x;
@@ -691,8 +707,14 @@ void LxCamera::run(){
             case MODE_AVOID_OBSTACLE2:{
                 lx_camera_ros::msg::Obstacle result;
                 result.header.frame_id = "mrdvs";
-                result.header.stamp = now;
+                result.header.stamp.sec = one_frame->app_data.sensor_timestamp/1000000;
+                result.header.stamp.nanosec = one_frame->app_data.sensor_timestamp%1000000;
                 Check("GetObstacleIO", DcSpecialControl(handle, "GetObstacleIO", (void*)&result.io_output));
+            	if(ret || !app_ptr){
+                    result.status = -1;
+                    pub_obstacle->publish(result);
+                    break;
+                }
                 LxAvoidanceOutputN* lao = (LxAvoidanceOutputN*)app_ptr;
                 result.status = lao->state;
                 result.box_number = lao->number_box;

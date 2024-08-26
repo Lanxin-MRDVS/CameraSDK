@@ -68,7 +68,10 @@ int main(int argc, char** argv)
         << "\n cameraip:" << device_info.ip << "\n firmware_ver:" << device_info.firmware_ver << "\n sn:" << device_info.sn
         << "\n name:" << device_info.name << "\n img_algor_ver:" << device_info.algor_ver << std::endl;
     
-    //应用算法
+    //开启托盘对接算法。建议关闭其他数据流，避免LX_CMD_GET_NEW_FRAME时算法数据未更新
+    checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, false));
+    checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, false));
+    checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, false));
     checkTC(DcSetIntValue(handle, LX_INT_ALGORITHM_MODE, MODE_PALLET_LOCATE));
 
     LxIntValueInfo algor_info = { 0 };
@@ -80,24 +83,26 @@ int main(int argc, char** argv)
     checkTC(DcGetStringValue(handle, LX_STRING_ALGORITHM_VERSION, &algor_ver));
     if (algor_ver != nullptr) std::cout << " current algor version:" << algor_ver << std::endl;
 
+    //托盘算法参数可以不设置。如果需要可通过如下函数设置，参数为json格式
+    //std::string str_pallet_json = "{}";
+    //checkTC(DcSetStringValue(handle, LX_STRING_ALGORITHM_PARAMS, str_pallet_json.c_str()));
+
     //算法参数，与当前设置的算法有关
     char* cur_algor_json = nullptr;
     checkTC(DcGetStringValue(handle, LX_STRING_ALGORITHM_PARAMS, &cur_algor_json));
     if (cur_algor_json != nullptr) std::cout << " current algor json param:" << cur_algor_json << std::endl;
 
-    //托盘算法参数可设置也可不设置，若设置，可通过如下函数设置，参数为json格式
-    //std::string str_pallet_json = "{}";
-    //checkTC(DcSetStringValue(handle, LX_STRING_ALGORITHM_PARAMS, str_pallet_json.c_str()));
-
     //正常状态下，网络断开或者SDK关闭之后，相机会切换为待机状态。
-    //如果算法结果不通过SDK输出，需要设置为常开模式，相机和内置算法会始终保持工作
-    checkTC(DcSetIntValue(handle, LX_INT_WORK_MODE, 1));
+    //如果算法结果不通过SDK输出，需要设置为常开模式，相机和内置算法会始终保持工作。此时启停流无效，不允许需要停流才能进行的操作
+    //checkTC(DcSetIntValue(handle, LX_INT_WORK_MODE, 1));
 
     //开启数据流
     checkTC(DcStartStream(handle));
     while (true)
     {
         //刷新数据
+        //如果开启了多个数据流，只要有一个更新，此函数会正常返回。
+        //可以设置LX_BOOL_ENABLE_SYNC_FRAME为true保持所有数据同步。或者通过帧ID和时间戳判断需要的数据是否更新
         auto ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
         if ((LX_SUCCESS != ret)
             && (LX_E_FRAME_ID_NOT_MATCH != ret)
@@ -120,7 +125,6 @@ int main(int argc, char** argv)
 
     DcStopStream(handle);
     DcCloseDevice(handle);
-    getchar();
     return 0;
 }
 

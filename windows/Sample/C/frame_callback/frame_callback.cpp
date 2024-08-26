@@ -4,6 +4,8 @@
 #include <string>
 #include "lx_camera_api.h"
 #include "lx_camera_application.h"
+
+#undef HAS_OPENCV
 #ifdef HAS_OPENCV
 #include "opencv2/opencv.hpp"
 using namespace cv;
@@ -31,9 +33,11 @@ void CallbackFunc(FrameInfo* frame, void* usr_data);
 
 int main(int argc, char** argv)
 {
+    //设置日志等级和路径。
     checkTC(DcSetInfoOutput(1, true, ""));
     printf("call api version: %s\n", DcGetApiVersion());
 
+    //查找设备
     int device_num = 0;
     LxDeviceInfo* p_device_list = NULL;
     checkTC(DcGetDeviceList(&p_device_list, &device_num));
@@ -45,6 +49,8 @@ int main(int argc, char** argv)
     }
     printf("DcGetDeviceList success list: %d\n", device_num);
 
+    //打开相机。SDK基于GIGE协议，会搜索到所有支持GIGE协议的相机，用索引方式打开相机时需要注意
+    //设备打开后会独占权限，其他进程无法再打开相机。如果程序强制结束没有调用DcCloseDevice，需要等待几秒等心跳超时释放权限
     std::string open_param;
     int open_mode = OPEN_BY_INDEX; //OPEN_BY_IP;//
     switch (open_mode)
@@ -74,17 +80,20 @@ int main(int argc, char** argv)
     }
     printf("device_info\nid: %s\nip: %s\nsn: %s\nfirmware_ver:%s\n",
         device_info.id, device_info.ip, device_info.sn, device_info.firmware_ver);
-    //===============================================================================
 
+    //获取数据流状态
     bool depth_enable = false, amp_enable = false, rgb_enable = false;
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, &depth_enable));
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, &amp_enable));
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, &rgb_enable));
-
+    //获取内置应用算法状态
     int app_mode = LX_ALGORITHM_MODE::MODE_ALL_OFF;
     LxIntValueInfo int_value;
     checkTC(DcGetIntValue(handle, LX_INT_ALGORITHM_MODE, &int_value));
     app_mode = int_value.cur_value;
+
+    //触发模式为无触发（流模式），部分型号不支持
+    checkTC(DcSetIntValue(handle, LX_INT_TRIGGER_MODE, LX_TRIGGER_MODE_OFF));
 
     printf("depth_enable:%d amp_enable:%d rgb_enable:%d app_mode:%d\n", depth_enable, amp_enable, rgb_enable, app_mode);
 
@@ -109,6 +118,7 @@ int main(int argc, char** argv)
 void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
 {
     //此函数内部,尽量不要做复杂操作,否则可能阻塞内部数据回调
+    //回调方式不需要再调用LX_CMD_GET_NEW_FRAME
     if (frame_ptr == nullptr)
     {
         return;
@@ -141,7 +151,7 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
         if (p_extend_info != nullptr)
             printf("depth frame_id:%d\n", p_extend_info->depth_frame_id);
 
-        //获取点云数据(可选, 假如需要的话)
+        //获取点云数据(可选）。点云数据由深度数据转换，与深度数据同步更新
         float* xyz_data = nullptr;
         if (DcGetPtrValue(frame_ptr->handle, LX_PTR_XYZ_DATA, (void**)&xyz_data) != LX_SUCCESS)
             printf("get xyz failed");
@@ -153,7 +163,6 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
             float x = xyz_data[pose * 3];
             float y = xyz_data[pose * 3 + 1];
             float z = xyz_data[pose * 3 + 2];
-            //std::cout << " x:" << x << " y:" << y << " z:" << z << std::endl;
         }
     }
     //amp
@@ -172,6 +181,7 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
     }
 
 #ifdef HAS_OPENCV
+    //show
     if (frame_ptr->depth_data.frame_data != nullptr) {
         FrameDataInfo depth_data = frame_ptr->depth_data;
         cv::Mat depth_image = cv::Mat(depth_data.frame_height, depth_data.frame_width,
@@ -181,7 +191,7 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
         depth_image.convertTo(show, CV_8U, 1.0 / 16);
         applyColorMap(show, show, COLORMAP_JET);
         cv::namedWindow("depth", 0);
-        cv::resizeWindow("depth", 640, 480);
+        //cv::resizeWindow("depth", 640, 480);
         cv::imshow("depth", show);
     }
 
@@ -197,7 +207,7 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
             show = amp_image;
 
         cv::namedWindow("amp", 0);
-        cv::resizeWindow("amp", 640, 480);
+        //cv::resizeWindow("amp", 640, 480);
         cv::imshow("amp", show);
     }
 
@@ -207,12 +217,12 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
             CV_MAKETYPE(rgb_data.frame_data_type, rgb_data.frame_channel), rgb_data.frame_data);
 
         cv::namedWindow("rgb", 0);
-        cv::resizeWindow("rgb", 640, 480);
+        //cv::resizeWindow("rgb", 640, 480);
         cv::imshow("rgb", rgb_image);
     }
+
     cv::waitKey(1);
 #endif
-
     //process application
     if (frame_ptr->app_data.frame_data != nullptr)
     {
@@ -222,9 +232,9 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
             printf("palletdata ret:%d x:%f, y:%f yaw:%f\n",
                 palletdata->return_val, palletdata->x, palletdata->y, palletdata->yaw);
         }
-        else if (frame_ptr->app_data.frame_data_type == LX_DATA_OBSTACLE)
+        else if (frame_ptr->app_data.frame_data_type == LX_DATA_OBSTACLE2)
         {
-            LxAvoidanceOutput* obstacle = (LxAvoidanceOutput*)frame_ptr->app_data.frame_data;
+            LxAvoidanceOutputN* obstacle = (LxAvoidanceOutputN*)frame_ptr->app_data.frame_data;
             if (obstacle->state != LxAvSuccess) {
                 printf("state is not success\n");
                 return;

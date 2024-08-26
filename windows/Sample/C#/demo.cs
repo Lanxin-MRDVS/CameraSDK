@@ -137,8 +137,16 @@ namespace demo
                 else Console.WriteLine("Get new frame  failed");
 
                 //获取2D图像数据
-                IntPtr voi = new IntPtr();
-                LX_STATE _fin = DcGetPtrValue(handle, 6001, ref voi);
+                //IntPtr voi = new IntPtr();
+                //LX_STATE _fin = DcGetPtrValue(handle, 6001, ref voi);
+
+                //获取图像数据信息
+                IntPtr frameInfo;
+                LX_STATE _fin = DcGetPtrValue(handle, 6009, out frameInfo);
+                FrameInfo frame = (FrameInfo)Marshal.PtrToStructure(frameInfo, typeof(FrameInfo));
+                System.Console.WriteLine(frame.depth_data.frame_width);
+                System.Console.WriteLine(frame.depth_data.frame_height);
+
                 if (_fin == LX_STATE.LX_SUCCESS) Console.WriteLine("DcGetPtrValue success");
                 else Console.WriteLine("DcGetPtrValue failed:{0}", _fin);
             }

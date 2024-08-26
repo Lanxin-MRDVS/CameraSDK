@@ -5,6 +5,7 @@
 #include <thread>
 #include "lx_camera_api.h"
 
+//#undef HAS_OPENCV
 #ifdef HAS_OPENCV
 #include "opencv2/opencv.hpp"
 using namespace cv;
@@ -25,7 +26,6 @@ static char wait_key = '0';
         }                                                              \
     }                                                                  \
 }
-
 
 int TestFrame(DcHandle handle);
 void WaitKey()
@@ -51,7 +51,8 @@ int main(int argc, char** argv)
     }
     printf("DcGetDeviceList success list: %d\n", device_num);
 
-    //打开相机
+    //打开相机。SDK基于GIGE协议，会搜索到所有支持GIGE协议的相机，用索引方式打开相机时需要注意
+    //设备打开后会独占权限，其他进程无法再打开相机。如果程序强制结束没有调用DcCloseDevice，需要等待几秒等心跳超时释放权限
     std::string open_param;
     int open_mode = OPEN_BY_INDEX;
     switch (open_mode)
@@ -86,20 +87,24 @@ int main(int argc, char** argv)
     printf("device_info\nid: %s\nip: %s\nsn: %s\nfirmware_ver:%s\n",
         device_info.id, device_info.ip, device_info.sn, device_info.firmware_ver);
 
-    //设置数据流
+    //获取数据流开启状态，如需调整可以调用DcSetBoolValue。
     bool test_depth = false, test_amp = false, test_rgb = false;
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, &test_depth));
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, &test_amp));
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, &test_rgb));
 
-    //RGBD对齐，TOF的图像尺寸和像素会扩展到与RGB一致，开启后建议关闭强度流
-    //checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_2D_TO_DEPTH, true));
+    //RGBD对齐，rgb和depth的图像尺寸和坐标会保持一致。
+    //提供两中对齐方式，以depth为基准和以rgb为基准。以rgb为基准时深度和强度图像坐标不一致。
+    //checkTC(DcSetIntValue(handle, LX_INT_RGBD_ALIGN_MODE, LX_RGBD_ALIGN_MODE::DEPTH_TO_RGB));
 
     //可以根据需要,是否开启帧同步模式, 开启该模式, 内部会对每一帧做同步处理后返回
-    //默认若不需要tof与rgb数据同步, 则不需要开启此功能, 内部会优先保证数据实时性
+    //若不需要不同数据流之间同步, 则不需要开启此功能, 内部会优先保证数据实时性，也可以通过帧ID和时间戳判断是否同步
     //checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_SYNC_FRAME, true));
 
     printf("test_depth: %d test_amp: %d test_rgb: %d\n", test_depth, test_amp, test_rgb);
+
+    /*其他操作。相机的设置、参数的获取建议在数据流开启之前操作，尤其涉及到图像尺寸变化的内容*/
+
     //开启数据流
     checkTC(DcStartStream(handle));
 
@@ -111,7 +116,9 @@ int main(int argc, char** argv)
         //更新数据
         auto ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
         if ((LX_SUCCESS != ret)
+            //开启帧同步时，在超时范围内没有找到匹配的帧（丢包），会返回LX_E_FRAME_ID_NOT_MATCH
             && (LX_E_FRAME_ID_NOT_MATCH != ret)
+            //多机模式开启时，检测到多机干扰会返回LX_E_FRAME_MULTI_MACHINE
             && (LX_E_FRAME_MULTI_MACHINE != ret))
         {
             if (LX_E_RECONNECTING == ret) {
@@ -154,10 +161,12 @@ int TestFrame(DcHandle handle)
         }
     }
 
+    //帧ID信息，可以用来识别每个数据流的同步，否则可以忽略
     FrameExtendInfo* pextendframe = nullptr;
     if (frame_ptr->reserve_data != nullptr)
         pextendframe = (FrameExtendInfo*)frame_ptr->reserve_data;
 
+    //深度数据
     if (frame_ptr->depth_data.frame_data != nullptr)
     {
         auto depth_data = frame_ptr->depth_data;
@@ -165,9 +174,15 @@ int TestFrame(DcHandle handle)
         if (pextendframe != nullptr)
             printf("depth_frame_id:%d\n", pextendframe->depth_frame_id);
 
+        //将depth数据转换为xyz点云数据
+        void* xyz = NULL;
+        DcGetPtrValue(handle, LX_PTR_XYZ_DATA, &xyz);
+
 #ifdef HAS_OPENCV
         cv::Mat depth_image = cv::Mat(depth_data.frame_height, depth_data.frame_width,
             CV_MAKETYPE(depth_data.frame_data_type, depth_data.frame_channel), depth_data.frame_data);
+        cv::Mat xyz_image = cv::Mat(depth_data.frame_height, depth_data.frame_width,
+            CV_32FC3, xyz);
 
         cv::Mat show;
         depth_image.convertTo(show, CV_8U, 1.0 / 16);
@@ -179,6 +194,7 @@ int TestFrame(DcHandle handle)
 #endif
     }
 
+    //强度数据
     if (frame_ptr->amp_data.frame_data != nullptr)
     {
         auto amp_data = frame_ptr->amp_data;
@@ -203,6 +219,7 @@ int TestFrame(DcHandle handle)
 #endif
     }
 
+    //rgb数据
     if (frame_ptr->rgb_data.frame_data != nullptr)
     {
         auto rgb_data = frame_ptr->rgb_data;
@@ -220,7 +237,6 @@ int TestFrame(DcHandle handle)
         cv::waitKey(1);
 #endif
     }
-
 
     return 0;
 }

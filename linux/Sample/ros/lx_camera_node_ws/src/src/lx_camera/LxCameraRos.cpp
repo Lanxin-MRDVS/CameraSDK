@@ -370,7 +370,7 @@ void LxCamera::SetParam(){
 LxCamera::LxCamera(){
     nh = new ros::NodeHandle("~");
     ROS_INFO("Api version: %s", DcGetApiVersion());
-    DcSetInfoOutput(0, true, log_path.c_str());
+    DcSetInfoOutput(1, true, log_path.c_str());
     ReadParam();
 	
     //advertise
@@ -454,8 +454,10 @@ void LxCamera::run(){
     while(!is_start) Start();
     ros::Rate loop_rate(10);
     while (ros::ok()){
+        FrameInfo* one_frame = nullptr;
         if(!is_start){ros::spinOnce();loop_rate.sleep();continue; }
         if (Check("LX_CMD_GET_NEW_FRAME", DcSetCmd(handle, LX_CMD_GET_NEW_FRAME))) continue;
+        if (Check("LX_PTR_FRAME_DATA", DcGetPtrValue(handle, LX_PTR_FRAME_DATA, (void**)&one_frame))) continue;
         float dep(0),amp(0),rgb(0),temp(0);
         auto now_time = ros::Time::now();
         LxFloatValueInfo f_val;
@@ -483,18 +485,22 @@ void LxCamera::run(){
                 }
                 else pcl::toROSMsg(*cloud_, pcl2);
 
+                pcl2.header.stamp.nsec = one_frame->depth_data.sensor_timestamp%1000000;
+                pcl2.header.stamp.sec = one_frame->depth_data.sensor_timestamp/1000000;
                 pcl2.header.frame_id = "mrdvs";
-                pcl2.header.stamp = now_time;
                 pub_cloud.publish(pcl2);
             }
             else ROS_WARN("%s", string("Cloud point data is empty!").c_str());			
 		}
 		
         if (is_depth){
-            void* dep_data = nullptr;
-            if (DcGetPtrValue(handle, LX_PTR_3D_DEPTH_DATA, &dep_data) == LX_SUCCESS){
-                cv::Mat dep_img(tof_camera_info.height, tof_camera_info.width, CV_16UC1, dep_data);
+            void* dep_data = one_frame->depth_data.frame_data;
+            if (dep_data){
+                cv::Mat dep_img(one_frame->depth_data.frame_height, one_frame->depth_data.frame_width, CV_16UC1, dep_data);
                 auto msg_depth = cv_bridge::CvImage(std_msgs::Header(), "16UC1", dep_img).toImageMsg();
+                msg_depth->header.stamp.nsec = one_frame->depth_data.sensor_timestamp%1000000;
+                msg_depth->header.stamp.sec = one_frame->depth_data.sensor_timestamp/1000000;
+                msg_depth->header.frame_id = "mrdvs";
                 pub_depth.publish(msg_depth);
             }
             else ROS_WARN("%s", string("Depth image is empty!").c_str());
@@ -503,10 +509,13 @@ void LxCamera::run(){
         }
 
         if (is_amp){
-            void* amp_data = nullptr;
-            if (DcGetPtrValue(handle, LX_PTR_3D_AMP_DATA, &amp_data) == LX_SUCCESS){
-                cv::Mat amp_img(tof_camera_info.height, tof_camera_info.width, CV_16UC1, amp_data);
-                sensor_msgs::ImagePtr msg_amp = cv_bridge::CvImage(std_msgs::Header(), "16UC1", amp_img).toImageMsg();
+            void* amp_data = one_frame->amp_data.frame_data;
+            if (amp_data){
+                cv::Mat amp_img(one_frame->amp_data.frame_height, one_frame->amp_data.frame_width, CV_16UC1, amp_data);
+                auto msg_amp = cv_bridge::CvImage(std_msgs::Header(), "16UC1", amp_img).toImageMsg();
+                msg_amp->header.stamp.nsec = one_frame->amp_data.sensor_timestamp%1000000;
+                msg_amp->header.stamp.sec = one_frame->amp_data.sensor_timestamp/1000000;
+                msg_amp->header.frame_id = "mrdvs";
                 pub_amp.publish(msg_amp);
             }
             else ROS_WARN("%s", string("Amplitude image is empty!").c_str());
@@ -515,16 +524,18 @@ void LxCamera::run(){
         }
 
         if (is_rgb){
-            void* rgb_data = nullptr;
-            if (DcGetPtrValue(handle, LX_PTR_2D_IMAGE_DATA, &rgb_data) == LX_SUCCESS){
+            void* rgb_data = one_frame->rgb_data.frame_data;
+            if (rgb_data){
                 cv::Mat rgb_pub;
-                cv::Mat rgb_img(rgb_camera_info.height, rgb_camera_info.width, CV_MAKETYPE(rgb_type, rgb_channel), rgb_data);
+                auto _type = CV_MAKETYPE(rgb_type, rgb_channel);
+                cv::Mat rgb_img(one_frame->rgb_data.frame_height, one_frame->rgb_data.frame_width, _type, rgb_data);
                 rgb_img.convertTo(rgb_pub, CV_8UC1, rgb_type == CV_16U ? 0.25 : 1);
 
                 std::string type = rgb_channel == 3 ? "bgr8" : "mono8";
                 sensor_msgs::ImagePtr msg_rgb = cv_bridge::CvImage(std_msgs::Header(), type, rgb_pub).toImageMsg();
+                msg_rgb->header.stamp.nsec = one_frame->rgb_data.sensor_timestamp%1000000;
+                msg_rgb->header.stamp.sec = one_frame->rgb_data.sensor_timestamp/1000000;
                 msg_rgb->header.frame_id = "mrdvs";
-                msg_rgb->header.stamp = now_time;
                 pub_rgb.publish(msg_rgb);
             }
             else ROS_WARN("%s", string("RGB image is empty!").c_str());
@@ -546,20 +557,20 @@ void LxCamera::run(){
         pub_temper.publish(fr);
 
         int ret = 0;
-        void* app_ptr = nullptr;
-        if(inside_app) ret = Check("ALGORITHM_OUTPUT", DcGetPtrValue(handle, LX_PTR_ALGORITHM_OUTPUT, &app_ptr));
-        if(ret || !app_ptr){
-            ros::spinOnce();
-            loop_rate.sleep();
-            continue;
-        }
+        void* app_ptr = one_frame->app_data.frame_data;
 
         switch(inside_app){
             case MODE_AVOID_OBSTACLE:{
                 lx_camera_ros::Obstacle result;
-                result.header.stamp = now_time;
                 result.header.frame_id = "mrdvs";
+                result.header.stamp.sec = one_frame->app_data.sensor_timestamp/1000000;
+                result.header.stamp.nsec = one_frame->app_data.sensor_timestamp%1000000;
                 Check("GetObstacleIO", DcSpecialControl(handle, "GetObstacleIO", (void*)&result.io_output));
+            	if(ret || !app_ptr){
+                    result.status = -1;
+                    pub_obstacle.publish(result);
+                    break;
+                }
                 LxAvoidanceOutput* lao = (LxAvoidanceOutput*)app_ptr;
                 result.status = lao->state;
                 result.box_number = lao->number_box;
@@ -578,9 +589,11 @@ void LxCamera::run(){
                 break;
             }
             case MODE_PALLET_LOCATE:{
+            	if(ret || !app_ptr)break;
                 lx_camera_ros::Pallet result;
-                result.header.stamp = now_time;
                 result.header.frame_id = "mrdvs";
+                result.header.stamp.sec = one_frame->app_data.sensor_timestamp/1000000;
+                result.header.stamp.nsec = one_frame->app_data.sensor_timestamp%1000000;
                 LxPalletPose* lao = (LxPalletPose*)app_ptr;
                 result.status = lao->return_val;
                 result.x = lao->x;
@@ -590,11 +603,13 @@ void LxCamera::run(){
                 break;
             }
             case MODE_VISION_LOCATION:{
+            	if(ret || !app_ptr)break;
                 LxLocation* __val = (LxLocation*)app_ptr;
                 if(!__val->status){
                     geometry_msgs::PoseStamped alg_val;
                     alg_val.header.frame_id = "mrdvs";
-                    alg_val.header.stamp = now_time;
+                    alg_val.header.stamp.sec = one_frame->app_data.sensor_timestamp/1000000;
+                    alg_val.header.stamp.nsec = one_frame->app_data.sensor_timestamp%1000000;
                     
                     geometry_msgs::Quaternion q;
                     q=tf::createQuaternionMsgFromRollPitchYaw(0,0,__val->theta);
@@ -611,9 +626,15 @@ void LxCamera::run(){
             }
             case MODE_AVOID_OBSTACLE2:{
                 lx_camera_ros::Obstacle result;
-                result.header.stamp = now_time;
                 result.header.frame_id = "mrdvs";
+                result.header.stamp.sec = one_frame->app_data.sensor_timestamp/1000000;
+                result.header.stamp.nsec = one_frame->app_data.sensor_timestamp%1000000;
                 Check("GetObstacleIO", DcSpecialControl(handle, "GetObstacleIO", (void*)&result.io_output));
+            	if(ret || !app_ptr){
+                    result.status = -1;
+                    pub_obstacle.publish(result);
+                    break;
+                }
                 LxAvoidanceOutputN* lao = (LxAvoidanceOutputN*)app_ptr;
                 result.status = lao->state;
                 result.box_number = lao->number_box;

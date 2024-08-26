@@ -21,7 +21,7 @@ LX_API_STR DcGetApiVersion();
 //                      1：warn     重要及警告类调试信息
 //                      2：error    仅输出错误信息
 //      [in]enable_screen_print 是否在窗口打印
-//      [in]log_path            log文件保存路径
+//      [in]log_path            log文件保存路径，可以为空，则保存在当前执行路径
 //~english:
 /**
  * @brief Set the level of log
@@ -70,7 +70,7 @@ LX_API DcGetDeviceList(LxDeviceInfo** devlist, int* devnum);
 #endif
 
 //~chinese:
-//功能：打开设备
+//功能：打开设备。设备打开后会独占权限，其他进程无法再打开相机。如果程序强制结束没有调用DcCloseDevice，需要等待几秒等心跳超时释放权限
 //参数：[in]open_mode           打开方式, 具体说明见LX_OPEN_MODE
 //      [in]param               不同的打开方式，填写不同的参数(当sdk运行在相机内部时，此处填写"127.0.0.1")
 //      [out]handle             连接成功后返回的设备句柄,后续所有接口访问都依赖该handle字段
@@ -88,7 +88,7 @@ LX_API DcGetDeviceList(LxDeviceInfo** devlist, int* devnum);
 LX_API DcOpenDevice(LX_OPEN_MODE open_mode, const char* param, DcHandle* handle, LxDeviceInfo* info);
 
 //~chinese
-//功能: 关闭设备
+//功能: 关闭设备。与DcOpenDevice对应，释放权限和资源。
 //参数：[in]handle  设备句柄
 //~english
 /**

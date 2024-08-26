@@ -93,6 +93,7 @@ typedef enum LX_DEVICE_TYPE {
     LX_DEVICE_S2MaxV1,
     LX_DEVICE_S2MaxV2,
     LX_DEVICE_S2MaxV1_1 = 2005,
+    LX_DEVICE_S3 = 2101,
 
     LX_DEVICE_I1 = 3001,
     LX_DEVICE_I2,
@@ -236,6 +237,20 @@ typedef enum LX_FILTER_MODE {
     FILTER_EXPERT = 3,
 }LX_FILTER_MODE;
 
+//3D频率模式
+typedef enum LX_3D_FREQ_MODE {
+    FREQ_SINGLE_3D = 0,
+    FREQ_DUAL_3D = 1,
+    FREQ_TRIPLE_3D = 2,
+}LX_3D_FREQ_MODE;
+
+//3D频率模式
+typedef enum LX_RGBD_ALIGN_MODE {
+    RGBD_ALIGN_OFF = 0,   //关闭rgbd对齐，rgb和depth分别以各自分别和坐标系
+    DEPTH_TO_RGB = 1,     //depth对齐rgb，分辨率和坐标以rgb为准
+    RGB_TO_DEPTH = 2,     //rgb对齐depth，分辨率和坐标以depth为准
+}LX_RGBD_ALIGN_MODE;
+
 typedef enum LX_CAN_PROTOCOL_TYPE 
 {
     CAN_MRDVS = 0,
@@ -326,6 +341,7 @@ typedef enum LX_CAMERA_FEATURE
     LX_INT_3D_IMAGE_OFFSET_Y = 1024,    //ROI垂直偏移像素，ROI设置中WIDTH HEIGHT OFFSET_X OFFSET_Y一起设置, 设置参数请用DcSetROI
     LX_INT_3D_BINNING_MODE = 1025,      //3D图像binning，参考LX_BINNING_MODE
     LX_INT_3D_DEPTH_DATA_TYPE = 1026,   //深度图像数据格式，只能获取，对应的值参考LX_DATA_TYPE
+    LX_INT_3D_FREQ_MODE = 1027,         //3D频率模式,详见LX_3D_FREQ_MODE定义
 
     //3D强度图像，尺寸与3D深度图一致
     LX_INT_3D_AMPLITUDE_CHANNEL = 1031,  //3D强度图像通道数，与深度图通道共用,单色为1，彩色为3
@@ -363,7 +379,7 @@ typedef enum LX_CAMERA_FEATURE
     LX_INT_CAN_PROTOCOL_TYPE = 1074,     //can协议类型, 参考枚举LX_CAN_PROTOCOL_TYPE 
     LX_INT_SAVE_PARAMS_GROUP = 1075,    //将相机当前配置保存为指定的参数组
     LX_INT_LOAD_PARAMS_GROUP = 1076,     //一键加载指定索引的参数组
-
+    LX_INT_RGBD_ALIGN_MODE = 1077,          //rgbd对齐的方式，参考LX_RGBD_ALIGN_MODE，替代LX_BOOL_ENABLE_2D_TO_DEPTH
 
     LX_INT_TRIGGER_MODE = 1069,         //触发模式,对应的值参考LX_TRIGGER_MODE
     LX_INT_HARDWARE_TRIGGER_FILTER_TIME = 1085, //硬触发滤波时间, 单位us
@@ -399,7 +415,7 @@ typedef enum LX_CAMERA_FEATURE
     LX_BOOL_ENABLE_2D_STREAM = 3011,        //开启/关闭2D数据流
     LX_BOOL_ENABLE_2D_AUTO_EXPOSURE = 3012, //2D自动曝光使能  
     LX_BOOL_ENABLE_2D_UNDISTORT = 3015,     //2D图像反畸变使能
-    LX_BOOL_ENABLE_2D_TO_DEPTH = 3016,      //2D3D图像对齐使能，深度图像分辨率会与2D图像保持一致            
+    LX_BOOL_ENABLE_2D_TO_DEPTH = 3016,      //2D3D图像对齐使能，替换为LX_INT_RGBD_ALIGN_MODE            
     LX_BOOL_ENABLE_BACKGROUND_AMP = 3017,   //强度背景光使能
     LX_BOOL_ENABLE_MULTI_MACHINE = 3018,    //多机模式使能，TOF会有多机干扰，开启此模式可以自动检测并缓解多机干扰
     LX_BOOL_ENABLE_MULTI_EXPOSURE_HDR = 3019,  //HDR（多曝光高动态范围模式）使能
@@ -414,9 +430,11 @@ typedef enum LX_CAMERA_FEATURE
     LX_STRING_DEVICE_OS_VERSION = 4007,     //设备系统镜像版本号
     LX_STRING_IMPORT_PARAMS_FROM_FILE = 4008,   //从本地文件加载参数到相机
     LX_STRING_EXPORT_PARAMS_TO_FILE = 4009,      //将相机当前参数导出到本地文件
+    LX_STRING_CUSTOM_ID = 4010,             //客户自定义设备ID标识
 
     /*command feature*/
     LX_CMD_GET_NEW_FRAME = 5001,    //主动更新当前最新数据，调用之后才可以获取相关数据指针。
+                                    //开启多个数据流时，每个数据流更新都会返回正常，除非设置LX_BOOL_ENABLE_SYNC_FRAME为true
                                     //建议采用回调方式DcRegisterFrameCallback更新数据，此时不需调用此接口
     LX_CMD_RETURN_VERSION = 5002,   //回退上一版本
     LX_CMD_RESTART_DEVICE = 5003,   //重启相机，部分型号需要重新打开相机
@@ -425,15 +443,15 @@ typedef enum LX_CAMERA_FEATURE
     LX_CMD_SOFTWARE_TRIGGER = 5008, //软触发执行指令
 
     /*ptr feature*/
-    LX_PTR_2D_IMAGE_DATA = 6001, //获取2D图像数据指针，数据长度由2D图像尺寸、通道数和数据格式（LX_INT_2D_IMAGE_DATA_TYPE）确定
-    LX_PTR_3D_AMP_DATA = 6002,   //获取3D强度图数据指针，数据长度由3D图像尺寸、通道数和数据格式（LX_INT_3D_AMPLITUDE_DATA_TYPE）确定
-    LX_PTR_3D_DEPTH_DATA = 6003, //获取3D深度图数据指针，数据长度由3D图像尺寸、通道数和数据格式（LX_INT_3D_DEPTH_DATA_TYPE）确定
+    LX_PTR_2D_IMAGE_DATA = 6001, //建议使用LX_PTR_FRAME_DATA，获取2D图像数据指针，数据长度由2D图像尺寸、通道数和数据格式（LX_INT_2D_IMAGE_DATA_TYPE）确定
+    LX_PTR_3D_AMP_DATA = 6002,   //建议使用LX_PTR_FRAME_DATA，获取3D强度图数据指针，数据长度由3D图像尺寸、通道数和数据格式（LX_INT_3D_AMPLITUDE_DATA_TYPE）确定
+    LX_PTR_3D_DEPTH_DATA = 6003, //建议使用LX_PTR_FRAME_DATA，获取3D深度图数据指针，数据长度由3D图像尺寸、通道数和数据格式（LX_INT_3D_DEPTH_DATA_TYPE）确定
     LX_PTR_XYZ_DATA = 6004,      //获取点云数据指针，float*类型三通道(x, y, z为一组数据，依次循环)
                                  //数据长度为LX_INT_3D_IMAGE_WIDTH*LX_INT_3D_IMAGE_HEIGHT*sizeof(float)*3   
     LX_PTR_2D_INTRIC_PARAM = 6005,  //获取2D图像内参，float*类型指针，长度固定为9*sizeof(float)(fx,fy,cx,cy,k1,k2,p1,p2,k3)
     LX_PTR_3D_INTRIC_PARAM = 6006, //获取3D图像内参, float*类型指针，长度固定为9*sizeof(float)(fx,fy,cx,cy,k1,k2,p1,p2,k3)
     LX_PTR_3D_EXTRIC_PARAM = 6007, //获取3D图像外参，float*类型指针 ，长度固定为12*sizeof(float)(前9个表示旋转矩阵，后3个表示平移向量)
-    LX_PTR_ALGORITHM_OUTPUT = 6008, //获取内置算法输出
+    LX_PTR_ALGORITHM_OUTPUT = 6008, //建议使用LX_PTR_FRAME_DATA，获取内置算法输出
                                     //当开启模式为MODE_AVOID_OBSTACLE，输出结果为LxAvoidanceOutput指针，参考struct LxAvoidanceOutput，
                                     //当开启模式为MODE_PALLET_LOCATE，输出结果为LxPalletPose指针，参考struct LxPalletPose,
                                     //当开启模式为MODE_VISION_LOCATION，输出结果为LxLocation指针，参考struct LxLocation

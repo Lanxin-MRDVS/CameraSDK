@@ -5,7 +5,7 @@ def generate_launch_description():
     return LaunchDescription([
         Node(
             package="lx_camera_ros",
-            node_executable="lx_camera_node",
+            executable="lx_camera_node",
             output="screen",
             emulate_tty=True,
             parameters=[
