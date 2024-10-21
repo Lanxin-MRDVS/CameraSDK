@@ -26,7 +26,7 @@ def generate_launch_description():
 			{"z" : 0},
 			{"yaw" : 0},
 			{"roll" : 0},
-			{"pitch" : 90},
+			{"pitch" : 0},
 			
 			#<!-- 是否使用launch配置 -->
 			{"raw_param": 0},

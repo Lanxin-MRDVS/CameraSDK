@@ -114,6 +114,9 @@ int main(int argc, char** argv)
     while (true)
     {
         //更新数据
+        if (wait_key == 'q' || wait_key == 'Q')
+            break;
+
         auto ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
         if ((LX_SUCCESS != ret)
             //开启帧同步时，在超时范围内没有找到匹配的帧（丢包），会返回LX_E_FRAME_ID_NOT_MATCH
@@ -129,9 +132,6 @@ int main(int argc, char** argv)
         }
 
         TestFrame(handle);
-
-        if (wait_key == 'q' || wait_key == 'Q')
-            break;
     }
 
     DcStopStream(handle);

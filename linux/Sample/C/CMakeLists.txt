@@ -37,7 +37,6 @@ add_executable(demo_${NAME} ${NAME}/${NAME}.cpp)
 target_link_libraries(demo_${NAME} ${LIBS})
 endmacro()
 
-add_exe(single_camera)
 add_exe(single_camera2)
 add_exe(multi_cameras)
 add_exe(application_obstacle)

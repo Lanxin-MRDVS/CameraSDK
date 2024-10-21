@@ -34,9 +34,9 @@ def generate_launch_description():
 		#<!-- 重要：定位时地图名需有效，已上传相机并存在；建图时,如果相机中无地图可默认输入"example_map1" -->
 		{"mapName": "xz9_231216"}
 		#<!-- 相机至小车外参, 单位:米, 度数, 格式[x, y, z, yaw, pitch, roll] -->
-		<rosparam param="cameraExtrinsicParam"> [0.34, 0.00, 1.3, -90, 0, 0] </rosparam>
+		<rosparam param="cameraExtrinsicParam"> [0.0, 0.0, 0.0, 0, 0, 0] </rosparam>
 		#<!-- 激光雷达至小车外参, 单位:米, 度数, 格式[x, y, yaw] -->
-		<rosparam param="laserExtrinsicParam"> [0.34, 0.11, 0.0] </rosparam>
+		<rosparam param="laserExtrinsicParam"> [0.0, 0.0, 0.0] </rosparam>
             ]
         )
     ])

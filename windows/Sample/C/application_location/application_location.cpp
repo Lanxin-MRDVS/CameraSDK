@@ -428,6 +428,11 @@ int main(int argc, char** argv)
     static bool is_first = true;
     while (true)
     {
+#ifndef HAS_OPENCV
+     if (kbhit()) wait_key = getchar();
+#endif
+     if (wait_key == 'q')  break;
+
         //刷新数据
         auto ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
         if (LX_SUCCESS != ret)
@@ -443,12 +448,6 @@ int main(int argc, char** argv)
 
         //show rgb img
         TestRgb(enable_rgb, handle, is_first);
-
-#ifndef HAS_OPENCV
-     if (kbhit()) wait_key = getchar();
-#endif
-
-     if (wait_key == 'q')  break;
 
         //获取数据
         void* algordata = nullptr;
