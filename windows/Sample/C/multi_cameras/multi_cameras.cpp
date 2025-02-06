@@ -33,7 +33,7 @@ int thread_work(std::string ip);
 int main(int argc, char** argv)
 {
     //日志
-    checkTC(DcSetInfoOutput(1, true, "./"), 0);
+    checkTC(DcSetInfoOutput(1, false, "./"), 0);
     std::cout << " call api version:" << DcGetApiVersion() << std::endl;
     //查找设备
     int device_num = 0;

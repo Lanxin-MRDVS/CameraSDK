@@ -12,7 +12,7 @@ using System.Runtime.InteropServices;//调用C++dll必须引用的命名空间
 
 namespace lx
 {
-    public class LxCamera
+    public unsafe class LxCamera
     {
         [DllImport("LxCameraApi.dll", EntryPoint = "DcGetApiVersion", ExactSpelling = false)]
         private static extern IntPtr _DcGetApiVersion();
@@ -306,7 +306,7 @@ namespace lx
                                             //当开启模式为MODE_VISION_LOCATION，输出结果为LxLocation指针，参考struct LxLocation
                                             //当开启模式为MODE_AVOID_OBSTACLE2，输出结果为LxAvoidanceOutputN指针，参考struct LxAvoidanceOutputN
             LX_PTR_FRAME_DATA = 6009,       //获取完整一帧数据，输出结果参考结构体FrameInfo
-        }LX_CAMERA_FEATURE;
+        };
 
         [StructLayout(LayoutKind.Sequential)]
         public struct LxDeviceInfo
@@ -372,6 +372,16 @@ namespace lx
             public FrameDataInfo app_data;     //算法输出结果
             public IntPtr reserve_data;         //扩展预留字段
         };
+        public struct FrameExtendInfo
+        {
+            public uint depth_frame_id;
+            public uint amp_frame_id;
+            public uint rgb_frame_id;
+            public uint app_frame_id;
+            public IntPtr reserve_data1; // 预留字段
+            public IntPtr reserve_data2; // 预留字段
+            public IntPtr reserve_data3; // 预留字段
+        }
 
         public enum LX_OPEN_MODE
         {

@@ -1,46 +1,55 @@
-﻿cmake_minimum_required(VERSION 3.0)
-project(lx_camera_demo)
+﻿message("***************build demo")
 
-set(LIBS LxCameraApi)
+set(LIBS ${LX_LIBRARY_NAME})
 
-if (WIN32)
-    if(CMAKE_CL_64) 
-        set(PLATFORM_PREFEX win_x64)
-    else()
-        set(PLATFORM_PREFEX win_x86)
-    endif()
-	set(CAMERA_BASE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../../)
-	include_directories(${CAMERA_BASE_PATH}/SDK/include)
-	link_directories(${CAMERA_BASE_PATH}/SDK/lib/${PLATFORM_PREFEX})
-elseif (UNIX)
-	include_directories(/opt/Lanxin-MRDVS/include)
-	link_directories(/opt/Lanxin-MRDVS/lib/)
-	list(APPEND LIBS ${LIBS} pthread)
+
+
+if (NOT WIN32 AND NOT ANDROID_ABI)
+    list(APPEND LIBS pthread)
 endif ()
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
-
-#opencv
-find_package(OpenCV)
-if(${OpenCV_FOUND})
-	message("find opencv " ${OpenCV_VERSION})
-	include_directories(${OpenCV_INCLUDE_DIRS})
-	link_directories(${OpenCV_LIB_DIR})
-	list(APPEND LIBS ${LIBS} ${OpenCV_LIBS})
-	add_definitions(-DHAS_OPENCV)
+if(${OPENCV_FOUND})
+    add_definitions(-DHAS_OPENCV)
+    list(APPEND LIBS ${OpenCV_LIBS})
 endif()
 
 macro(add_exe NAME)
 add_executable(demo_${NAME} ${NAME}/${NAME}.cpp)
 target_link_libraries(demo_${NAME} ${LIBS})
+install(FILES ${NAME}/${NAME}.cpp
+    DESTINATION ${INSTALL_PLAT_PATH}/Sample/C/${NAME})
+if(WIN32)
+    install(TARGETS demo_${NAME} 
+        DESTINATION ${INSTALL_PLAT_PATH}/Tools)
+#else()
+#    install(TARGETS demo_${NAME}
+#        DESTINATION ${INSTALL_PLAT_PATH}/Tools/${PLATFORM_PREFEX})
+endif(WIN32)
+SET_PROPERTY(TARGET demo_${NAME} PROPERTY FOLDER "demo")
 endmacro()
 
-add_exe(single_camera)
+#add_exe(single_camera)
 add_exe(single_camera2)
 add_exe(multi_cameras)
 add_exe(application_obstacle)
 add_exe(application_pallet)
 add_exe(frame_callback)
+add_exe(application_location)
+#add_exe(get_device_log)
 
+if(${PLATFORM_PREFEX} MATCHES "linux_arm64")
+add_exe(arm_local_camera)
+endif()
+
+add_executable(update_version update_version.cpp)
+target_link_libraries(update_version ${LIBS})
+
+if(WIN32)
+    install(TARGETS update_version
+        DESTINATION ${INSTALL_PLAT_PATH}/Tools)
+#else()
+#    install(TARGETS update_version
+#        DESTINATION ${INSTALL_PLAT_PATH}/Tools/${PLATFORM_PREFEX})
+endif(WIN32)
+
+SET_PROPERTY(TARGET update_version PROPERTY FOLDER "tools")

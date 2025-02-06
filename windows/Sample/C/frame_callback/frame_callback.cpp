@@ -34,7 +34,7 @@ void CallbackFunc(FrameInfo* frame, void* usr_data);
 int main(int argc, char** argv)
 {
     //设置日志等级和路径。
-    checkTC(DcSetInfoOutput(1, true, ""));
+    checkTC(DcSetInfoOutput(0, true, ""));
     printf("call api version: %s\n", DcGetApiVersion());
 
     //查找设备
@@ -157,7 +157,9 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
             printf("get xyz failed");
         if (xyz_data != nullptr)
         {
-            //第yRows行xCol列点云数据
+            // xyz_data指向点云数据内存空间由API接口内部管理，数据按照深度图的行列顺序排列方式一致，点云数据在相机坐标系下
+            // 其内存总大小为(frame_ptr->depth_data.frame_width) * (frame_ptr->depth_data.frame_height) * sizeof(float) * 3
+            // 假设获取第yRows = 100 行xCol = 100列点的坐标数据
             int yRow = 100, xCol = 100;
             int pose = yRow * frame_ptr->depth_data.frame_width + xCol;
             float x = xyz_data[pose * 3];

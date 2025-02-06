@@ -94,12 +94,17 @@ typedef enum LX_DEVICE_TYPE {
     LX_DEVICE_S2MaxV2,
     LX_DEVICE_S2MaxV1_1 = 2005,
     LX_DEVICE_S3 = 2101,
+    LX_DEVICE_S10 = 2108,
+    LX_DEVICE_S10PRO = 2109,
 
     LX_DEVICE_I1 = 3001,
     LX_DEVICE_I2,
     LX_DEVICE_T1 = 4001,
     LX_DEVICE_T2,
+
     LX_DEVICE_H3 = 5001,
+    LX_DEVICE_H4 = 5002,
+
     LX_DEVICE_V1Pro = 6001,
 
     LX_DEVICE_NULL = 0
@@ -172,6 +177,7 @@ typedef enum LX_DATA_TYPE
     LX_DATA_PALLET = 17,
     LX_DATA_LOCATION =18,
     LX_DATA_OBSTACLE2 = 19,
+    LX_DATA_CUSTOM = 100,//相机应用自定义的数据类型
 }LX_DATA_TYPE;
 
 //图像binning模式
@@ -198,6 +204,7 @@ typedef enum LX_ALGORITHM_MODE
     MODE_PALLET_LOCATE = 2,           //内置托盘对接算法
     MODE_VISION_LOCATION = 3,         //内置视觉定位算法
     MODE_AVOID_OBSTACLE2 = 4,         //内置避障算法V2
+    MODE_GENERIC_DATA = 5,        //自定义数据类型（应用算法平台）
 }LX_ALGORITHM_MODE;
 
 //相机工作模式
@@ -230,6 +237,11 @@ typedef enum LX_IO_OUTPUT_STATE {
     OUT1_1_OUT2_1 = 3,
 }LX_IO_OUTPUT_STATE;
 
+typedef enum LX_IO_HARDWARE_MODE {
+    OPEN_DRAIN_MODE = 0,  //开漏常开模式
+    PUSH_PULL_MODE = 1,   //推挽高电平模式
+}LX_IO_HARDWARE_MODE;
+
 //滤波设置模式
 typedef enum LX_FILTER_MODE {
     FILTER_SIMPLE = 1,
@@ -239,9 +251,9 @@ typedef enum LX_FILTER_MODE {
 
 //3D频率模式
 typedef enum LX_3D_FREQ_MODE {
-    FREQ_SINGLE_3D = 0,
-    FREQ_DUAL_3D = 1,
-    FREQ_TRIPLE_3D = 2,
+    FREQ_SINGLE_3D = 0,//单频
+    FREQ_MULTI_3D = 1,//多频
+    FREQ_TRIPLE_3D = 2,//三频（新设备固件版本已经不支持）
 }LX_3D_FREQ_MODE;
 
 //3D频率模式
@@ -371,8 +383,8 @@ typedef enum LX_CAMERA_FEATURE
     LX_INT_MODBUS_ADDR = 1066,          //modbus地址，部分型号支持MODBUS协议通过串口输出
     LX_INT_HEART_TIME = 1067,           //与设备间心跳时间,单位ms
     LX_INT_GVSP_PACKET_SIZE = 1068,     //GVSP单包数据分包大小, 单位字节
-    LX_INT_CALCULATE_UP = 1070,         //允许tof或rgb算法上下移，节省上位机或相机算力，可能影响帧率和延时
-                                        //0-0xFFFF，四个F代表意义：保留位，滤波上移，RGB上移，TOF上移
+    LX_INT_CALCULATE_UP = 1070,         //允许2d或3d算法上下移，节省上位机或相机算力，可能影响帧率和延时
+                                        //0-0xFFFF，四个F代表意义：保留位，滤波上移，2d上移，3d上移
                                         //内置应用算法（LX_INT_ALGORITHM_MODE）开启时不允许上移
     LX_INT_CAN_BAUD_RATE = 1072,         //can的波特率值, 单位bps 
     LX_INT_CAN_NODE_ID = 1073,           //can地址 
@@ -388,12 +400,14 @@ typedef enum LX_CAMERA_FEATURE
     LX_INT_TRIGGER_FRAME_COUNT = 1088,          //单次触发帧数
     LX_INT_IO_WORK_MODE = 1530,           //GPIO信号输出控制模式, 参考LX_IO_WORK_MODE
     LX_INT_IO_OUTPUT_STATE = 1531,       //GPIO信号输出的用户控制模式, 参考LX_IO_OUTPUT_STATE
+    LX_INT_IO_HARDWARE_WORK_MODE = 1532, //GPIO信号输出的硬件工作模式，参考LX_IO_HARDWARE_MODE
 
     LX_INT_FILTER_MODE = 1090,          //滤波模式,参考LX_FILTER_MODE
     LX_INT_FILTER_SMOOTH_LEVEL = 1091,  //当LX_INT_FILTER_MODE为FILTER_NORMAL时,可设置滤波平滑等级，[0, 3]，值越大，滤波越强
     LX_INT_FILTER_NOISE_LEVEL = 1092,   //当LX_INT_FILTER_MODE为FILTER_NORMAL时,可设置滤波噪声等级，[0, 3]，值越大，滤波越强
     LX_INT_FILTER_TIME_LEVEL = 1093,    //当LX_INT_FILTER_MODE为FILTER_NORMAL时,可设置滤波时域等级，[0, 3]，值越大，滤波越强
     LX_INT_FILTER_DETECT_LOW_SIGNAL = 1094, //小信号测量，可能检测到信噪比较低的数据，包括远距离数据导致多周期问题
+    LX_INT_FILTER_FILL_LEVEL = 1095,    //当LX_INT_FILTER_MODE为FILTER_NORMAL时,可设置滤波填充等级，[0, 3]，值越大，滤波越强
 
     /*float feature*/
     LX_FLOAT_FILTER_LEVEL = 2001,      //当LX_INT_FILTER_MODE为FILTER_SIMPLE时,可设置滤波等级，[0, 1]，值越大，滤波越强，等于0表示关闭滤波，
@@ -403,6 +417,7 @@ typedef enum LX_CAMERA_FEATURE
     LX_FLOAT_3D_AMPLITUDE_FPS = 2005,  //强度图当前帧率，只可获取
     LX_FLOAT_2D_IMAGE_FPS = 2006,      //RGB图当前帧率，只可获取
     LX_FLOAT_DEVICE_TEMPERATURE = 2007,//相机当前温度, 只可获取
+    LX_FLOAT_CONFIDENCE = 2008,        //置信度，[0-1]，越小则保留越多数据
 
     /*bool feature*/
     LX_BOOL_CONNECT_STATE = 3001,           //当前连接状态
@@ -420,6 +435,7 @@ typedef enum LX_CAMERA_FEATURE
     LX_BOOL_ENABLE_MULTI_MACHINE = 3018,    //多机模式使能，TOF会有多机干扰，开启此模式可以自动检测并缓解多机干扰
     LX_BOOL_ENABLE_MULTI_EXPOSURE_HDR = 3019,  //HDR（多曝光高动态范围模式）使能
     LX_BOOL_ENABLE_SYNC_FRAME = 3020,          //是否开启强制帧同步, 默认数据实时性优先，若需要RGBD同步, 需要开启该模式
+    LX_BOOL_ENABLE_TERM_RESISTOR = 3021,      //端接电阻使能
 
     /*string feature*/
     LX_STRING_DEVICE_VERSION = 4001,        //设备版本号

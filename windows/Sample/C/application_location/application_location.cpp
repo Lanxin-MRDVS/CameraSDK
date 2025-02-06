@@ -381,7 +381,7 @@ int main(int argc, char** argv)
     //in_map_list.push_back("F:/work/aaa_test_file.pgm");
     in_map_list.push_back("./22.pcapng");
     //in_map_list.push_back("zip_utils_src");
-    checkTC(DcSpecialControl(handle, "ImportLocationMapFile", const_cast <char*>("F:/work/aaa_test_file.pgm")));
+    checkTC(DcSpecialControl(handle, "ImportLocationMapFile", const_cast <char*>("F:/work/aaa_test_file.bin")));
 
     //建图使能
     bool enable = true;
