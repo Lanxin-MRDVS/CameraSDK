@@ -501,4 +501,19 @@ LX_API_STR DcGetErrorString(LX_STATE state);
 LX_API DcSetGpuEnable(bool is_enable);
 LX_API DcGetGpuEnable(bool* is_enable);
 
+//~chinese:
+//功能: 开启ptp时间同步源服务，打开相机前调用，否则无效。默认打开
+//参数：[in]is_enable     是否使能
+//~english:
+/**
+ * @brief Enable the PTP time synchronization source service and call it before turning on the camera, otherwise it will be invalid. It is turned on by default
+
+ *
+ * @param is_enable [bool]
+ * @return LX_API
+ */
+LX_API DcSetPtpEnable(bool is_enable);
+LX_API DcGetPtpEnable(bool* is_enable);
+
+
 #endif
