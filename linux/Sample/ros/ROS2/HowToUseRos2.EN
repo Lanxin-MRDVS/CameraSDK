@@ -1,7 +1,0 @@
-//How to create a new example ros2 node:
-//Create a new node named example and make it output 'hello world example_package package'
-step 0: execute command: mkdir example_ws && cd example_ws
-step 1: execute command: ros2 pkg create --build-type ament_cmake --node-name example_node example_package
-step 2: execute command: colcon build
-step 3: execute command: source install/setup.bash
-step 4: execute command: ros2 run example_package example_node

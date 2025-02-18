@@ -261,11 +261,17 @@ void LxCamera::Run() {
     if (is_depth_) {
       void *dep_data = one_frame->depth_data.frame_data;
       if (dep_data) {
-        cv::Mat dep_img(one_frame->depth_data.frame_height,
-                        one_frame->depth_data.frame_width, CV_16UC1, dep_data);
+        
+        cv::Mat dep_img(one_frame->depth_data.frame_height,one_frame->depth_data.frame_width, 
+                CV_MAKETYPE(one_frame->depth_data.frame_data_type, one_frame->depth_data.frame_channel), dep_data);
+        
+        if (dep_img.type() == CV_32F) 
+          dep_img.convertTo(dep_img, CV_16U);
+
         auto msg_depth =
             cv_bridge::CvImage(std_msgs::Header(), "16UC1", dep_img)
                 .toImageMsg();
+
         msg_depth->header.stamp = ros::Time().fromSec(
             one_frame->depth_data.sensor_timestamp / 1000000.0);
         msg_depth->header.frame_id = "mrdvs_tof";
@@ -280,8 +286,12 @@ void LxCamera::Run() {
     if (is_amp_) {
       void *amp_data = one_frame->amp_data.frame_data;
       if (amp_data) {
-        cv::Mat amp_img(one_frame->amp_data.frame_height,
-                        one_frame->amp_data.frame_width, CV_16UC1, amp_data);
+        cv::Mat amp_img(one_frame->amp_data.frame_height,one_frame->amp_data.frame_width, 
+                CV_MAKETYPE(one_frame->amp_data.frame_data_type, one_frame->amp_data.frame_channel), amp_data);
+
+        if (amp_img.type() == CV_8U) 
+          amp_img.convertTo(amp_img, CV_16U);
+
         auto msg_amp = cv_bridge::CvImage(std_msgs::Header(), "16UC1", amp_img)
                            .toImageMsg();
         msg_amp->header.stamp = ros::Time().fromSec(

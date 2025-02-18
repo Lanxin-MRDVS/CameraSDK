@@ -1,9 +1,0 @@
-int32   cmd
-float32 val
-bool    is_set
----
-float32 max_value
-float32 min_value
-float32 cur_value
-bool    available
-Result  result

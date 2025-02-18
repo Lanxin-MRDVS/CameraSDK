@@ -26,6 +26,7 @@ struct DcLib{
 	LX_STATE (*DcSetCmd)(DcHandle, int);
 	const char*(*DcGetErrorString)(LX_STATE);
 	LX_STATE (*DcSpecialControl)(DcHandle, const char*, void*);
+	LX_STATE (*DcRegisterCameraStatusCallback)(DcHandle, LX_CAMERA_STATUS_CALLBACK, void*);
 };
 
 #ifdef LX_DYNAMIC
@@ -49,6 +50,7 @@ static bool is_dynamic = true;
 #define DcSetCmd(A,B) (*LX_DYNAMIC_LIB->DcSetCmd)(A,B)
 #define DcGetErrorString(A) (*LX_DYNAMIC_LIB->DcGetErrorString)(A)
 #define DcSpecialControl(A,B,C) (*LX_DYNAMIC_LIB->DcSpecialControl)(A,B,C)
+#define DcRegisterCameraStatusCallback(A, B, C) (*LX_DYNAMIC_LIB->DcRegisterCameraStatusCallback)(A,B,C)
 #else
 #include "lx_camera_api.h"
 static bool is_dynamic = false;

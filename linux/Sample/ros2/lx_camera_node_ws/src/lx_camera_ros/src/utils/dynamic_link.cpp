@@ -78,6 +78,10 @@ bool DynamicLink(DcLib* lib){
 	lib->DcSpecialControl = (LX_STATE(*)(DcHandle, const char*, void*))dlsym(handle, "DcSpecialControl"); 
 	if (dlerror())RETURN_FAILED("DcSpecialControl");
 
+	lib->DcRegisterCameraStatusCallback = (LX_STATE(*)(DcHandle, LX_CAMERA_STATUS_CALLBACK, void*))dlsym(handle, "DcRegisterCameraStatusCallback"); 
+	if (dlerror())RETURN_FAILED("DcRegisterCameraStatusCallback");
+
+
 	std::cout<<"Dynamic link success!"<<std::endl;
 	return true;
 }

@@ -240,11 +240,10 @@ void LxCamera::Run() {
         cloud->height = tof_info_.height;
         cloud->width = tof_info_.width;
         pcl::toROSMsg(*cloud, msg_cloud);
-        int64_t nanoseconds =
+        int64_t nanoseconds = 
             static_cast<int64_t>(one_frame->depth_data.sensor_timestamp * 1e3);
         msg_cloud.header.stamp.sec = nanoseconds / 1e9;
-        msg_cloud.header.stamp.nanosec =
-            nanoseconds % static_cast<int64_t>(1e9);
+        msg_cloud.header.stamp.nanosec = nanoseconds % static_cast<int64_t>(1e9);
         msg_cloud.header.frame_id = "mrdvs_tof";
         pub_cloud_->publish(msg_cloud);
       } else
@@ -254,41 +253,59 @@ void LxCamera::Run() {
 
     if (is_depth_) {
       void *dep_data = one_frame->depth_data.frame_data;
+       
       if (dep_data) {
         cv_bridge::CvImage cv_img;
         sensor_msgs::msg::Image msg_depth;
-        cv::Mat dep_img(one_frame->depth_data.frame_height,
-                        one_frame->depth_data.frame_width, CV_16UC1, dep_data);
+
+        cv::Mat dep_img(one_frame->depth_data.frame_height,one_frame->depth_data.frame_width, 
+                CV_MAKETYPE(one_frame->depth_data.frame_data_type, one_frame->depth_data.frame_channel), dep_data);
+     
+        cv::Mat dist_img;
+        if (dep_img.type() == CV_32F) {
+          cv::normalize(dep_img, dist_img, 0, 65535, cv::NORM_MINMAX);
+          dist_img.convertTo(dist_img, CV_16UC1);
+          cv_img.image = dist_img;
+        }else {
+          cv_img.image = dep_img;  
+        }  
+                   
         int64_t nanoseconds =
-            static_cast<int64_t>(one_frame->amp_data.sensor_timestamp * 1e3);
+            static_cast<int64_t>(one_frame->depth_data.sensor_timestamp * 1e3);
         cv_img.header.stamp.sec = nanoseconds / 1e9;
         cv_img.header.stamp.nanosec = nanoseconds % static_cast<int64_t>(1e9);
+      
         cv_img.header.frame_id = "mrdvs_tof";
         cv_img.encoding = "mono16";
-        cv_img.image = dep_img;
         cv_img.toImageMsg(msg_depth);
-        pub_depth_->publish(msg_depth);
+        pub_depth_->publish(msg_depth);       
       } else
         RCLCPP_WARN(this->get_logger(), "%s",
                     std::string("Depth image is empty!").c_str());
       Check("LX_FLOAT_3D_DEPTH_FPS",
             DcGetFloatValue(handle_, LX_FLOAT_3D_DEPTH_FPS, &f_val));
-      dep_fps = f_val.cur_value;
-    }
+      dep_fps = f_val.cur_value;      
+    }   
 
     if (is_amp_) {
       void *amp_data = one_frame->amp_data.frame_data;
       if (amp_data) {
         cv_bridge::CvImage cv_img;
         sensor_msgs::msg::Image msg_amp;
-        cv::Mat amp_img(one_frame->amp_data.frame_height,
-                        one_frame->amp_data.frame_width, CV_16UC1, amp_data);
+
+        cv::Mat amp_img(one_frame->amp_data.frame_height,one_frame->amp_data.frame_width, 
+                CV_MAKETYPE(one_frame->amp_data.frame_data_type, one_frame->amp_data.frame_channel), amp_data);
+        if (amp_img.type() == CV_8UC1) {
+          cv_img.encoding = "mono8";
+        }else {
+          cv_img.encoding = "mono16";
+        }
+                        
         int64_t nanoseconds =
             static_cast<int64_t>(one_frame->amp_data.sensor_timestamp * 1e3);
         cv_img.header.stamp.sec = nanoseconds / 1e9;
         cv_img.header.stamp.nanosec = nanoseconds % static_cast<int64_t>(1e9);
         cv_img.header.frame_id = "mrdvs_tof";
-        cv_img.encoding = "mono16";
         cv_img.image = amp_img;
         cv_img.toImageMsg(msg_amp);
         pub_amp_->publish(msg_amp);
@@ -299,6 +316,7 @@ void LxCamera::Run() {
             DcGetFloatValue(handle_, LX_FLOAT_3D_AMPLITUDE_FPS, &f_val));
       amp_fps = f_val.cur_value;
     }
+    
 
     if (is_rgb_) {
       void *rgb_data = one_frame->rgb_data.frame_data;
@@ -312,7 +330,7 @@ void LxCamera::Run() {
         rgb_img.convertTo(rgb_pub, CV_8UC1, rgb_type_ == CV_16U ? 0.25 : 1);
         std::string rgb_type_ = rgb_channel_ == 3 ? "bgr8" : "mono8";
         int64_t nanoseconds =
-            static_cast<int64_t>(one_frame->amp_data.sensor_timestamp * 1e3);
+            static_cast<int64_t>(one_frame->rgb_data.sensor_timestamp * 1e3);
         cv_img.header.stamp.sec = nanoseconds / 1e9;
         cv_img.header.stamp.nanosec = nanoseconds % static_cast<int64_t>(1e9);
         cv_img.header.frame_id = "mrdvs_rgb";
@@ -327,6 +345,7 @@ void LxCamera::Run() {
             DcGetFloatValue(handle_, LX_FLOAT_2D_IMAGE_FPS, &f_val));
       rgb_fps = f_val.cur_value;
     }
+     
     if (is_amp_ || is_depth_ || is_xyz_) {
       tof_info_.header.stamp = now;
       pub_tof_info_->publish(tof_info_);
@@ -362,7 +381,7 @@ void LxCamera::Run() {
       tf_ext_tof_rgb.header.frame_id = "mrdvs_tof";
       tf_ext_tof_rgb.child_frame_id = "mrdvs_rgb";
       PubTf(tf_ext_tof_rgb);
-    }
+    }  
 
     int ret = 0;
     void *app_ptr = one_frame->app_data.frame_data;
