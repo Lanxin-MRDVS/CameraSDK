@@ -1,5 +1,8 @@
 # Release Notes
 
+## 2025-04-10
+- Add python3 api whl file
+
 ## SDK V2.4.38
 - Support S10 series
 - Fix some bugs
