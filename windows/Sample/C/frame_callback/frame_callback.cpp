@@ -2,6 +2,7 @@
 //
 
 #include <string>
+#include <thread>
 #include "lx_camera_api.h"
 #include "lx_camera_application.h"
 
@@ -92,8 +93,11 @@ int main(int argc, char** argv)
     checkTC(DcGetIntValue(handle, LX_INT_ALGORITHM_MODE, &int_value));
     app_mode = int_value.cur_value;
 
-    //触发模式为无触发（流模式），部分型号不支持
-    checkTC(DcSetIntValue(handle, LX_INT_TRIGGER_MODE, LX_TRIGGER_MODE_OFF));
+    LX_TRIGGER_MODE trigger_mode;
+    if (DcGetIntValue(handle, LX_INT_TRIGGER_MODE, &int_value) == LX_E_NOT_SUPPORT)
+        trigger_mode = LX_TRIGGER_MODE_OFF;
+    else
+        trigger_mode = static_cast<LX_TRIGGER_MODE>(int_value.cur_value);
 
     printf("depth_enable:%d amp_enable:%d rgb_enable:%d app_mode:%d\n", depth_enable, amp_enable, rgb_enable, app_mode);
 
@@ -102,6 +106,21 @@ int main(int argc, char** argv)
 
     //启流
     checkTC(DcStartStream(handle));
+
+    if (trigger_mode == LX_TRIGGER_MODE::LX_TRIGGER_SOFTWARE) {
+        std::thread trigger_pthread = std::thread([&]() {
+            do {
+                //软触发模式需要自行控制触发，这里只是示例
+                auto ret = DcSetCmd(handle, LX_CMD_SOFTWARE_TRIGGER);
+                if (ret != LX_SUCCESS) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                    continue;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            } while (wait_key != 'q');
+         });
+        trigger_pthread.detach();
+    }
 
     printf("**********press 'q' to exit********\n\n");
     while (wait_key != 'q')

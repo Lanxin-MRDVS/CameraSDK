@@ -106,6 +106,7 @@ typedef enum LX_DEVICE_TYPE {
     LX_DEVICE_H4 = 5002,
 
     LX_DEVICE_V1Pro = 6001,
+    LX_DEVICE_V2Pro = 6002,
 
     LX_DEVICE_NULL = 0
 }LX_DEVICE_TYPE;
@@ -269,6 +270,13 @@ typedef enum LX_CAN_PROTOCOL_TYPE
     CAN_KECONG = 1,
 }LX_CAN_PROTOCOL_TYPE;
 
+typedef enum LX_POWER_MODE_TYPE 
+{
+    POWER_MODE_LOW = 0,       // 低功耗模式（关闭部分功能）
+    POWER_MODE_DEFAULT = 1,   // 默认功耗模式（平衡性能与功耗）
+    POWER_MODE_HIGH,          // 高性能模式（启用所有功能）
+    POWER_MODE_STANDBY,       // 待机模式（最低功耗，暂停图像采集）
+}LX_POWER_MODE_TYPE;
 
 //图像显示相关信息
 typedef struct FrameDataInfo
@@ -401,6 +409,8 @@ typedef enum LX_CAMERA_FEATURE
     LX_INT_IO_WORK_MODE = 1530,           //GPIO信号输出控制模式, 参考LX_IO_WORK_MODE
     LX_INT_IO_OUTPUT_STATE = 1531,       //GPIO信号输出的用户控制模式, 参考LX_IO_OUTPUT_STATE
     LX_INT_IO_HARDWARE_WORK_MODE = 1532, //GPIO信号输出的硬件工作模式，参考LX_IO_HARDWARE_MODE
+    LX_INT_IO_INPUT_STATUS = 1533,       //IO输入状态,只读
+    LX_INT_IO_OUTPUT_STATUS = 1534,      //IO输出状态,只读
 
     LX_INT_FILTER_MODE = 1090,          //滤波模式,参考LX_FILTER_MODE
     LX_INT_FILTER_SMOOTH_LEVEL = 1091,  //当LX_INT_FILTER_MODE为FILTER_NORMAL时,可设置滤波平滑等级，[0, 3]，值越大，滤波越强
@@ -408,6 +418,8 @@ typedef enum LX_CAMERA_FEATURE
     LX_INT_FILTER_TIME_LEVEL = 1093,    //当LX_INT_FILTER_MODE为FILTER_NORMAL时,可设置滤波时域等级，[0, 3]，值越大，滤波越强
     LX_INT_FILTER_DETECT_LOW_SIGNAL = 1094, //小信号测量，可能检测到信噪比较低的数据，包括远距离数据导致多周期问题
     LX_INT_FILTER_FILL_LEVEL = 1095,    //当LX_INT_FILTER_MODE为FILTER_NORMAL时,可设置滤波填充等级，[0, 3]，值越大，滤波越强
+    LX_INT_3D_FPS = 1510,             //深度、强度的帧率
+    LX_INT_POWER_MODE = 1755,         //相机功耗模式，详见LX_POWER_MODE_TYPE定义，部分型号支持
 
     /*float feature*/
     LX_FLOAT_FILTER_LEVEL = 2001,      //当LX_INT_FILTER_MODE为FILTER_SIMPLE时,可设置滤波等级，[0, 1]，值越大，滤波越强，等于0表示关闭滤波，
@@ -473,6 +485,8 @@ typedef enum LX_CAMERA_FEATURE
                                     //当开启模式为MODE_VISION_LOCATION，输出结果为LxLocation指针，参考struct LxLocation
                                     //当开启模式为MODE_AVOID_OBSTACLE2，输出结果为LxAvoidanceOutputN指针，参考struct LxAvoidanceOutputN
     LX_PTR_FRAME_DATA = 6009,       //获取完整一帧数据，输出结果参考结构体FrameInfo
+    LX_PTR_2D_NEW_INTRIC_PARAM = 6010,  //获取2D图像新内参，float*类型指针，长度固定为18*sizeof(float)(fx,fy,cx,cy,k1,k2,p1,p2,k3,k4,k5,k6,s1,s2,s3,s4,τx,τx)
+    LX_PTR_3D_NEW_INTRIC_PARAM = 6011, //获取3D图像新内参, float*类型指针，长度固定为18*sizeof(float)(fx,fy,cx,cy,k1,k2,p1,p2,k3,k4,k5,k6,s1,s2,s3,s4,τx,τx)
 }LX_CAMERA_FEATURE;
 
 #endif
