@@ -309,9 +309,9 @@ LxLocalization::LxLocalization() {
   rgb_camera_info_.height = int_value.cur_value;
 
   float *intr = nullptr;
-  DcGetPtrValue(handle_, LX_PTR_2D_INTRIC_PARAM, (void **)&intr);
+  DcGetPtrValue(handle_, LX_PTR_2D_NEW_INTRIC_PARAM, (void **)&intr);
   rgb_camera_info_.D =
-      std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8]};
+      std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8], intr[9], intr[10], intr[11], intr[12], intr[13], intr[14], intr[15], intr[16], intr[17]};
   rgb_camera_info_.K = boost::array<double, 9>{intr[0], 0, intr[2], 0, intr[1],
                                                intr[3], 0, 0,       1};
   rgb_info_publisher_.publish(rgb_camera_info_);

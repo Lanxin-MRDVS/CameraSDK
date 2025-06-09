@@ -516,4 +516,18 @@ LX_API DcSetPtpEnable(bool is_enable);
 LX_API DcGetPtpEnable(bool* is_enable);
 
 
+//~chinese:
+//功能: 开启SDK内部日志功能，默认开启
+//参数：[in]is_enable     是否使能
+//~english:
+/**
+ * @brief Enable SDK inner log 
+
+ *
+ * @param is_enable [bool]
+ * @return LX_API
+ */
+LX_API DcSetLogEnable(bool is_enable);
+
+
 #endif

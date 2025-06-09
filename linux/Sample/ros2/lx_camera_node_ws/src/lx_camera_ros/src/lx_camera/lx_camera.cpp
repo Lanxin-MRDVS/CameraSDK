@@ -129,14 +129,21 @@ int LxCamera::Start() {
   // get image params
   if (is_depth_ || is_amp_ || is_xyz_) {
     float *intr = nullptr, *ex_intr = nullptr;
-    DcGetPtrValue(handle_, LX_PTR_3D_INTRIC_PARAM, (void **)&intr);
+    DcGetPtrValue(handle_, LX_PTR_3D_NEW_INTRIC_PARAM, (void **)&intr);
     DcGetPtrValue(handle_, LX_PTR_3D_EXTRIC_PARAM, (void **)&ex_intr);
-    double d[5]{intr[4], intr[5], intr[6], intr[7], intr[8]};
+    double d[14]{intr[4], intr[5], intr[6], intr[7], intr[8],intr[9],intr[10],intr[11],intr[12],intr[13],intr[14],intr[15],intr[16],intr[17]};
     double k[9]{intr[0], 0, intr[2], 0, intr[1], intr[3], 0, 0, 1};
     for (int i = 0; i < 9; i++) {
       tof_info_.k[i] = k[i];
-      tof_info_.r[i] = ex_intr[i], tof_info_.d.push_back(d[i]);
     }
+    for (int i = 0; i < 9; i++) {
+      tof_info_.r[i] = ex_intr[i]; 
+    }
+    for (int i = 0; i < 14; i++)
+    {
+      tof_info_.d.push_back(d[i]);
+    }
+    
     auto q = ToQuaternion(install_yaw_, install_pitch_, install_roll_);
     tf_.transform.translation.x = install_x_;
     tf_.transform.translation.y = install_y_;
@@ -152,11 +159,14 @@ int LxCamera::Start() {
 
   if (is_rgb_) {
     float *intr = nullptr;
-    DcGetPtrValue(handle_, LX_PTR_2D_INTRIC_PARAM, (void **)&intr);
-    double d[5]{intr[4], intr[5], intr[6], intr[7], intr[8]};
+    DcGetPtrValue(handle_, LX_PTR_2D_NEW_INTRIC_PARAM, (void **)&intr);
+    double d[14]{intr[4], intr[5], intr[6], intr[7], intr[8],intr[9],intr[10],intr[11],intr[12],intr[13],intr[14],intr[15],intr[16],intr[17]};
     double k[9]{intr[0], 0, intr[2], 0, intr[1], intr[3], 0, 0, 1};
     for (int i = 0; i < 9; i++)
-      rgb_info_.k[i] = k[i], rgb_info_.d.push_back(d[i]);
+      rgb_info_.k[i] = k[i];
+    for (int i = 0;i < 14; i++)  
+      rgb_info_.d.push_back(d[i]);
+
     rgb_info_.header.frame_id = "intrinsic_rgb";
   }
   auto ret = DcStartStream(handle_);

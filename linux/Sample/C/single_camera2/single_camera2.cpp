@@ -111,13 +111,33 @@ int main(int argc, char** argv)
     std::thread pthread = std::thread(WaitKey);
     pthread.detach();
 
+    LxIntValueInfo info;
+    LX_TRIGGER_MODE trigger_mode;
+    if(DcGetIntValue(handle, LX_INT_TRIGGER_MODE, &info) == LX_E_NOT_SUPPORT)
+        trigger_mode = LX_TRIGGER_MODE_OFF;
+    else 
+        trigger_mode = static_cast<LX_TRIGGER_MODE>(info.cur_value);
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     while (true)
     {
         //更新数据
         if (wait_key == 'q' || wait_key == 'Q')
             break;
 
-        auto ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
+        LX_STATE ret;
+        if (trigger_mode == LX_TRIGGER_MODE::LX_TRIGGER_SOFTWARE)
+        {
+            ////软触发模式需要自行控制触发，这里只是示例
+            ret = DcSetCmd(handle, LX_CMD_SOFTWARE_TRIGGER);
+            if (ret != LX_SUCCESS) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                continue;
+            }
+        }
+
+        ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
+
         if ((LX_SUCCESS != ret)
             //开启帧同步时，在超时范围内没有找到匹配的帧（丢包），会返回LX_E_FRAME_ID_NOT_MATCH
             && (LX_E_FRAME_ID_NOT_MATCH != ret)

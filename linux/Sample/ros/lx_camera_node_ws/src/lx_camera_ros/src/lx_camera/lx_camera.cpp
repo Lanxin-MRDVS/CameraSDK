@@ -156,9 +156,9 @@ int LxCamera::Start() {
   // get image params
   if (is_depth_ || is_amp_ || is_xyz_) {
     float *intr = nullptr;
-    DcGetPtrValue(handle_, LX_PTR_3D_INTRIC_PARAM, (void **)&intr);
+    DcGetPtrValue(handle_, LX_PTR_3D_NEW_INTRIC_PARAM, (void **)&intr);
     tof_camera_info_.D =
-        std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8]};
+        std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8], intr[9], intr[10], intr[11], intr[12], intr[13], intr[14], intr[15], intr[16], intr[17]};
     tof_camera_info_.K = boost::array<double, 9>{
         intr[0], 0, intr[2], 0, intr[1], intr[3], 0, 0, 1};
     tof_camera_info_.header.frame_id = "intrinsic_depth";
@@ -166,9 +166,9 @@ int LxCamera::Start() {
 
   if (is_rgb_) {
     float *intr = nullptr;
-    DcGetPtrValue(handle_, LX_PTR_2D_INTRIC_PARAM, (void **)&intr);
+    DcGetPtrValue(handle_, LX_PTR_2D_NEW_INTRIC_PARAM, (void **)&intr);
     rgb_camera_info_.D =
-        std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8]};
+        std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8], intr[9], intr[10], intr[11], intr[12], intr[13], intr[14], intr[15], intr[16], intr[17]};
     rgb_camera_info_.K = boost::array<double, 9>{
         intr[0], 0, intr[2], 0, intr[1], intr[3], 0, 0, 1};
     rgb_camera_info_.header.frame_id = "intrinsic_rgb";
@@ -234,19 +234,63 @@ void LxCamera::Run() {
       if (DcGetPtrValue(handle_, LX_PTR_XYZ_DATA, (void **)&xyz_data) ==
           LX_SUCCESS) {
         sensor_msgs::PointCloud2 msg_cloud;
+#ifdef XYZRGB_RENDER        
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(
+            new pcl::PointCloud<pcl::PointXYZRGB>);
+#else
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(
             new pcl::PointCloud<pcl::PointXYZ>);
+#endif
         auto buff_len = tof_camera_info_.width * tof_camera_info_.height;
         cloud->points.resize(buff_len);
-        if (lx_tof_unit_) {
+
+        if (lx_tof_unit_)
+        {
           for (long i = 0; i < buff_len; i++) {
             long index = 3 * i;
             cloud->points[i].x = xyz_data[index] / 1000.f;
             cloud->points[i].y = xyz_data[index + 1] / 1000.f;
             cloud->points[i].z = xyz_data[index + 2] / 1000.f;
+#ifdef XYZRGB_RENDER 
+            uint8_t *rgb_data = static_cast<uint8_t*>(one_frame->rgb_data.frame_data);
+            if ((lx_rgb_to_tof_ == 1) or (lx_rgb_to_tof_ == 2)) {
+              if ((rgb_data != nullptr) and (rgb_channel_ == 3)) {
+                cloud->points[i].b = rgb_data[index];
+                cloud->points[i].g = rgb_data[index + 1];
+                cloud->points[i].r = rgb_data[index + 2];
+              }
+            }else {
+                cloud->points[i].b = 255;
+                cloud->points[i].g = 255;
+                cloud->points[i].r = 255;
+            }       
+#endif            
           }
-        } else
+        }else {
+#ifdef XYZRGB_RENDER 
+          uint8_t *rgb_data = static_cast<uint8_t*>(one_frame->rgb_data.frame_data);
+          for (long i = 0; i < buff_len; i++) {
+              long index = 3 * i;
+              cloud->points[i].x = xyz_data[index];
+              cloud->points[i].y = xyz_data[index + 1];
+              cloud->points[i].z = xyz_data[index + 2];
+              if ((lx_rgb_to_tof_) == 1 or (lx_rgb_to_tof_ == 2)) {
+                if ((rgb_data != nullptr) and (rgb_channel_ == 3)) {
+                  cloud->points[i].b = rgb_data[index];
+                  cloud->points[i].g = rgb_data[index + 1];
+                  cloud->points[i].r = rgb_data[index + 2];
+                }
+              }else {
+                  cloud->points[i].b = 255;
+                  cloud->points[i].g = 255;
+                  cloud->points[i].r = 255;
+              }                   
+          }     
+#else
           memcpy(cloud->points.data(), xyz_data, buff_len * 3 * 4);
+#endif          
+        }
+        
         cloud->width = tof_camera_info_.width;
         cloud->height = tof_camera_info_.height;
         pcl::toROSMsg(*cloud, msg_cloud);

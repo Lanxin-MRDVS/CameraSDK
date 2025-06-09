@@ -221,7 +221,8 @@ void LxLocalization::DownloadMapCallBack(
 void LxLocalization::UploadScanCallBack(
     const sensor_msgs::msg::LaserScan::SharedPtr msg) {
   LxLaser laser_data;
-  laser_data.timestamp = msg->header.stamp.nanosec * 1e-6;
+  laser_data.timestamp =
+      msg->header.stamp.sec * 1e3 + msg->header.stamp.nanosec * 1e-6;
   laser_data.time_increment = msg->time_increment;
   laser_data.angle_min = msg->angle_min;
   laser_data.angle_max = msg->angle_max;
@@ -261,7 +262,8 @@ void LxLocalization::UploadOdomCallBack(
   q.w = msg->pose.pose.orientation.w;
   data.theta = ToEulerAngles(q).yaw;
   // 定位模块接收时间戳单位ms
-  data.timestamp = msg->header.stamp.nanosec * 1e-6;
+  data.timestamp =
+      msg->header.stamp.sec * 1e3 + msg->header.stamp.nanosec * 1e-6;
   auto message = nlohmann::json();
   message["cmd"] = "LxCamera_UploadOdom";
   message["result"] = DcSpecialControl(handle_, "SetOdomData", &data);
@@ -282,7 +284,8 @@ void LxLocalization::UploadLaserPoseCallBack(
   q.z = msg->pose.orientation.z;
   q.w = msg->pose.orientation.w;
   data.theta = ToEulerAngles(q).yaw;
-  data.timestamp = msg->header.stamp.nanosec * 1e-6;
+  data.timestamp =
+      msg->header.stamp.sec * 1e3 + msg->header.stamp.nanosec * 1e-6;
   auto message = nlohmann::json();
   message["cmd"] = "LxCamera_UploadLaserPose";
   message["result"] = DcSpecialControl(handle_, "SetLaserPose", &data);
@@ -384,7 +387,8 @@ void LxLocalization::CommandCallBack(
   }
 }
 
-LxLocalization::LxLocalization(DcLib *dynamic_lib) : Node("lx_localization_node") {
+LxLocalization::LxLocalization(DcLib *dynamic_lib)
+    : Node("lx_localization_node") {
   LX_DYNAMIC_LIB = dynamic_lib;
   qos_ = rmw_qos_profile_default;
 
@@ -558,21 +562,21 @@ LxLocalization::LxLocalization(DcLib *dynamic_lib) : Node("lx_localization_node"
               info.firmware_ver, info.algor_ver);
 
   Check("LX_BOOL_ENABLE_2D_STREAM",
-        DcSetBoolValue(handle_, LX_BOOL_ENABLE_2D_STREAM, 1)); //开启RGB流
+        DcSetBoolValue(handle_, LX_BOOL_ENABLE_2D_STREAM, 1)); // 开启RGB流
   Check("LX_INT_ALGORITHM_MODE",
         DcSetIntValue(handle_, LX_INT_ALGORITHM_MODE,
-                      MODE_VISION_LOCATION)); //设置算法模式为视觉定位
+                      MODE_VISION_LOCATION)); // 设置算法模式为视觉定位
 
   Check("LX_INT_WORK_MODE",
-        DcSetIntValue(handle_, LX_INT_WORK_MODE, 0)); //设置工作模式为关闭
+        DcSetIntValue(handle_, LX_INT_WORK_MODE, 0)); // 设置工作模式为关闭
   Check("LX_BOOL_ENABLE_2D_AUTO_EXPOSURE",
         DcSetBoolValue(handle_, LX_BOOL_ENABLE_2D_AUTO_EXPOSURE,
-                       1)); //开启2D自动曝光
+                       1)); // 开启2D自动曝光
   Check("LX_INT_2D_AUTO_EXPOSURE_LEVEL",
         DcSetIntValue(handle_, LX_INT_2D_AUTO_EXPOSURE_LEVEL,
-                      auto_exposure_value_)); //设置自动曝光值为50
+                      auto_exposure_value_)); // 设置自动曝光值为50
   Check("LX_INT_WORK_MODE",
-        DcSetIntValue(handle_, LX_INT_WORK_MODE, 1)); //设置算法模式为常开
+        DcSetIntValue(handle_, LX_INT_WORK_MODE, 1)); // 设置算法模式为常开
 
   bool is_enable_rgb = false, is_enable_exp = false;
   LxIntValueInfo int_value, exp_val;
@@ -597,7 +601,7 @@ LxLocalization::LxLocalization(DcLib *dynamic_lib) : Node("lx_localization_node"
   if (!is_enable_rgb || int_value.cur_value != MODE_VISION_LOCATION ||
       !is_enable_exp || exp_val.cur_value != auto_exposure_value_) {
     RCLCPP_ERROR(this->get_logger(), "camera setting failed...");
-    abort(); //判断值是否正确
+    abort(); // 判断值是否正确
   }
 
   // 遍历已有地图，判断地图名是否正确
@@ -628,9 +632,9 @@ LxLocalization::LxLocalization(DcLib *dynamic_lib) : Node("lx_localization_node"
   rgb_camera_info_.height = int_value.cur_value;
 
   float *intr = nullptr;
-  DcGetPtrValue(handle_, LX_PTR_2D_INTRIC_PARAM, (void **)&intr);
+  DcGetPtrValue(handle_, LX_PTR_3D_NEW_INTRIC_PARAM, (void **)&intr);
   rgb_camera_info_.d =
-      std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8]};
+      std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8], intr[9], intr[10], intr[11], intr[12], intr[13], intr[14], intr[15],intr[16],intr[17]};
   rgb_camera_info_.k =
       std::array<double, 9>{intr[0], 0, intr[2], 0, intr[1], intr[3], 0, 0, 1};
   rgb_info_publisher_->publish(rgb_camera_info_);
@@ -657,15 +661,18 @@ void LxLocalization::Run() {
   DcGetIntValue(handle_, LX_INT_2D_IMAGE_CHANNEL, &int_value);
   int rgb_channel = int_value.cur_value;
 
-  auto base_camera_quat = ToQuaternion(camera_extrinsic_param_[3] / 180.0 * M_PI, camera_extrinsic_param_[4] / 180.0 * M_PI, camera_extrinsic_param_[5] / 180.0 * M_PI);
+  auto base_camera_quat =
+      ToQuaternion(camera_extrinsic_param_[3] / 180.0 * M_PI,
+                   camera_extrinsic_param_[4] / 180.0 * M_PI,
+                   camera_extrinsic_param_[5] / 180.0 * M_PI);
   geometry_msgs::msg::TransformStamped tf_base_camera;
   tf_base_camera.transform.translation.x = camera_extrinsic_param_[0];
   tf_base_camera.transform.translation.y = camera_extrinsic_param_[1];
   tf_base_camera.transform.translation.z = camera_extrinsic_param_[2];
-  tf_base_camera.transform.rotation.x =  base_camera_quat.x;
-  tf_base_camera.transform.rotation.y =  base_camera_quat.y;
-  tf_base_camera.transform.rotation.z =  base_camera_quat.z;
-  tf_base_camera.transform.rotation.w =  base_camera_quat.w;
+  tf_base_camera.transform.rotation.x = base_camera_quat.x;
+  tf_base_camera.transform.rotation.y = base_camera_quat.y;
+  tf_base_camera.transform.rotation.z = base_camera_quat.z;
+  tf_base_camera.transform.rotation.w = base_camera_quat.w;
 
   rclcpp::Node::SharedPtr node(this);
   rclcpp::Rate rate(15);
@@ -748,7 +755,8 @@ void LxLocalization::Run() {
                   loc_res->y, loc_res->theta);
       // pub tf
       {
-        static std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster = std::make_shared<tf2_ros::TransformBroadcaster>(this);
+        static std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster =
+            std::make_shared<tf2_ros::TransformBroadcaster>(this);
         geometry_msgs::msg::TransformStamped transform_stamped;
         transform_stamped.header.stamp = rclcpp::Clock().now();
         transform_stamped.header.frame_id = "map";
@@ -756,10 +764,10 @@ void LxLocalization::Run() {
         transform_stamped.transform.translation.x = loc_res->x;
         transform_stamped.transform.translation.y = loc_res->y;
         transform_stamped.transform.translation.z = 0.0;
-        transform_stamped.transform.rotation.x =  qua_res.x;
-        transform_stamped.transform.rotation.y =  qua_res.y;
-        transform_stamped.transform.rotation.z =  qua_res.z;
-        transform_stamped.transform.rotation.w =  qua_res.w;
+        transform_stamped.transform.rotation.x = qua_res.x;
+        transform_stamped.transform.rotation.y = qua_res.y;
+        transform_stamped.transform.rotation.z = qua_res.z;
+        transform_stamped.transform.rotation.w = qua_res.w;
         tf_broadcaster->sendTransform(transform_stamped);
 
         tf_base_camera.header.stamp = rclcpp::Clock().now();
