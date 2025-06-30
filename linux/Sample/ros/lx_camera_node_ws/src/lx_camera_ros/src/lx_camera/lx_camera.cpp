@@ -90,6 +90,7 @@ LxCamera::~LxCamera() {
   DcCloseDevice(handle_);
 }
 
+#define XYZRGB_RENDER
 bool LxCamera::SearchAndOpenDevice() {
   // find device
   int search_num = 5;
@@ -156,9 +157,9 @@ int LxCamera::Start() {
   // get image params
   if (is_depth_ || is_amp_ || is_xyz_) {
     float *intr = nullptr;
-    DcGetPtrValue(handle_, LX_PTR_3D_NEW_INTRIC_PARAM, (void **)&intr);
+    DcGetPtrValue(handle_, LX_PTR_3D_INTRIC_PARAM, (void **)&intr);
     tof_camera_info_.D =
-        std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8], intr[9], intr[10], intr[11], intr[12], intr[13], intr[14], intr[15], intr[16], intr[17]};
+        std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8]};
     tof_camera_info_.K = boost::array<double, 9>{
         intr[0], 0, intr[2], 0, intr[1], intr[3], 0, 0, 1};
     tof_camera_info_.header.frame_id = "intrinsic_depth";
@@ -166,9 +167,9 @@ int LxCamera::Start() {
 
   if (is_rgb_) {
     float *intr = nullptr;
-    DcGetPtrValue(handle_, LX_PTR_2D_NEW_INTRIC_PARAM, (void **)&intr);
+    DcGetPtrValue(handle_, LX_PTR_2D_INTRIC_PARAM, (void **)&intr);
     rgb_camera_info_.D =
-        std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8], intr[9], intr[10], intr[11], intr[12], intr[13], intr[14], intr[15], intr[16], intr[17]};
+        std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8]};
     rgb_camera_info_.K = boost::array<double, 9>{
         intr[0], 0, intr[2], 0, intr[1], intr[3], 0, 0, 1};
     rgb_camera_info_.header.frame_id = "intrinsic_rgb";
@@ -390,10 +391,12 @@ void LxCamera::Run() {
     pub_temper_.publish(fr);
 
     // pub TF
-    PubTf(tf_ext_base_tof, "base_link", "mrdvs_tof");
+    
+    //PubTf(tf_ext_base_tof, "base_link", "mrdvs_tof");
     if ((is_xyz_ || is_depth_ || is_amp_) && is_rgb_) {
       PubTf(tf_ext_tof_rgb, "mrdvs_tof", "mrdvs_rgb");
     }
+    
 
     int ret = 0;
     void *app_ptr = one_frame->app_data.frame_data;
