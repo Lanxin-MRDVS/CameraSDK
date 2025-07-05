@@ -109,6 +109,8 @@ private:
   int rgb_channel_ = 0;
   float install_x_ = 0.0, install_y_ = 0.0, install_z_ = 0.0,
         install_yaw_ = 0.0, install_roll_ = 0.0, install_pitch_ = 0.0;
+
+  std::string tof_frame_id_ = ""; // Configurable frame_id for TOF data (set via ROS param)
 };
 
 #endif //_LX_CAMERA_H_

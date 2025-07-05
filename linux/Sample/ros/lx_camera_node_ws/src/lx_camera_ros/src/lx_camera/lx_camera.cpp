@@ -297,7 +297,7 @@ void LxCamera::Run() {
         pcl::toROSMsg(*cloud, msg_cloud);
         msg_cloud.header.stamp = ros::Time().fromSec(
             one_frame->depth_data.sensor_timestamp / 1000000.0);
-        msg_cloud.header.frame_id = "mrdvs_tof";
+        msg_cloud.header.frame_id = tof_frame_id_;
         pub_cloud_.publish(msg_cloud);
       } else
         ROS_WARN("%s", std::string("Cloud point data is empty!").c_str());
@@ -319,7 +319,7 @@ void LxCamera::Run() {
 
         msg_depth->header.stamp = ros::Time().fromSec(
             one_frame->depth_data.sensor_timestamp / 1000000.0);
-        msg_depth->header.frame_id = "mrdvs_tof";
+        msg_depth->header.frame_id = tof_frame_id_;
         pub_depth_.publish(msg_depth);
       } else
         ROS_WARN("%s", std::string("Depth image is empty!").c_str());
@@ -341,7 +341,7 @@ void LxCamera::Run() {
                            .toImageMsg();
         msg_amp->header.stamp = ros::Time().fromSec(
             one_frame->amp_data.sensor_timestamp / 1000000.0);
-        msg_amp->header.frame_id = "mrdvs_tof";
+        msg_amp->header.frame_id = tof_frame_id_;
         pub_amp_.publish(msg_amp);
       } else
         ROS_WARN("%s", std::string("Amplitude image is empty!").c_str());
@@ -392,9 +392,9 @@ void LxCamera::Run() {
 
     // pub TF
     
-    //PubTf(tf_ext_base_tof, "base_link", "mrdvs_tof");
+    //PubTf(tf_ext_base_tof, "base_link", tof_frame_id_);
     if ((is_xyz_ || is_depth_ || is_amp_) && is_rgb_) {
-      PubTf(tf_ext_tof_rgb, "mrdvs_tof", "mrdvs_rgb");
+      PubTf(tf_ext_tof_rgb, tof_frame_id_, "mrdvs_rgb");
     }
     
 
@@ -526,8 +526,10 @@ int LxCamera::Check(std::string Command, int state) {
 }
 
 void LxCamera::ReadParam() {
+  nh_->param<std::string>("tof_frame_id", tof_frame_id_, "mrdvs_tof");
   nh_->param<std::string>("ip", ip_, "");
   nh_->param<std::string>("log_path", log_path_, "./");
+  ROS_INFO("tof_frame_id: %s", tof_frame_id_.c_str());
   ROS_INFO("ip: %s", ip_.c_str());
   ROS_INFO("Log file path: %s", log_path_.c_str());
   nh_->param<int>("is_xyz", is_xyz_, 1);
