@@ -162,7 +162,7 @@ int LxCamera::Start() {
         std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8]};
     tof_camera_info_.K = boost::array<double, 9>{
         intr[0], 0, intr[2], 0, intr[1], intr[3], 0, 0, 1};
-    tof_camera_info_.header.frame_id = "intrinsic_depth";
+    tof_camera_info_.header.frame_id = intrinsic_depth_frame_id_;
   }
 
   if (is_rgb_) {
@@ -172,7 +172,7 @@ int LxCamera::Start() {
         std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8]};
     rgb_camera_info_.K = boost::array<double, 9>{
         intr[0], 0, intr[2], 0, intr[1], intr[3], 0, 0, 1};
-    rgb_camera_info_.header.frame_id = "intrinsic_rgb";
+    rgb_camera_info_.header.frame_id = intrinsic_rgb_frame_id_;
   }
 
   auto ret = DcStartStream(handle_);
@@ -528,10 +528,14 @@ int LxCamera::Check(std::string Command, int state) {
 void LxCamera::ReadParam() {
   nh_->param<std::string>("tof_frame_id", tof_frame_id_, "mrdvs_tof");
   nh_->param<std::string>("rgb_frame_id", rgb_frame_id_, "mrdvs_rgb");
+  nh_->param<std::string>("intrinsic_depth_frame_id", intrinsic_depth_frame_id_, "intrinsic_depth");
+  nh_->param<std::string>("intrinsic_rgb_frame_id", intrinsic_rgb_frame_id_, "intrinsic_rgb");
   nh_->param<std::string>("ip", ip_, "");
   nh_->param<std::string>("log_path", log_path_, "./");
   ROS_INFO("tof_frame_id: %s", tof_frame_id_.c_str());
   ROS_INFO("rgb_frame_id: %s", rgb_frame_id_.c_str());
+  ROS_INFO("intrinsic_depth_frame_id: %s", intrinsic_depth_frame_id_.c_str());
+  ROS_INFO("intrinsic_rgb_frame_id: %s", intrinsic_rgb_frame_id_.c_str());
   ROS_INFO("ip: %s", ip_.c_str());
   ROS_INFO("Log file path: %s", log_path_.c_str());
   nh_->param<int>("is_xyz", is_xyz_, 1);
