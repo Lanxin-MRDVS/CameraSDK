@@ -4,6 +4,7 @@
 
   <node name="cam3" pkg="lx_camera_ros" type="lx_camera_node" output="screen">
 	<!-- ip、日志路径、流配置、算法、工作模式配置、点云单位 -->
+	<param name="tof_frame_id" 					value="mrdvs_tof"/>
 	<param name="ip" 							value="192.168.0.23"/>
 	<param name="log_path" 						value="/var/log/"/>
 	<param name="is_xyz" 						value="1" />
