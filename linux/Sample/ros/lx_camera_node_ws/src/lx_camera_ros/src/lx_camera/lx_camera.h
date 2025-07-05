@@ -114,6 +114,7 @@ private:
   std::string rgb_frame_id_ = ""; // Configurable frame_id for RGB data (set via ROS param)
   std::string intrinsic_depth_frame_id_ = ""; // Configurable intrinsic frame_id for depth (set via ROS param)
   std::string intrinsic_rgb_frame_id_ = ""; // Configurable intrinsic frame_id for RGB (set via ROS param)
+  std::string main_frame_id_ = ""; // Configurable main frame_id (set via ROS param)
 };
 
 #endif //_LX_CAMERA_H_

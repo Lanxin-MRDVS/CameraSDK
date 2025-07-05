@@ -382,7 +382,7 @@ void LxCamera::Run() {
           DcGetFloatValue(handle_, LX_FLOAT_DEVICE_TEMPERATURE, &f_val));
     temp = f_val.cur_value;
     lx_camera_ros::FrameRate fr;
-    fr.header.frame_id = "mrdvs";
+    fr.header.frame_id = main_frame_id_;
     fr.header.stamp = now_time;
     fr.amp = amp_fps;
     fr.rgb = rgb_fps;
@@ -403,7 +403,7 @@ void LxCamera::Run() {
     switch (inside_app_) {
     case MODE_AVOID_OBSTACLE: {
       lx_camera_ros::Obstacle result;
-      result.header.frame_id = "mrdvs";
+      result.header.frame_id = main_frame_id_;
       result.header.stamp =
           ros::Time().fromSec(one_frame->app_data.sensor_timestamp / 1000000.0);
       Check("GetObstacleIO", DcSpecialControl(handle_, "GetObstacleIO",
@@ -437,7 +437,7 @@ void LxCamera::Run() {
       if (ret || !app_ptr)
         break;
       lx_camera_ros::Pallet result;
-      result.header.frame_id = "mrdvs";
+      result.header.frame_id = main_frame_id_;
       result.header.stamp =
           ros::Time().fromSec(one_frame->app_data.sensor_timestamp / 1000000.0);
       LxPalletPose *lao = (LxPalletPose *)app_ptr;
@@ -454,7 +454,7 @@ void LxCamera::Run() {
       LxLocation *val = (LxLocation *)app_ptr;
       if (!val->status) {
         geometry_msgs::PoseStamped alg_val;
-        alg_val.header.frame_id = "mrdvs";
+        alg_val.header.frame_id = main_frame_id_;
         alg_val.header.stamp = ros::Time().fromSec(
             one_frame->app_data.sensor_timestamp / 1000000.0);
 
@@ -473,7 +473,7 @@ void LxCamera::Run() {
     }
     case MODE_AVOID_OBSTACLE2: {
       lx_camera_ros::Obstacle result;
-      result.header.frame_id = "mrdvs";
+      result.header.frame_id = main_frame_id_;
       result.header.stamp =
           ros::Time().fromSec(one_frame->app_data.sensor_timestamp / 1000000.0);
       Check("GetObstacleIO", DcSpecialControl(handle_, "GetObstacleIO",
@@ -530,12 +530,14 @@ void LxCamera::ReadParam() {
   nh_->param<std::string>("rgb_frame_id", rgb_frame_id_, "mrdvs_rgb");
   nh_->param<std::string>("intrinsic_depth_frame_id", intrinsic_depth_frame_id_, "intrinsic_depth");
   nh_->param<std::string>("intrinsic_rgb_frame_id", intrinsic_rgb_frame_id_, "intrinsic_rgb");
+  nh_->param<std::string>("main_frame_id", main_frame_id_, "mrdvs");
   nh_->param<std::string>("ip", ip_, "");
   nh_->param<std::string>("log_path", log_path_, "./");
   ROS_INFO("tof_frame_id: %s", tof_frame_id_.c_str());
   ROS_INFO("rgb_frame_id: %s", rgb_frame_id_.c_str());
   ROS_INFO("intrinsic_depth_frame_id: %s", intrinsic_depth_frame_id_.c_str());
   ROS_INFO("intrinsic_rgb_frame_id: %s", intrinsic_rgb_frame_id_.c_str());
+  ROS_INFO("main_frame_id: %s", main_frame_id_.c_str());
   ROS_INFO("ip: %s", ip_.c_str());
   ROS_INFO("Log file path: %s", log_path_.c_str());
   nh_->param<int>("is_xyz", is_xyz_, 1);
