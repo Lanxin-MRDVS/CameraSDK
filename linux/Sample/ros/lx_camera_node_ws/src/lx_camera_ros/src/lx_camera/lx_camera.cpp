@@ -364,7 +364,7 @@ void LxCamera::Run() {
             cv_bridge::CvImage(std_msgs::Header(), type, rgb_pub).toImageMsg();
         msg_rgb->header.stamp = ros::Time().fromSec(
             one_frame->rgb_data.sensor_timestamp / 1000000.0);
-        msg_rgb->header.frame_id = "mrdvs_rgb";
+        msg_rgb->header.frame_id = rgb_frame_id_;
         pub_rgb_.publish(msg_rgb);
       } else
         ROS_WARN("%s", std::string("RGB image is empty!").c_str());
@@ -394,7 +394,7 @@ void LxCamera::Run() {
     
     //PubTf(tf_ext_base_tof, "base_link", tof_frame_id_);
     if ((is_xyz_ || is_depth_ || is_amp_) && is_rgb_) {
-      PubTf(tf_ext_tof_rgb, tof_frame_id_, "mrdvs_rgb");
+      PubTf(tf_ext_tof_rgb, tof_frame_id_, rgb_frame_id_);
     }
     
 
@@ -527,9 +527,11 @@ int LxCamera::Check(std::string Command, int state) {
 
 void LxCamera::ReadParam() {
   nh_->param<std::string>("tof_frame_id", tof_frame_id_, "mrdvs_tof");
+  nh_->param<std::string>("rgb_frame_id", rgb_frame_id_, "mrdvs_rgb");
   nh_->param<std::string>("ip", ip_, "");
   nh_->param<std::string>("log_path", log_path_, "./");
   ROS_INFO("tof_frame_id: %s", tof_frame_id_.c_str());
+  ROS_INFO("rgb_frame_id: %s", rgb_frame_id_.c_str());
   ROS_INFO("ip: %s", ip_.c_str());
   ROS_INFO("Log file path: %s", log_path_.c_str());
   nh_->param<int>("is_xyz", is_xyz_, 1);

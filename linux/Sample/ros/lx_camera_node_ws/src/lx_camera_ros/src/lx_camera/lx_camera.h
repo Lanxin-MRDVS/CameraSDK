@@ -111,6 +111,7 @@ private:
         install_yaw_ = 0.0, install_roll_ = 0.0, install_pitch_ = 0.0;
 
   std::string tof_frame_id_ = ""; // Configurable frame_id for TOF data (set via ROS param)
+  std::string rgb_frame_id_ = ""; // Configurable frame_id for RGB data (set via ROS param)
 };
 
 #endif //_LX_CAMERA_H_
