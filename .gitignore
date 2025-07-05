@@ -1,4 +1,5 @@
 Output/*
 update/*
 *.iss
-
+linux/Sample/ros/lx_camera_node_ws/devel/*
+linux/Sample/ros/lx_camera_node_ws/build/*
