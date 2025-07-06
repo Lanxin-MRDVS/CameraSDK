@@ -1,1 +1,0 @@
-netsh advfirewall firewall delete rule name="LxCameraViewer.exe" program="%cd%\LxCameraViewer.exe"
