@@ -65,6 +65,8 @@
 
   </node>
 
+  <node pkg="tf2_ros" type="static_transform_publisher" name="cam2_static_tf_pub" args="0 0 0 0 0 0 cam2_frame cam2_depth_frame" />
+
 	<!-- rviz -->
 	<group if="$(arg enable_rviz)">
 		<node name="lx_camera" pkg="rviz" type="rviz" args="-d $(find lx_camera_ros)/rviz/lx_camera.rviz" required="false" />
