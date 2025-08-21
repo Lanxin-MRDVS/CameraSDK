@@ -308,7 +308,9 @@ LX_API DcSetCmd(DcHandle handle, int cmd);
 //~chinese
 //功能：LX_CAMERA_FEATURE定义之外的特殊操作，具体功能和参数由字符串command确定
 //参数：[in]handle                 设备句柄
-//      [in]command                指令
+//      [in]command                指令(具体详见demo)
+//                                 SetObstacleIndex,GetObstacleIndex,SetObstacleMode,GetObstacleIO,SetOdomData,SetRelocPose,SetLaserData,ImportLocationMapFile,EnableBuildMap,EnableLocation,ExportLocationMapFile
+// 
 //      [in][out]value             设置时为对应入参，获取时为对应出参，无需外部分配内存
 //~english
 /**
@@ -516,6 +518,21 @@ LX_API DcSetPtpEnable(bool is_enable);
 LX_API DcGetPtpEnable(bool* is_enable);
 
 
+/**
+ * 功能：多线程并行计算加速线程数量
+ * 参数：{int} thread_num: 设置并行计算的线程数，默认-1自动调整
+ * 开启并行计算会增加CPU消耗，但是计算速度有较大提升
+ */
+//~english:
+/**
+ * @brief Multi-threaded parallel computing accelerates the number of threads
+ *
+ * @param {int} thread_num: Set the number of threads to be computed in parallel, and the default -1 will automatically adjust
+ *        Enabling parallel computing will increase CPU consumption, but the computing speed will be greatly improved
+ * @return LX_API
+ */
+LX_API DcSetParallelThread(int thread_num);
+
 //~chinese:
 //功能: 开启SDK内部日志功能，默认开启
 //参数：[in]is_enable     是否使能
@@ -528,6 +545,65 @@ LX_API DcGetPtpEnable(bool* is_enable);
  * @return LX_API
  */
 LX_API DcSetLogEnable(bool is_enable);
+
+
+//以下IMU数据采集只有部分设备型号支持
+
+//~chinese
+//功能: 注册IMU传感器数据回调函数,收到新的数据时自动调用
+//参数：[in]handle      设备句柄
+//      [in]func        回调函数指针
+//      [in]usr_data    用户自定义参数
+//~english
+/**
+ * @brief Register the imu data callback function to be called automatically when new data is received.
+ *
+ * @param handle[in]Device handle
+ * @param func[in]Callback function pointer
+ * @param usr_data[in]User-defined parameters
+ * @return LX_API
+ */
+LX_API DcRegisterImuDataCallback(DcHandle handle, LX_IMUDATA_CALLBACK func, void* usr_data);
+
+//~chinese
+//功能: 取消IMU传感器数据帧注册回调函数
+//参数：[in]handle      设备句柄
+//~english
+/**
+    * @brief Cancel imu data  registration callback function
+    *
+    * @param handle[in]Device handle
+    * @return LX_API
+    */
+LX_API DcUnregisterImuDataCallback(DcHandle handle);
+
+//~chinese
+//功能: 启动IMU数据监听
+//参数：[in]handle      设备句柄
+//      [in]acc_range 加速度量程 0:±2g，1:±4g，2:±8g，3:±16g
+//      [in]gry_range 角速度量程 0: 2000*PI/180 rad/s, 1: 1000*PI/180 rad/s, 2: 500*PI/180 rad/s, 3:250*PI/180 rad/s, 4:125*PI/180 rad/s
+//~english
+/**
+    * @brief Start IMU data listening
+    *
+    * @param handle[in]Device handle
+    * @param acc_range[in]acc range 0:±2g，1:±4g，2:±8g，3:±16g
+    * @param gry_range[in]gry range 0: 2000*PI/180 rad/s, 1: 1000*PI/180 rad/s, 2: 500*PI/180 rad/s, 3:250*PI/180 rad/s, 4:125*PI/180 rad/s
+    * @return LX_API
+    */
+LX_API DcStartIMU(DcHandle handle, uint16_t acc_range, uint16_t gry_range);
+
+//~chinese
+//功能: 停止IMU数据监听
+//参数：[in]handle      设备句柄
+//~english
+/**
+* @brief Start IMU data listening
+*
+* @param handle[in]Device handle
+* @return LX_API
+*/
+LX_API DcStopImu(DcHandle handle);
 
 
 #endif

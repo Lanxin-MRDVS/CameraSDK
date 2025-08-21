@@ -51,6 +51,8 @@ int kbhit(void) {
     if(val != LX_SUCCESS){                                             \
         if(val == LX_E_RECONNECTING){                                  \
             std::cout << " device reconnecting" << std::endl;}         \
+        else if(val == LX_E_NOT_SUPPORT){                                  \
+            std::cout << " device not support" << std::endl;}         \
         else{                                                          \
             std::cout << DcGetErrorString(val)<<std::endl;             \
             std::cout << " press any key to exit!" << std::endl;       \

@@ -9,6 +9,7 @@
 #include "lx_camera_api.h"
 #ifdef HAS_OPENCV
 #include "opencv2/opencv.hpp"
+#define ENABLE_VISION
 using namespace cv;
 #endif
 using namespace std;
@@ -18,6 +19,8 @@ static char wait_key = '0';
     if(val != LX_SUCCESS){                                              \
         if(val == LX_E_RECONNECTING){                                   \
             std::cout << " device reconnecting" << std::endl;}          \
+        else if(val == LX_E_NOT_SUPPORT){                               \
+            std::cout << "device not support" << std::endl;}            \
         else{                                                           \
             std::cout << DcGetErrorString(val)<<std::endl;              \
             std::cout << " press any key to exit!" << std::endl;        \
@@ -128,22 +131,26 @@ int thread_work(std::string ip)
 #ifdef HAS_OPENCV
         cv::Mat depth_image = cv::Mat(tof_height, tof_width, CV_MAKETYPE(tof_data_type, 1), depth_data_ptr);
         cv::Mat depth_show;
+#ifdef ENABLE_VISION
         depth_image.convertTo(depth_show, CV_8U, 1.0 / 16);
         cv::namedWindow("depth" + ip, 0);
         cv::resizeWindow("depth" + ip, 640, 480);
         cv::imshow("depth" + ip, depth_show);
-        wait_key = cv::waitKey(1);
+        cv::waitKey(1);
+#endif
 #endif
         //获取rgb数据
         if (rgb_enable) {
             void* rgb_data_ptr = nullptr;
             checkTC(DcGetPtrValue(handle, LX_PTR_2D_IMAGE_DATA, &rgb_data_ptr), handle);
 #ifdef HAS_OPENCV
+            cv::Mat rgb_show = cv::Mat(rgb_height, rgb_width, CV_MAKETYPE(rgb_data_type, rgb_channles), rgb_data_ptr);
+#ifdef ENABLE_VISION
             cv::namedWindow("rgb" + ip, 0);
             cv::resizeWindow("rgb" + ip, 640, 480);
-            cv::Mat rgb_show = cv::Mat(rgb_height, rgb_width, CV_MAKETYPE(rgb_data_type, rgb_channles), rgb_data_ptr);
             cv::imshow("rgb" + ip, rgb_show);
-            wait_key = cv::waitKey(1);
+            cv::waitKey(1);
+#endif
 #endif
         }
         //帧率
@@ -154,7 +161,9 @@ int thread_work(std::string ip)
             _time = std::chrono::system_clock::now();
             LxFloatValueInfo float_info = { 0 };
             DcGetFloatValue(handle, LX_FLOAT_3D_DEPTH_FPS, &float_info);
-            std::cout << "Depth FPS: " << float_info.cur_value << std::endl;
+            std::cout << "Depth FPS: " << float_info.cur_value;
+            DcGetFloatValue(handle, LX_FLOAT_2D_IMAGE_FPS, &float_info);
+            std::cout << " Rgb FPS: " << float_info.cur_value << std::endl;
         }
     }
 

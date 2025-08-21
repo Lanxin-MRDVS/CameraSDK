@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=LxCameraViewer
+Exec=AppRun %F
+Icon=default
+Comment=Edit this default file
+Terminal=true
+Categories=Development
+X-AppImage-Version=7fd46dd8

@@ -35,6 +35,7 @@
         #define LX_EXTC
     #endif
 #endif
+#include <stdint.h>
 
 //错误类型定义
 typedef enum LX_STATE
@@ -69,6 +70,7 @@ typedef enum LX_STATE
     LX_E_IPAPPDR_UNREACHABLE_ERROR = -27, //IP不可达或网络配置错误
     LX_E_FRAME_ID_NOT_MATCH        = -28, //超时范围内帧不同步错误
     LX_E_FRAME_MULTI_MACHINE       = -29, //帧中检测到多机干扰信号
+    LX_E_FRAME_IMAGE_ERROR = -30, //帧数据中检测到相机设备图像相关异常错误
 
     LX_W_LOAD_DATAPROCESSLIB_ERROR = 25, //加载图像处理算法库失败，不影响其他功能
 }LX_STATE;
@@ -96,6 +98,8 @@ typedef enum LX_DEVICE_TYPE {
     LX_DEVICE_S3 = 2101,
     LX_DEVICE_S10 = 2108,
     LX_DEVICE_S10PRO = 2109,
+
+    LX_DEVICE_S11 = 2201,
 
     LX_DEVICE_I1 = 3001,
     LX_DEVICE_I2,
@@ -134,7 +138,7 @@ typedef struct LxDeviceInfo
     char name[32];                 //设备名称，如：camera_M3_192.168.11.13_9803
     char reserve[32];              //预留字段, 子网掩码 //add at 20231120
     char reserve2[32];             //预留字段2, 网关ip  //add at 20231120
-    char reserve3[64];             //预留字段3
+    char reserve3[64];             //预留字段3,[0：3]表示设备当前访问模式
     char reserve4[128];            //预留字段4
 }LxDeviceInfo;
 
@@ -257,7 +261,7 @@ typedef enum LX_3D_FREQ_MODE {
     FREQ_TRIPLE_3D = 2,//三频（新设备固件版本已经不支持）
 }LX_3D_FREQ_MODE;
 
-//3D频率模式
+//RGB对齐模式
 typedef enum LX_RGBD_ALIGN_MODE {
     RGBD_ALIGN_OFF = 0,   //关闭rgbd对齐，rgb和depth分别以各自分别和坐标系
     DEPTH_TO_RGB = 1,     //depth对齐rgb，分辨率和坐标以rgb为准
@@ -337,6 +341,40 @@ typedef void(*LX_FRAME_CALLBACK)(FrameInfo*, void*);
 //相机状态回调
 typedef void(*LX_CAMERA_STATUS_CALLBACK)(CameraStatus*, void*);
 
+typedef struct ImuRawData {
+    int16_t acc_x;
+    int16_t acc_y;
+    int16_t acc_z;
+    int16_t gry_x;
+    int16_t gry_y;
+    int16_t gry_z;
+    int32_t status;
+    uint64_t sensor_time;
+    int16_t resveredData[16];
+}ImuRawData; //IMU Raw数据
+
+typedef struct ImuData {
+    float acc_x;
+    float acc_y;
+    float acc_z;
+    float gry_x;
+    float gry_y;
+    float gry_z;
+    unsigned long long sensor_timestamp;     //sensor出图时间戳
+    unsigned long long recv_timestamp;       //接收完帧数据时的时间戳
+}ImuData; //IMU量程转化处理后的数据
+
+typedef struct LxImuData
+{
+    LX_STATE frame_state;
+    DcHandle handle;
+    ImuRawData imu_raw_data;
+    ImuData imu_data;
+}LxImuData;
+
+//IMU传感器数据回调
+typedef void(*LX_IMUDATA_CALLBACK)(LxImuData*, void*);
+
 typedef enum LX_CAMERA_FEATURE
 {
     /*int feature*/
@@ -411,6 +449,7 @@ typedef enum LX_CAMERA_FEATURE
     LX_INT_IO_HARDWARE_WORK_MODE = 1532, //GPIO信号输出的硬件工作模式，参考LX_IO_HARDWARE_MODE
     LX_INT_IO_INPUT_STATUS = 1533,       //IO输入状态,只读
     LX_INT_IO_OUTPUT_STATUS = 1534,      //IO输出状态,只读
+    LX_INT_3D_GLARE_LEVEL = 1738,        //炫光等级，0关闭,等级1,2,3
 
     LX_INT_FILTER_MODE = 1090,          //滤波模式,参考LX_FILTER_MODE
     LX_INT_FILTER_SMOOTH_LEVEL = 1091,  //当LX_INT_FILTER_MODE为FILTER_NORMAL时,可设置滤波平滑等级，[0, 3]，值越大，滤波越强

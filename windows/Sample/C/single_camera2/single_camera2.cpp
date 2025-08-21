@@ -17,8 +17,11 @@ static char wait_key = '0';
     if(val != LX_SUCCESS){                                             \
         if(val == LX_E_RECONNECTING){                                  \
             printf("device reconnecting\n"); }                         \
+        else if(val == LX_E_NOT_SUPPORT){                              \
+            printf("device not support\n");                          \
+        }                                                               \
         else{                                                          \
-            printf("%s\n", DcGetErrorString(val));                             \
+            printf("%s\n", DcGetErrorString(val));                     \
             printf("press any key to exit!\n");                        \
             wait_key = getchar();                                      \
             DcCloseDevice(handle);                                     \
@@ -105,18 +108,18 @@ int main(int argc, char** argv)
 
     /*其他操作。相机的设置、参数的获取建议在数据流开启之前操作，尤其涉及到图像尺寸变化的内容*/
 
+    //触发模式
+    LxIntValueInfo info;
+    LX_TRIGGER_MODE trigger_mode = LX_TRIGGER_MODE_OFF;  
+    //DcSetIntValue(handle, LX_INT_TRIGGER_MODE, trigger_mode);
+    if(DcGetIntValue(handle, LX_INT_TRIGGER_MODE, &info) == LX_SUCCESS)
+        trigger_mode = static_cast<LX_TRIGGER_MODE>(info.cur_value);
+
     //开启数据流
     checkTC(DcStartStream(handle));
 
     std::thread pthread = std::thread(WaitKey);
     pthread.detach();
-
-    LxIntValueInfo info;
-    LX_TRIGGER_MODE trigger_mode;
-    if(DcGetIntValue(handle, LX_INT_TRIGGER_MODE, &info) == LX_E_NOT_SUPPORT)
-        trigger_mode = LX_TRIGGER_MODE_OFF;
-    else 
-        trigger_mode = static_cast<LX_TRIGGER_MODE>(info.cur_value);
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
     while (true)
@@ -164,16 +167,19 @@ int main(int argc, char** argv)
 int TestFrame(DcHandle handle)
 {
     FrameInfo* frame_ptr = nullptr;
-    checkTC(DcGetPtrValue(handle, LX_PTR_FRAME_DATA, (void**)&frame_ptr));
+    if (LX_SUCCESS != DcGetPtrValue(handle, LX_PTR_FRAME_DATA, (void**)&frame_ptr)) {
+		printf("DcGetPtrValue failed\n");
+        return 1;
+    }
     if (!frame_ptr) {
         printf("new frame not correct, frame ptr is null\n");
         return 1;
     }
 
     if (frame_ptr->frame_state != LX_SUCCESS) {
-        if (frame_ptr->frame_state != LX_E_FRAME_ID_NOT_MATCH)
+        if (frame_ptr->frame_state == LX_E_FRAME_ID_NOT_MATCH)
             printf("frame id not match\n");
-        else if(frame_ptr->frame_state != LX_E_FRAME_MULTI_MACHINE)
+        else if(frame_ptr->frame_state == LX_E_FRAME_MULTI_MACHINE)
             printf("found multi machine signal\n");
         else {
             printf("new frame not correct\n");
@@ -200,13 +206,13 @@ int TestFrame(DcHandle handle)
 
 #ifdef HAS_OPENCV
         cv::Mat depth_image = cv::Mat(depth_data.frame_height, depth_data.frame_width,
-            CV_MAKETYPE(depth_data.frame_data_type, depth_data.frame_channel), depth_data.frame_data);
+            CV_MAKETYPE(depth_data.frame_data_type, depth_data.frame_channel), depth_data.frame_data).clone();
         cv::Mat xyz_image = cv::Mat(depth_data.frame_height, depth_data.frame_width,
-            CV_32FC3, xyz);
+            CV_32FC3, xyz).clone();
 
         cv::Mat show;
         depth_image.convertTo(show, CV_8U, 1.0 / 16);
-        applyColorMap(show, show, COLORMAP_JET);
+        cv::applyColorMap(show, show, COLORMAP_JET);
         cv::namedWindow("depth", 0);
         cv::resizeWindow("depth", 640, 480);
         cv::imshow("depth", show);
@@ -224,14 +230,14 @@ int TestFrame(DcHandle handle)
 
 #ifdef HAS_OPENCV
         cv::Mat amp_image = cv::Mat(amp_data.frame_height, amp_data.frame_width,
-            CV_MAKETYPE(amp_data.frame_data_type, amp_data.frame_channel), amp_data.frame_data);
+            CV_MAKETYPE(amp_data.frame_data_type, amp_data.frame_channel), amp_data.frame_data).clone();
 
         cv::Mat show;
         if (amp_image.type() == CV_16U)
             amp_image.convertTo(show, CV_8U, 1.0 / 8);
         else
             show = amp_image;
-        applyColorMap(show, show, COLORMAP_JET);
+        cv::applyColorMap(show, show, COLORMAP_JET);
         cv::namedWindow("amp", 0);
         cv::resizeWindow("amp", 640, 480);
         cv::imshow("amp", show);
@@ -249,7 +255,7 @@ int TestFrame(DcHandle handle)
 
 #ifdef HAS_OPENCV
         cv::Mat rgb_image = cv::Mat(rgb_data.frame_height, rgb_data.frame_width,
-            CV_MAKETYPE(rgb_data.frame_data_type, rgb_data.frame_channel), rgb_data.frame_data);
+            CV_MAKETYPE(rgb_data.frame_data_type, rgb_data.frame_channel), rgb_data.frame_data).clone();
 
         cv::namedWindow("rgb", 0);
         cv::resizeWindow("rgb", 640, 480);

@@ -35,7 +35,7 @@ void CallbackFunc(FrameInfo* frame, void* usr_data);
 int main(int argc, char** argv)
 {
     //设置日志等级和路径。
-    checkTC(DcSetInfoOutput(0, true, ""));
+    //checkTC(DcSetInfoOutput(0, true, ""));
     printf("call api version: %s\n", DcGetApiVersion());
 
     //查找设备
