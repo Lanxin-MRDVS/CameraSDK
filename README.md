@@ -1,6 +1,14 @@
 # Release Notes
 
-## 2025-04-10
+## SDK V2.4.50
+- support new calibration algo,LX_PTR_2D_NEW_INTRIC_PARAM and LX_PTR_3D_NEW_INTRIC_PARAM
+- fix some bugs,and add some features
+- linux version of cameraviewer
+- cameraViewer supports restricted access to the camera device for devices connected via the SDK
+
+## LxDataProcess V1.3.30
+- fix some bugs
+
 - Add python3 api whl file
 
 ## SDK V2.4.38
