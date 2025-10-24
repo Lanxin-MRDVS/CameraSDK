@@ -5,7 +5,7 @@
   <node name="cam1" pkg="lx_camera_ros" type="lx_camera_node" output="screen">
 	<!-- ip、日志路径、流配置、算法、工作模式配置、点云单位 -->
 	<param name="tof_frame_id" 					value="cam1_depth_frame"/>
-	<param name="rgb_frame_id" 					value="cam1_frame"/>
+	<param name="rgb_frame_id" 					value="cam1_rgb_frame"/>
 	<param name="intrinsic_depth_frame_id" 	    value="cam1_intrinsic_depth_frame"/>
 	<param name="intrinsic_rgb_frame_id" 	    value="cam1_intrinsic_rgb_frame"/>
 	<param name="main_frame_id" 	    		value="cam1_main_frame"/>
