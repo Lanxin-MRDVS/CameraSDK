@@ -1,4 +1,4 @@
-﻿//application_pallet.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+﻿//application_pallet.cpp : This file contains the main function. Program execution begins and ends here.
 //
 
 #include <iostream>
@@ -48,15 +48,15 @@ int main(int argc, char** argv)
     int open_mode = OPEN_BY_INDEX;
     switch (open_mode)
     {
-        //根据ip打开设备
+        // Open device by IP
     case OPEN_BY_IP:
         open_param = "192.168.100.82";
         break;
-        //根据sn打开设备
+        // Open device by SN
     case OPEN_BY_ID:
         open_param = "F13301122647";
         break;
-        //根据搜索设备列表索引打开设备
+        // Open device by index in the discovered device list
     case OPEN_BY_INDEX:
     default:
         open_param = "0";
@@ -70,7 +70,7 @@ int main(int argc, char** argv)
         << "\n cameraip:" << device_info.ip << "\n firmware_ver:" << device_info.firmware_ver << "\n sn:" << device_info.sn
         << "\n name:" << device_info.name << "\n img_algor_ver:" << device_info.algor_ver << std::endl;
     
-    //开启托盘对接算法。建议关闭其他数据流，避免LX_CMD_GET_NEW_FRAME时算法数据未更新
+    // Enable pallet docking algorithm. Disable other streams to avoid stale algorithm data on LX_CMD_GET_NEW_FRAME.
     checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, false));
     checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, false));
     checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, false));
@@ -80,31 +80,32 @@ int main(int argc, char** argv)
     checkTC(DcGetIntValue(handle, LX_INT_ALGORITHM_MODE, &algor_info));
     std::cout << " current LX_INT_ALGORITHM_MODE:" << algor_info.cur_value << std::endl;
 
-    //算法版本号
+    // Algorithm version
     char* algor_ver = nullptr;
     checkTC(DcGetStringValue(handle, LX_STRING_ALGORITHM_VERSION, &algor_ver));
     if (algor_ver != nullptr) std::cout << " current algor version:" << algor_ver << std::endl;
 
-    //托盘算法参数可以不设置。如果需要可通过如下函数设置，参数为json格式
+    // Pallet algorithm parameters are optional. If needed, set via the function below (JSON).
     //std::string str_pallet_json = "{}";
     //checkTC(DcSetStringValue(handle, LX_STRING_ALGORITHM_PARAMS, str_pallet_json.c_str()));
 
-    //算法参数，与当前设置的算法有关
+    // Algorithm parameters (depend on current algorithm)
     char* cur_algor_json = nullptr;
     checkTC(DcGetStringValue(handle, LX_STRING_ALGORITHM_PARAMS, &cur_algor_json));
     if (cur_algor_json != nullptr) std::cout << " current algor json param:" << cur_algor_json << std::endl;
 
-    //正常状态下，网络断开或者SDK关闭之后，相机会切换为待机状态。
-    //如果算法结果不通过SDK输出，需要设置为常开模式，相机和内置算法会始终保持工作。此时启停流无效，不允许需要停流才能进行的操作
+    // Normally, after network disconnect or SDK close, the camera enters standby.
+    // If algorithm output is not read via SDK, set always-on mode to keep the camera and algorithms running.
+    // In always-on mode, start/stop stream is ignored and operations requiring stop are not allowed.
     //checkTC(DcSetIntValue(handle, LX_INT_WORK_MODE, 1));
 
-    //开启数据流
+    // Start stream
     checkTC(DcStartStream(handle));
     while (true)
     {
-        //刷新数据
-        //如果开启了多个数据流，只要有一个更新，此函数会正常返回。
-        //可以设置LX_BOOL_ENABLE_SYNC_FRAME为true保持所有数据同步。或者通过帧ID和时间戳判断需要的数据是否更新
+        // Refresh data
+        // If multiple streams are enabled, this call returns when any stream updates.
+        // Set LX_BOOL_ENABLE_SYNC_FRAME to true to keep all streams in sync, or check frame ID/timestamp.
         auto ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
         if ((LX_SUCCESS != ret)
             && (LX_E_FRAME_ID_NOT_MATCH != ret)
@@ -119,7 +120,7 @@ int main(int argc, char** argv)
             continue;
         }
 
-        //获取数据
+        // Get data
         void* algordata = nullptr;
         checkTC(DcGetPtrValue(handle, LX_PTR_ALGORITHM_OUTPUT, &algordata));
         PrintData(algordata);

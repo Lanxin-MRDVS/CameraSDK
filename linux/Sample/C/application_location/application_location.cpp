@@ -1,4 +1,4 @@
-﻿//application_location.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+﻿//application_location.cpp : This file contains the main function. Program execution begins and ends here.
 //
 
 #include <iostream>
@@ -109,9 +109,9 @@ int TestRgb(bool is_enable, DcHandle handle, bool& is_first)
     unsigned char* data_ptr = nullptr;
     if(DcGetPtrValue(handle, LX_PTR_2D_IMAGE_DATA, (void**)&data_ptr) == LX_SUCCESS && data_ptr != nullptr)
     {
-        //第yRows行xCol列数据
-        //2D图像目前只有unsigned char格式
-        //LX_DATE_TYPE的定义与opencv CV_8U CV_16U CV_32F一致
+        // Data at row yRow, column xCol
+        // 2D image currently only uses unsigned char format
+        // LX_DATE_TYPE matches OpenCV CV_8U / CV_16U / CV_32F
         int yRow = 100, xCol = 100;
         int pose = yRow * width + xCol;
         if (1 == channles)
@@ -255,34 +255,34 @@ int ReadAndSendOdom(DcHandle handle)
             {
                 if (wait_key == 'q') return 0;
 
-                if(DcSpecialControl(handle, "SetOdomData", &it->second) != LX_SUCCESS) //发送odom数据
+                if(DcSpecialControl(handle, "SetOdomData", &it->second) != LX_SUCCESS) // Send odom data
                     continue;
 
                 if (!has_send_reloc && ict++ == 9)
                 {
-                    if(DcSpecialControl(handle, "SetRelocPose", &init_pose) == LX_SUCCESS) //发送reloc数据
+                    if(DcSpecialControl(handle, "SetRelocPose", &init_pose) == LX_SUCCESS) // Send reloc data
                         has_send_reloc = true;
                 }
 
                 //if (DcSpecialControl(handle, "SetRelocPose", &pose_map[it->first]) != LX_SUCCESS)
                 //    continue;
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(50)); //间隔50ms发送一次
+                std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Send every 50 ms
             }
 
-            //反向循环时不需要重定位
+            // No relocation needed when iterating in reverse
             auto iter2 = odom_map.rbegin();
             for (;iter2 != odom_map.rend(); iter2++) 
             {
                 if (wait_key == 'q') return 0;
 
-                if (DcSpecialControl(handle, "SetOdomData", &iter2->second) != LX_SUCCESS) //发送odom数据
+                if (DcSpecialControl(handle, "SetOdomData", &iter2->second) != LX_SUCCESS) // Send odom data
                     continue;
 
                 //if (DcSpecialControl(handle, "SetRelocPose", &pose_map[iter2->first]) != LX_SUCCESS)
                 //    continue;
 
-                std::this_thread::sleep_for(std::chrono::milliseconds(50)); //间隔50ms发送一次
+                std::this_thread::sleep_for(std::chrono::milliseconds(50)); // Send every 50 ms
             }
         }
     }
@@ -311,15 +311,15 @@ int main(int argc, char** argv)
     int open_mode = OPEN_BY_INDEX;//OPEN_BY_IP;//OPEN_BY_INDEX;
     switch (open_mode)
     {
-        //根据ip打开设备
+        // Open device by IP
     case OPEN_BY_IP:
         open_param = "192.168.100.120";
         break;
-        //根据sn打开设备
+        // Open device by SN
     case OPEN_BY_ID:
         open_param = "F13301122647";
         break;
-        //根据搜索设备列表索引打开设备
+        // Open device by index in the discovered device list
     case OPEN_BY_INDEX:
     default:
         open_param = "0";
@@ -337,7 +337,7 @@ int main(int argc, char** argv)
     checkTC(DcGetIntValue(handle, LX_INT_ALGORITHM_MODE, &algor_mode));
     std::cout << " current mode :" << algor_mode.cur_value << std::endl;
 
-    //开启定位算法
+    // Enable localization algorithm
     checkTC(DcSetIntValue(handle, LX_INT_ALGORITHM_MODE, MODE_VISION_LOCATION));
 
     //for test laser_data
@@ -366,62 +366,62 @@ int main(int argc, char** argv)
     //checkTC(DcSpecialControl(handle, "SetLaserData", &laser_data));
 
 
-    //算法版本号
+    // Algorithm version
     char* algor_ver = nullptr;
     checkTC(DcGetStringValue(handle, LX_STRING_ALGORITHM_VERSION, &algor_ver));
     if (algor_ver != nullptr) std::cout << " current algor version:" << algor_ver << std::endl;
 
-    //算法参数，与当前设置的算法有关
+    // Algorithm parameters (depend on current algorithm)
     char* cur_algor_json = nullptr;
     checkTC(DcGetStringValue(handle, LX_STRING_ALGORITHM_PARAMS, &cur_algor_json));
     if (cur_algor_json != nullptr) std::cout << " current algor json param:" << cur_algor_json << std::endl;
 
     auto sret = LX_ERROR;
 
-    //导入地图
+    // Import map
     std::vector<std::string> in_map_list;
     //in_map_list.push_back("F:/work/aaa_test_file.pgm");
     in_map_list.push_back("./22.pcapng");
     //in_map_list.push_back("zip_utils_src");
     checkTC(DcSpecialControl(handle, "ImportLocationMapFile", const_cast <char*>("F:/work/aaa_test_file.bin")));
 
-    //建图使能
+    // Mapping enable
     bool enable = true;
     checkTC(DcSpecialControl(handle, "EnableBuildMap", &enable));
 
-    //定位使能
+    // Localization enable
     checkTC(DcSpecialControl(handle, "EnableLocation", &enable));
 
-     //是否设置定位调试模式
+     // Whether to enable localization debug mode
     //checkTC(DcSetIntValue(handle, DCAPI::LX_INI_RELOC_DEBUG_MODE, 0));
 
-    //导出地图文件
+    // Export map file
     const char* out_map = "./outmap.zip";
     checkTC(DcSpecialControl(handle, "ExportLocationMapFile", (void*)out_map));
 
 
-    //定位算法参数可通过如下函数设置，参数为json格式
+    // Localization algorithm parameters can be set via the function below (JSON)
     char sz_algor_json[512] = "{\"map_name\":\"XS1019\", \"external_param\":[-0.14, -0.172, 1.2, 179.799, -0.512, 0.116]}";
     checkTC(DcSetStringValue(handle, LX_STRING_ALGORITHM_PARAMS, sz_algor_json));
 
-    //切换地图
+    // Switch map
     //char newmap[] = "0509";
     //sret = DcSpecialControl(handle, "SetMapName", newmap);
     //std::cout << " DcSpecialControl  SetMapName:" << newmap << " sret:" << sret << std::endl;
 
-    //正常状态下，网络断开或者SDK关闭之后，相机会切换为待机状态。
-    //如果算法结果不通过SDK输出，需要设置为常开模式，相机和内置算法会始终保持工作
+    // Normally, after network disconnect or SDK close, the camera enters standby.
+    // If algorithm output is not read via SDK, set always-on mode to keep the camera and algorithms running.
     checkTC(DcSetIntValue(handle, LX_INT_WORK_MODE, 1));
 
-    //开启RGB
+    // Enable RGB
     bool enable_rgb = true;
     checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, enable_rgb));
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, &enable_rgb));
 
-    //开启数据流
+    // Start stream
     checkTC(DcStartStream(handle));
 
-    //开启线程, 读取odom数据
+    // Start thread to read odom data
     std::thread threads_odom(ReadAndSendOdom, handle);
     threads_odom.detach();
 
@@ -435,7 +435,7 @@ int main(int argc, char** argv)
 #endif
      if (wait_key == 'q')  break;
 
-        //刷新数据
+        // Refresh data
         auto ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
         if (LX_SUCCESS != ret)
         {            
@@ -451,7 +451,7 @@ int main(int argc, char** argv)
         //show rgb img
         TestRgb(enable_rgb, handle, is_first);
 
-        //获取数据
+        // Get data
         void* algordata = nullptr;
         if(DcGetPtrValue(handle, LX_PTR_ALGORITHM_OUTPUT, &algordata) == LX_SUCCESS) PrintData(algordata, loca_file);
     }

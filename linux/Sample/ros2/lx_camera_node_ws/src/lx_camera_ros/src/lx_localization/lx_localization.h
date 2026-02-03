@@ -47,7 +47,7 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr
       rgb_info_publisher_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr
-      app_info_publisher_; //输出定位信息
+      app_info_publisher_; // Publish localization info
 
   // subscribe
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr lsg_subsciber_;

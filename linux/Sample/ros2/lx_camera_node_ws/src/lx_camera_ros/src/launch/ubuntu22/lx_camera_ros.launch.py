@@ -7,14 +7,14 @@ from ament_index_python.packages import get_package_share_directory
 import os
 
 def generate_launch_description():
-  # 是否开启rviz显示
+  # Whether to enable rviz display
   enable_rviz =  LaunchConfiguration('enable_rviz')
   
   return LaunchDescription([
-    # 声明参数，可以通过命令行传递参数值
+    # Declare parameters; can be overridden via command line
     DeclareLaunchArgument('enable_rviz', default_value='true', description='Whether to launch rviz2'),
 
-    # 启动节点lx_camera_node
+    # Start lx_camera_node
     Node(
         package="lx_camera_ros",
         executable="lx_camera_node",
@@ -22,7 +22,7 @@ def generate_launch_description():
         output="screen",
         emulate_tty=True,
         parameters=[
-            # <!-- ip、日志路径、流配置、算法、工作模式配置、点云单位 -->
+            # <!-- IP, log path, stream config, algorithm, work mode, point cloud unit -->
         	  {"ip": "0"},
             {"log_path": "/var/log/"},
             {"is_xyz": 1},
@@ -33,7 +33,7 @@ def generate_launch_description():
             {"lx_application": 0},
             {"lx_tof_unit": 1},
 
-            # <!-- 相机位姿配置 -->
+            # <!-- Camera pose config -->
             {"x": 0.0},
             {"y": 0.0},
             {"z": 0.0},
@@ -41,10 +41,10 @@ def generate_launch_description():
             {"pitch": 0.0},
             {"yaw": 0.0},
 
-            # <!-- 是否使用launch配置 -->
+            # <!-- Whether to use launch parameters -->
             {"raw_param": 0},
 
-            # <!-- 2D配置 -->
+            # <!-- 2D config -->
             {"lx_2d_binning": 0},
             {"lx_2d_undistort": 0},
             {"lx_2d_undistort_scale": 51},
@@ -53,7 +53,7 @@ def generate_launch_description():
             {"lx_2d_exposure": 10001},
             {"lx_2d_gain": 101},
 
-            # <!-- 3D配置 -->
+            # <!-- 3D config -->
             {"lx_rgb_to_tof": 0},
             {"lx_3d_binning": 0},
             {"lx_mulit_mode": 0},
@@ -66,11 +66,11 @@ def generate_launch_description():
             {"lx_3d_second_exposure": 200},
             {"lx_3d_gain": 11},
 
-            # <!-- 深度 -->
+            # <!-- Depth -->
             {"lx_min_depth": 0},
             {"lx_max_depth": 8000}]),
 
-    # 启动节点rviz2（只有在enable_rviz为True时才会启动）
+    # Start rviz2 (only when enable_rviz is True)
     Node(
         package='rviz2',
         executable='rviz2',

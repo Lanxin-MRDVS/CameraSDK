@@ -4,10 +4,6 @@
 
 #include "lx_camera_define.h"
 
-//~chinese:
-//功能: 获取API版本号
-//参数：[out]version  API版本号，无需外部分配内存
-//~english:
 /**
  * @brief Get api version
  * 
@@ -15,14 +11,6 @@
  */
 LX_API_STR DcGetApiVersion();
 
-//~chinese:
-//功能: 设置打印信息等级
-//参数：[in]print_level 0：info     所有调试信息
-//                      1：warn     重要及警告类调试信息
-//                      2：error    仅输出错误信息
-//      [in]enable_screen_print 是否在窗口打印
-//      [in]log_path            log文件保存路径，可以为空，则保存在当前执行路径
-//~english:
 /**
  * @brief Set the level of log
  * 
@@ -34,14 +22,9 @@ LX_API_STR DcGetApiVersion();
 #ifdef __cplusplus
 LX_API DcSetInfoOutput(int print_level = 1, bool enable_screen_print = false, const char* log_path = "", int language = 0);
 #else
-//纯C风格接口，原接口逐步弃用
 LX_API DcSetInfoOutput(int print_level, bool enable_screen_print, const char* log_path);
 #endif
 
-//~chinese:
-//功能: 允许用户输出调试信息到log文件
-//参数：[in]str     要输出的字符串，'\0'结尾
-//~english:
 /**
  * @brief Allows users to output debugging information to log files.
  * 
@@ -50,11 +33,6 @@ LX_API DcSetInfoOutput(int print_level, bool enable_screen_print, const char* lo
  */
 LX_API DcLog(const char* str);
 
-//~chinese:
-//功能：查找支持的相机
-//参数  [out]devlist            查找到的相机列表
-//参数  [out]devnum             查找到的相机数量
-//~english:
 /**
  * @brief Search for camera list
  * 
@@ -65,17 +43,9 @@ LX_API DcLog(const char* str);
 #ifdef __cplusplus
 LX_EXPORT LX_STATE LX_STDC DcGetDeviceList(LxDeviceInfo** devlist, int* devnum, LX_DEVICE_SERIALS lx_serials = LX_SERIAL_ALL);
 #else
-//纯C风格接口，原接口逐步弃用
 LX_API DcGetDeviceList(LxDeviceInfo** devlist, int* devnum);
 #endif
 
-//~chinese:
-//功能：打开设备。设备打开后会独占权限，其他进程无法再打开相机。如果程序强制结束没有调用DcCloseDevice，需要等待几秒等心跳超时释放权限
-//参数：[in]open_mode           打开方式, 具体说明见LX_OPEN_MODE
-//      [in]param               不同的打开方式，填写不同的参数(当sdk运行在相机内部时，此处填写"127.0.0.1")
-//      [out]handle             连接成功后返回的设备句柄,后续所有接口访问都依赖该handle字段
-//      [out]info               连接成功后返回的相机详细信息
-//~english:
 /**
  * @brief open device  
  * 
@@ -87,10 +57,6 @@ LX_API DcGetDeviceList(LxDeviceInfo** devlist, int* devnum);
  */
 LX_API DcOpenDevice(LX_OPEN_MODE open_mode, const char* param, DcHandle* handle, LxDeviceInfo* info);
 
-//~chinese
-//功能: 关闭设备。与DcOpenDevice对应，释放权限和资源。
-//参数：[in]handle  设备句柄
-//~english
 /**
  * @brief Close device
  * 
@@ -99,10 +65,6 @@ LX_API DcOpenDevice(LX_OPEN_MODE open_mode, const char* param, DcHandle* handle,
  */
 LX_API DcCloseDevice(DcHandle handle);
 
-//~chinese
-//功能: 打开数据流
-//参数：[in]handle  设备句柄
-//~english
 /**
  * @brief Start stream data
  * 
@@ -111,10 +73,6 @@ LX_API DcCloseDevice(DcHandle handle);
  */
 LX_API DcStartStream(DcHandle handle);
 
-//~chinese
-//功能: 关闭数据流
-//参数：[in]handle  设备句柄
-//~english
 /**
  * @brief stop stream data
  * 
@@ -123,14 +81,6 @@ LX_API DcStartStream(DcHandle handle);
  */
 LX_API DcStopStream(DcHandle handle);
 
-//~chinese
-//功能: 设置相机IP相关参数
-//      修改完之后设备列表会变化，需重新调用DcGetDeviceList接口重新获取新的设备列表
-//参数：[in]handle                 设备句柄, (当未连接上设备情况下，需先通过搜索获取)
-//      [in]ip                     设备IP
-//      [in]netmask                子网掩码(若传空则内部默认"255.255.0.0")
-//      [in]gateway                网关ip(若传空则内部默认将ip最后网段置为"1"后作为网关)
-//~english
 /**
  * @brief Set camera IP-related parameters
  * 
@@ -143,16 +93,9 @@ LX_API DcStopStream(DcHandle handle);
 #ifdef __cplusplus
 LX_API DcSetCameraIp(DcHandle handle, const char* ip, const char* netmask = 0, const char* gateway = 0);
 #else
-//纯C风格接口，原接口逐步弃用
 LX_API DcSetCameraIp(DcHandle handle, const char* ip, const char* netmask, const char* gateway);
 #endif
 
-//~chinese
-//功能：设置int类型参数
-//参数：[in]handle                  设备句柄
-//      [in]cmd                     参考LX_CAMERA_FEATURE
-//      [in]value                   设置参数值
-//~english
 /**
  * @brief Set int type parameters
  * 
@@ -163,12 +106,6 @@ LX_API DcSetCameraIp(DcHandle handle, const char* ip, const char* netmask, const
  */
 LX_API DcSetIntValue(DcHandle handle, int cmd, int value);
 
-//~chinese
-//功能：获取int类型参数
-//参数：[in]handle                  设备句柄
-//      [in]cmd                     参考LX_CAMERA_FEATURE
-//      [out]value                  返回参数结构体
-//~english
 /**
  * @brief Obtain int type parameters
  * 
@@ -179,12 +116,6 @@ LX_API DcSetIntValue(DcHandle handle, int cmd, int value);
  */
 LX_API DcGetIntValue(DcHandle handle, int cmd, LxIntValueInfo* value);
 
-//~chinese
-//功能：设置float类型参数
-//参数：[in]handle                  设备句柄
-//      [in]cmd                     参考LX_CAMERA_FEATURE
-//      [in]value                   设置参数值
-//~english
 /**
  * @brief Set float type parameters
  * 
@@ -195,12 +126,6 @@ LX_API DcGetIntValue(DcHandle handle, int cmd, LxIntValueInfo* value);
  */
 LX_API DcSetFloatValue(DcHandle handle, int cmd, float value);
 
-//~chinese
-//功能：获取float类型参数
-//参数：[in]handle                  设备句柄
-//      [in]cmd                     参考LX_CAMERA_FEATURE
-//      [out]value                  返回参数结构体
-//~english
 /**
  * @brief Obtain float type parameters
  * 
@@ -211,12 +136,6 @@ LX_API DcSetFloatValue(DcHandle handle, int cmd, float value);
  */
 LX_API DcGetFloatValue(DcHandle handle, int cmd, LxFloatValueInfo* value);
 
-//~chinese
-//功能：设置bool类型参数
-//参数：[in]handle                  设备句柄
-//      [in]cmd                     参考LX_CAMERA_FEATURE
-//      [in]value                   设置参数值
-//~english
 /**
  * @brief Set bool type parameters
  * 
@@ -227,12 +146,6 @@ LX_API DcGetFloatValue(DcHandle handle, int cmd, LxFloatValueInfo* value);
  */
 LX_API DcSetBoolValue(DcHandle handle, int cmd, bool value);
 
-//~chinese
-//功能：获取bool类型参数
-//参数：[in]handle                  设备句柄
-//      [in]cmd                     参考LX_CAMERA_FEATURE
-//      [out]value                  返回参数
-//~english
 /**
  * @brief Obtain bool type parameters
  * 
@@ -243,12 +156,6 @@ LX_API DcSetBoolValue(DcHandle handle, int cmd, bool value);
  */
 LX_API DcGetBoolValue(DcHandle handle, int cmd, bool* value);
 
-//~chinese
-//功能：设置string类型参数
-//参数：[in]handle                  设备句柄
-//      [in]cmd                     参考LX_CAMERA_FEATURE
-//      [in]value                   设置参数值
-//~english
 /**
  * @brief Set string type parameters
  * 
@@ -259,12 +166,6 @@ LX_API DcGetBoolValue(DcHandle handle, int cmd, bool* value);
  */
 LX_API DcSetStringValue(DcHandle handle, int cmd, const char* value);
 
-//~chinese
-//功能：获取string类型参数
-//参数：[in]handle                  设备句柄
-//      [in]cmd                     参考LX_CAMERA_FEATURE
-//      [out]value                  返回参数，无需外部分配内存
-//~english
 /**
  * @brief Obtain string type parameters
  * 
@@ -275,12 +176,6 @@ LX_API DcSetStringValue(DcHandle handle, int cmd, const char* value);
  */
 LX_API DcGetStringValue(DcHandle handle, int cmd, char** value);
 
-//~chinese
-//功能：获取指针类型参数
-//参数：[in]handle                  设备句柄
-//      [in]cmd                     参考LX_CAMERA_FEATURE
-//      [out]value                  返回参数，无需外部分配内存
-//~english
 /**
  * @brief Obtain pointer type parameters
  * 
@@ -291,11 +186,6 @@ LX_API DcGetStringValue(DcHandle handle, int cmd, char** value);
  */
 LX_API DcGetPtrValue(DcHandle handle, int cmd, void** value);
 
-//~chinese
-//功能：执行对应CMD类型指令操作
-//参数：[in]handle                  设备句柄
-//      [in]cmd                     参考LX_CAMERA_FEATURE
-//~english
 /**
  * @brief Execute the corresponding CMD type command
  * 
@@ -305,14 +195,8 @@ LX_API DcGetPtrValue(DcHandle handle, int cmd, void** value);
  */
 LX_API DcSetCmd(DcHandle handle, int cmd);
 
-//~chinese
-//功能：LX_CAMERA_FEATURE定义之外的特殊操作，具体功能和参数由字符串command确定
-//参数：[in]handle                 设备句柄
-//      [in]command                指令(具体详见demo)
 //                                 SetObstacleIndex,GetObstacleIndex,SetObstacleMode,GetObstacleIO,SetOdomData,SetRelocPose,SetLaserData,ImportLocationMapFile,EnableBuildMap,EnableLocation,ExportLocationMapFile
 // 
-//      [in][out]value             设置时为对应入参，获取时为对应出参，无需外部分配内存
-//~english
 /**
  * @brief Special operations outside the definition of LX_CAMERA_FEATURE, with specific functions and parameters defined by the string command
  * 
@@ -324,15 +208,6 @@ LX_API DcSetCmd(DcHandle handle, int cmd);
 LX_API DcSpecialControl(DcHandle handle, const char* command, void* value);
 
 
-//~chinese
-//功能：设置ROI区域, 输入数值若不是8的整数倍,内部会自动处理为目标值最近的8的整倍数
-//参数：[in]handle                  设备句柄
-//      [in]offsetx                 起始点水平偏移像素
-//      [in]offsety                 起始点垂直偏移参数
-//      [in]width                   roi目标区域的宽
-//      [in]height                  roi目标区域的高
-//      [in]img_type                0-3D图像 1-2D图像
-//~english
 /**
  * @brief Set the ROI area, if the input value is not an integer multiple of 8, it will be automatically processed as the nearest integer multiple of 8 to the target value.
  * 
@@ -347,12 +222,6 @@ LX_API DcSpecialControl(DcHandle handle, const char* command, void* value);
 LX_API DcSetROI(DcHandle handle, int offsetx, int offsety, int width, int height, int img_type);
 
 
-//~chinese
-//功能: 注册数据帧回调函数,收到新的数据时自动调用
-//参数：[in]handle      设备句柄
-//      [in]func        回调函数指针
-//      [in]usr_data    用户自定义参数
-//~english
 /**
  * @brief Register the data frame callback function to be called automatically when new data is received.
  * 
@@ -364,14 +233,9 @@ LX_API DcSetROI(DcHandle handle, int offsetx, int offsety, int width, int height
 #ifdef __cplusplus
 LX_API DcRegisterFrameCallback(DcHandle handle, LX_FRAME_CALLBACK func, void* usr_data = 0);
 #else
-//纯C风格接口，原接口逐步弃用
 LX_API DcRegisterFrameCallback(DcHandle handle, LX_FRAME_CALLBACK func, void* usr_data);
 #endif
 
-//~chinese
-//功能: 取消数据帧注册回调函数
-//参数：[in]handle      设备句柄
-//~english
 /**
  * @brief Cancel data frame registration callback function
  * 
@@ -380,12 +244,6 @@ LX_API DcRegisterFrameCallback(DcHandle handle, LX_FRAME_CALLBACK func, void* us
  */
 LX_API DcUnregisterFrameCallback(DcHandle handle);
 
-//~chinese
-//功能: 注册相机状态回调函数,相机状态变化时自动调用
-//参数：[in]handle      设备句柄
-//      [in]func        回调函数指针
-//      [in]usr_data    用户自定义参数
-//~english
 /**
  * @brief Register the camera state callback function and call it automatically when the camera state changes.
  * 
@@ -397,14 +255,9 @@ LX_API DcUnregisterFrameCallback(DcHandle handle);
 #ifdef __cplusplus
 LX_API DcRegisterCameraStatusCallback(DcHandle handle, LX_CAMERA_STATUS_CALLBACK func, void* usr_data = 0);
 #else
-//纯C风格接口，原接口逐步弃用
 LX_API DcRegisterCameraStatusCallback(DcHandle handle, LX_CAMERA_STATUS_CALLBACK func, void* usr_data);
 #endif
 
-//~chinese
-//功能: 取消相机状态注册回调函数
-//参数：[in]handle      设备句柄
-//~english
 /**
  * @brief Cancel camera state registration callback function
  * 
@@ -413,13 +266,6 @@ LX_API DcRegisterCameraStatusCallback(DcHandle handle, LX_CAMERA_STATUS_CALLBACK
  */
 LX_API DcUnregisterCameraStatusCallback(DcHandle handle);
 
-//~chinese
-//功能：往设备写入自定义内容
-//参数：[in]handle             设备句柄
-//      [in]start_address         起始地址，从0开始
-//      [in]data               写入内存的内容，最大支持128kb内容
-//      [in]data_size          写入内存的内容长度，最大不超过128kb
-//~english
 /**
  * @brief Write custom content to device
  * 
@@ -431,13 +277,6 @@ LX_API DcUnregisterCameraStatusCallback(DcHandle handle);
  */
 LX_API DcWriteUserData(DcHandle handle, int start_address, char* data, int data_size);
 
-//~chinese
-//功能：从设备读取自定义内容,无需外部分配内存，但每次调用读取前会重置上次读取时分配的内存
-//参数：[in]handle             设备句柄
-//      [in]start_address      起始地址，从0开始
-//      [out]data              读取内存的内容，最大支持128kb内容
-//      [out]data_size         读取的内容长度，最大不超过128kb
-//~english
 /**
  * @brief Read customized content from the device without external memory allocation, but each call to read will reset the memory allocated during the last read.
  * 
@@ -449,11 +288,6 @@ LX_API DcWriteUserData(DcHandle handle, int start_address, char* data, int data_
  */
 LX_API DcReadUserData(DcHandle handle, int start_address, char** data, int& data_size);
 
-//~chinese
-//功能: 保存点云，可直接调用
-//参数：[in]handle                设备句柄
-//      [in]filename              文件名，支持txt,ply和pcd格式。txt格式按图像顺序保存所有数据，ply和pcd仅保存非零数据
-//~english
 /**
  * @brief Save the point cloud, which can be called directly
  * 
@@ -463,11 +297,6 @@ LX_API DcReadUserData(DcHandle handle, int start_address, char** data, int& data
  */
 LX_API DcSaveXYZ(DcHandle handle, const char* filename);
 
-//~chinese
-//功能：设置参数路径
-//参数：[in]handle                  设备句柄
-//      [in]filepath                参数文件路径，不包含文件名(大部分情况不需要调用，仅部分相型号机打开时需要参数，如M3，I2等)
-//~english
 /**
  * @brief Setting the parameter path
  * 
@@ -477,10 +306,6 @@ LX_API DcSaveXYZ(DcHandle handle, const char* filename);
  */
 LX_API DcSetParamPath(DcHandle handle, const char* filepath);
 
-//~chinese
-//功能: 获取函数返回状态对应的说明
-//参数：[in]state  函数接口返回的状态
-//~english
 /**
  * @brief Get the description of the function's return status
  * 
@@ -490,10 +315,6 @@ LX_API DcSetParamPath(DcHandle handle, const char* filepath);
 LX_API_STR DcGetErrorString(LX_STATE state);
 
 
-//~chinese:
-//功能: 算法库使用GPU加速，打开相机前必须先调用，否则无效。默认关闭。部分GPU设备可能不支持，如果出现异常，建议关闭。
-//参数：[in]is_enable     是否使能
-//~english:
 /**
  * @brief Use gpu to accelerate, must call first. Recommend to set false if it works abnormally.
  *
@@ -503,10 +324,6 @@ LX_API_STR DcGetErrorString(LX_STATE state);
 LX_API DcSetGpuEnable(bool is_enable);
 LX_API DcGetGpuEnable(bool* is_enable);
 
-//~chinese:
-//功能: 开启ptp时间同步源服务，打开相机前调用，否则无效。默认打开
-//参数：[in]is_enable     是否使能
-//~english:
 /**
  * @brief Enable the PTP time synchronization source service and call it before turning on the camera, otherwise it will be invalid. It is turned on by default
 
@@ -519,11 +336,7 @@ LX_API DcGetPtpEnable(bool* is_enable);
 
 
 /**
- * 功能：多线程并行计算加速线程数量
- * 参数：{int} thread_num: 设置并行计算的线程数，默认-1自动调整
- * 开启并行计算会增加CPU消耗，但是计算速度有较大提升
  */
-//~english:
 /**
  * @brief Multi-threaded parallel computing accelerates the number of threads
  *
@@ -533,10 +346,6 @@ LX_API DcGetPtpEnable(bool* is_enable);
  */
 LX_API DcSetParallelThread(int thread_num);
 
-//~chinese:
-//功能: 开启SDK内部日志功能，默认开启
-//参数：[in]is_enable     是否使能
-//~english:
 /**
  * @brief Enable SDK inner log 
 
@@ -547,14 +356,7 @@ LX_API DcSetParallelThread(int thread_num);
 LX_API DcSetLogEnable(bool is_enable);
 
 
-//以下IMU数据采集只有部分设备型号支持
 
-//~chinese
-//功能: 注册IMU传感器数据回调函数,收到新的数据时自动调用
-//参数：[in]handle      设备句柄
-//      [in]func        回调函数指针
-//      [in]usr_data    用户自定义参数
-//~english
 /**
  * @brief Register the imu data callback function to be called automatically when new data is received.
  *
@@ -565,10 +367,6 @@ LX_API DcSetLogEnable(bool is_enable);
  */
 LX_API DcRegisterImuDataCallback(DcHandle handle, LX_IMUDATA_CALLBACK func, void* usr_data);
 
-//~chinese
-//功能: 取消IMU传感器数据帧注册回调函数
-//参数：[in]handle      设备句柄
-//~english
 /**
     * @brief Cancel imu data  registration callback function
     *
@@ -577,12 +375,6 @@ LX_API DcRegisterImuDataCallback(DcHandle handle, LX_IMUDATA_CALLBACK func, void
     */
 LX_API DcUnregisterImuDataCallback(DcHandle handle);
 
-//~chinese
-//功能: 启动IMU数据监听
-//参数：[in]handle      设备句柄
-//      [in]acc_range 加速度量程 0:±2g，1:±4g，2:±8g，3:±16g
-//      [in]gry_range 角速度量程 0: 2000*PI/180 rad/s, 1: 1000*PI/180 rad/s, 2: 500*PI/180 rad/s, 3:250*PI/180 rad/s, 4:125*PI/180 rad/s
-//~english
 /**
     * @brief Start IMU data listening
     *
@@ -593,10 +385,6 @@ LX_API DcUnregisterImuDataCallback(DcHandle handle);
     */
 LX_API DcStartIMU(DcHandle handle, uint16_t acc_range, uint16_t gry_range);
 
-//~chinese
-//功能: 停止IMU数据监听
-//参数：[in]handle      设备句柄
-//~english
 /**
 * @brief Start IMU data listening
 *

@@ -1,4 +1,4 @@
-﻿// single_camera.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+﻿// single_camera.cpp : This file contains the main function. Program execution begins and ends here.
 //
 
 #include <string>
@@ -42,7 +42,7 @@ int main(int argc, char** argv)
     DcHandle handle = 0;
     printf("call api version: %s\n", DcGetApiVersion());
 
-    //查找相机
+    // Find camera
     int device_num = 0;
     LxDeviceInfo* p_device_list = NULL;
     checkTC(DcGetDeviceList(&p_device_list, &device_num));    
@@ -54,25 +54,26 @@ int main(int argc, char** argv)
     }
     printf("DcGetDeviceList success list: %d\n", device_num);
 
-    //打开相机。SDK基于GIGE协议，会搜索到所有支持GIGE协议的相机，用索引方式打开相机时需要注意
-    //设备打开后会独占权限，其他进程无法再打开相机。如果程序强制结束没有调用DcCloseDevice，需要等待几秒等心跳超时释放权限
+    // Open camera. SDK uses GIGE and finds all GIGE cameras; be careful when opening by index.
+    // After opening, the camera is exclusive; other processes cannot open it.
+    // If the program exits without DcCloseDevice, wait for heartbeat timeout to release.
     std::string open_param;
     int open_mode = OPEN_BY_INDEX;
     switch (open_mode)
     {
-        //根据ip打开设备
+        // Open device by IP
     case OPEN_BY_IP:
         open_param = "192.168.100.82";
         break;
-        //根据id打开设备
+        // Open device by ID
     case OPEN_BY_ID:
         open_param = "F13301122647";
         break;
-        //根据sn打开设备
+        // Open device by SN
     case OPEN_BY_SN:
         open_param = "ccf8981cc50b66b6";
         break;
-        //根据搜索设备列表索引打开设备
+        // Open device by index in the discovered device list
     case OPEN_BY_INDEX:
     default:
         open_param = "0";
@@ -90,32 +91,32 @@ int main(int argc, char** argv)
     printf("device_info\nid: %s\nip: %s\nsn: %s\nfirmware_ver:%s\n",
         device_info.id, device_info.ip, device_info.sn, device_info.firmware_ver);
 
-    //获取数据流开启状态，如需调整可以调用DcSetBoolValue。
+    // Get stream enable status; adjust via DcSetBoolValue if needed.
     bool test_depth = false, test_amp = false, test_rgb = false;
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, &test_depth));
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, &test_amp));
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, &test_rgb));
 
-    //RGBD对齐，rgb和depth的图像尺寸和坐标会保持一致。
-    //提供两中对齐方式，以depth为基准和以rgb为基准。以rgb为基准时深度和强度图像坐标不一致。
+    // RGBD alignment keeps RGB and depth sizes/coordinates consistent.
+    // Two modes: align to depth or to RGB. Aligning to RGB makes depth/amp coordinates inconsistent.
     //checkTC(DcSetIntValue(handle, LX_INT_RGBD_ALIGN_MODE, LX_RGBD_ALIGN_MODE::DEPTH_TO_RGB));
 
-    //可以根据需要,是否开启帧同步模式, 开启该模式, 内部会对每一帧做同步处理后返回
-    //若不需要不同数据流之间同步, 则不需要开启此功能, 内部会优先保证数据实时性，也可以通过帧ID和时间戳判断是否同步
+    // Enable frame sync if needed; when enabled, frames are synchronized internally before returning.
+    // If not needed, keep it off for better real-time behavior; you can also use frame ID/timestamp.
     //checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_SYNC_FRAME, true));
 
     printf("test_depth: %d test_amp: %d test_rgb: %d\n", test_depth, test_amp, test_rgb);
 
-    /*其他操作。相机的设置、参数的获取建议在数据流开启之前操作，尤其涉及到图像尺寸变化的内容*/
+    /* Other operations: set parameters before starting stream, especially those affecting image size. */
 
-    //触发模式
+    // Trigger mode
     LxIntValueInfo info;
     LX_TRIGGER_MODE trigger_mode = LX_TRIGGER_MODE_OFF;  
     //DcSetIntValue(handle, LX_INT_TRIGGER_MODE, trigger_mode);
     if(DcGetIntValue(handle, LX_INT_TRIGGER_MODE, &info) == LX_SUCCESS)
         trigger_mode = static_cast<LX_TRIGGER_MODE>(info.cur_value);
 
-    //开启数据流
+    // Start stream
     checkTC(DcStartStream(handle));
 
     std::thread pthread = std::thread(WaitKey);
@@ -124,14 +125,14 @@ int main(int argc, char** argv)
     std::this_thread::sleep_for(std::chrono::seconds(1));
     while (true)
     {
-        //更新数据
+        // Update data
         if (wait_key == 'q' || wait_key == 'Q')
             break;
 
         LX_STATE ret;
         if (trigger_mode == LX_TRIGGER_MODE::LX_TRIGGER_SOFTWARE)
         {
-            ////软触发模式需要自行控制触发，这里只是示例
+            //// Software trigger mode requires manual triggering; this is just an example
             ret = DcSetCmd(handle, LX_CMD_SOFTWARE_TRIGGER);
             if (ret != LX_SUCCESS) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(300));
@@ -142,9 +143,9 @@ int main(int argc, char** argv)
         ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
 
         if ((LX_SUCCESS != ret)
-            //开启帧同步时，在超时范围内没有找到匹配的帧（丢包），会返回LX_E_FRAME_ID_NOT_MATCH
+            // With frame sync enabled, timeout without a matched frame (packet loss) returns LX_E_FRAME_ID_NOT_MATCH
             && (LX_E_FRAME_ID_NOT_MATCH != ret)
-            //多机模式开启时，检测到多机干扰会返回LX_E_FRAME_MULTI_MACHINE
+            // In multi-camera mode, interference returns LX_E_FRAME_MULTI_MACHINE
             && (LX_E_FRAME_MULTI_MACHINE != ret))
         {
             if (LX_E_RECONNECTING == ret) {
@@ -187,12 +188,12 @@ int TestFrame(DcHandle handle)
         }
     }
 
-    //帧ID信息，可以用来识别每个数据流的同步，否则可以忽略
+    // Frame ID info can be used to synchronize streams; otherwise can be ignored
     FrameExtendInfo* pextendframe = nullptr;
     if (frame_ptr->reserve_data != nullptr)
         pextendframe = (FrameExtendInfo*)frame_ptr->reserve_data;
 
-    //深度数据
+    // Depth data
     if (frame_ptr->depth_data.frame_data != nullptr)
     {
         auto depth_data = frame_ptr->depth_data;
@@ -200,7 +201,7 @@ int TestFrame(DcHandle handle)
         if (pextendframe != nullptr)
             printf("depth_frame_id:%d\n", pextendframe->depth_frame_id);
 
-        //将depth数据转换为xyz点云数据
+        // Convert depth data to XYZ point cloud
         void* xyz = NULL;
         DcGetPtrValue(handle, LX_PTR_XYZ_DATA, &xyz);
 
@@ -220,7 +221,7 @@ int TestFrame(DcHandle handle)
 #endif
     }
 
-    //强度数据
+    // Intensity data
     if (frame_ptr->amp_data.frame_data != nullptr)
     {
         auto amp_data = frame_ptr->amp_data;
@@ -245,7 +246,7 @@ int TestFrame(DcHandle handle)
 #endif
     }
 
-    //rgb数据
+    // RGB data
     if (frame_ptr->rgb_data.frame_data != nullptr)
     {
         auto rgb_data = frame_ptr->rgb_data;

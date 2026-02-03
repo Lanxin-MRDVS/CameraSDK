@@ -1,4 +1,4 @@
-﻿//application_obstacle.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+﻿//application_obstacle.cpp : This file contains the main function. Program execution begins and ends here.
 //
 
 #include <iostream>
@@ -46,15 +46,15 @@ int main(int argc, char** argv)
     int open_mode = OPEN_BY_INDEX;
     switch (open_mode)
     {
-        //根据ip打开设备
+        // Open device by IP
     case OPEN_BY_IP:
         open_param = "192.168.100.12";
         break;
-        //根据sn打开设备
+        // Open device by SN
     case OPEN_BY_ID:
         open_param = "F13301122647";
         break;
-        //根据搜索设备列表索引打开设备
+        // Open device by index in the discovered device list
     case OPEN_BY_INDEX:
     default:
         open_param = "0";
@@ -68,32 +68,32 @@ int main(int argc, char** argv)
         << "\n cameraip:" << device_info.ip << "\n firmware_ver:" << device_info.firmware_ver << "\n sn:" << device_info.sn
         << "\n name:" << device_info.name << "\n img_algor_ver:" << device_info.algor_ver << std::endl;
 
-    //应用算法
+    // Apply algorithm
     LxIntValueInfo algor_info = { 0 };
     checkTC(DcGetIntValue(handle, LX_INT_ALGORITHM_MODE, &algor_info));
     std::cout << " current LX_INT_ALGORITHM_MODE:" << algor_info.cur_value << std::endl;
 
     int algor_mode = 0;
 
-    //老版本, 是否支持取决于设备端
+    // Legacy version; support depends on device firmware
     //algor_mode = MODE_AVOID_OBSTACLE;
     
-    //V2版本
+    // V2 version
     algor_mode = MODE_AVOID_OBSTACLE2;
     checkTC(DcSetIntValue(handle, LX_INT_ALGORITHM_MODE, algor_mode));
 
-    //算法版本号
+    // Algorithm version
     char* algor_ver = nullptr;
     checkTC(DcGetStringValue(handle, LX_STRING_ALGORITHM_VERSION, &algor_ver));
     if (algor_ver != nullptr) std::cout << " current algor version:" << algor_ver << std::endl;
 
-    //算法参数，与当前设置的算法有关
+    // Algorithm parameters (depend on current algorithm)
     char* cur_algor_json = nullptr;
     checkTC(DcGetStringValue(handle, LX_STRING_ALGORITHM_PARAMS, &cur_algor_json));
     if (cur_algor_json != nullptr) std::cout << " current algor json param:" << cur_algor_json << std::endl;
 
-    //根据需要，修改算法参数，为json格式，可通过json库也可以通过string直接修改，也可以通过文件中转
-    //以下为该算法json范例，其中ZoneIndex为当前生效的避障模式索引，对应Zones中多个模式，Zones中的单个模式中区分危险区域和预警区域坐标。
+    // Modify algorithm parameters as needed (JSON). You can edit with a JSON library, a raw string, or via a file.
+    // Example JSON below: ZoneIndex selects the active obstacle mode; Zones contains multiple modes with Danger/Warning zones.
     std::string obstacle_json_param = "{ \
         \"R\": [0.00000002842, 0.00000119, 1.00000119, -1.00000011920, 0.0000119209, 0.0000011920931, -0.00002384, -1.00000011920, 0.0000119209],\
         \"T\": [400, 0, 120],\
@@ -118,22 +118,22 @@ int main(int argc, char** argv)
         \"setRadiusFilter\": [-1, 1],\
         \"setRange\": [0, 4000, -500, 500, -50, 500]\
         }";
-    //修改避障参数，建议通过上位机LxCameraViewer修改。S2仅支持上位机修改！！！
+    // Modify obstacle parameters; recommended via the host tool LxCameraViewer. S2 only supports host-side changes.
     //checkTC(DcSetStringValue(handle, LX_STRING_ALGORITHM_PARAMS, obstacle_json_param.c_str()));
 
-    //仅切换避障参数可以通过以下接口实现。S2需要上位机配置好每套参数后才能切换，否则无效
-    int pobstacle_mode = 1;//使用第二套参数
+    // Switch obstacle parameter set using the interface below. S2 requires all sets to be preconfigured on the host.
+    int pobstacle_mode = 1; // Use the second parameter set
     checkTC(DcSpecialControl(handle, "SetObstacleMode", (void*)&pobstacle_mode));
 
     checkTC(DcStartStream(handle));
 
-    //正常状态下，网络断开或者SDK关闭之后，相机会切换为待机状态。
-    //如果算法结果不通过SDK输出（IO 串口 UDP协议等方式），需要设置为常开模式，相机和内置算法会始终保持工作
+    // Normally, after network disconnect or SDK close, the camera enters standby.
+    // If algorithm output is not read via SDK (IO/serial/UDP, etc.), set always-on mode to keep the camera and algorithms running.
     checkTC(DcSetIntValue(handle, LX_INT_WORK_MODE, 1));
 
     while (true)
     {
-        //刷新数据
+        // Refresh data
         auto ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
         if ((LX_SUCCESS != ret)
             && (LX_E_FRAME_ID_NOT_MATCH != ret)
@@ -147,7 +147,7 @@ int main(int argc, char** argv)
             continue;
         }
 
-        //获取避障IO输出结果
+        // Get obstacle IO output result
         int obstacle_io_result;
         checkTC(DcSpecialControl(handle, "GetObstacleIO", (void*)&obstacle_io_result));
         std::cout << " obstacle io result:" << obstacle_io_result << std::endl;
@@ -155,7 +155,7 @@ int main(int argc, char** argv)
         if (device_info.dev_type == LX_DEVICE_M4
             || device_info.dev_type == LX_DEVICE_M4Pro)
         {
-            //获取数据
+            // Get data
             void* algordata = nullptr;
             checkTC(DcGetPtrValue(handle, LX_PTR_ALGORITHM_OUTPUT, &algordata));
             PrintData(algordata, algor_mode);
@@ -186,7 +186,7 @@ int PrintData(void* data_ptr, int obstacle_mode)
 
         if (obstacle->cloud_output != nullptr)
         {
-            algor_ss << " cloud data "; //print 前10个
+            algor_ss << " cloud data "; // print first 10
             auto cloud_num = obstacle->number_3d < 10 ? obstacle->number_3d : 10;
             for (int i = 0; i < (int)cloud_num; i++)
             {
@@ -216,7 +216,7 @@ int PrintData(void* data_ptr, int obstacle_mode)
 
         if (obstacle->cloud_output != nullptr)
         {
-            algor_ss << " cloud data "; //print 前10个
+            algor_ss << " cloud data "; // print first 10
             auto cloud_num = obstacle->number_3d < 10 ? obstacle->number_3d : 10;
             for (int i = 0; i < (int)cloud_num; i++)
             {

@@ -1,4 +1,4 @@
-﻿//application_obstacle_v2.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+﻿//application_obstacle_v2.cpp : This file contains the main function. Program execution begins and ends here.
 //
 
 #include <iostream>
@@ -49,15 +49,15 @@ int main(int argc, char** argv)
     int open_mode = OPEN_BY_INDEX;
     switch (open_mode)
     {
-        //根据ip打开设备
+        // Open device by IP
     case OPEN_BY_IP:
         open_param = "192.168.100.82";
         break;
-        //根据sn打开设备
+        // Open device by SN
     case OPEN_BY_ID:
         open_param = "F13301122647";
         break;
-        //根据搜索设备列表索引打开设备
+        // Open device by index in the discovered device list
     case OPEN_BY_INDEX:
     default:
         open_param = "0";
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
         << "\n cameraip:" << device_info.ip << "\n firmware_ver:" << device_info.firmware_ver << "\n sn:" << device_info.sn
         << "\n name:" << device_info.name << "\n img_algor_ver:" << device_info.algor_ver << std::endl;
 
-    //应用算法
+    // Apply algorithm
     LxIntValueInfo algor_info = { 0 };
     checkTC(DcGetIntValue(handle, LX_INT_ALGORITHM_MODE, &algor_info));
     std::cout << " current LX_INT_ALGORITHM_MODE:" << algor_info.cur_value << std::endl;
@@ -79,17 +79,17 @@ int main(int argc, char** argv)
     int algor_mode = MODE_AVOID_OBSTACLE2;
     checkTC(DcSetIntValue(handle, LX_INT_ALGORITHM_MODE, algor_mode));
 
-    //算法版本号
+    // Algorithm version
     char* algor_ver = nullptr;
     checkTC(DcGetStringValue(handle, LX_STRING_ALGORITHM_VERSION, &algor_ver));
     if (algor_ver != nullptr) std::cout << " current algor version:" << algor_ver << std::endl;
 
-    //算法参数，与当前设置的算法有关
+    // Algorithm parameters (depend on current algorithm)
     char* cur_algor_json = nullptr;
     checkTC(DcGetStringValue(handle, LX_STRING_ALGORITHM_PARAMS, &cur_algor_json));
     if (cur_algor_json != nullptr) std::cout << " current algor json param:" << cur_algor_json << std::endl;
 
-    //关闭3D深度图、强度图和2D图像流，以节省带宽。如果需要可以开启
+    // Disable 3D depth, intensity, and 2D image streams to save bandwidth (enable if needed)
     checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, false));
     checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, false));
     checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, false));
@@ -106,7 +106,7 @@ int main(int argc, char** argv)
             {
                 pobstacle_index = 0;
             }
-            //修改避障检测区域索引参数
+            // Update obstacle detection region index
             LX_STATE state = DcSpecialControl(handle, "SetObstacleMode", &pobstacle_index);
             if (state != LX_SUCCESS)
                 std::cout << DcGetErrorString(state) << std::endl;
@@ -117,7 +117,7 @@ int main(int argc, char** argv)
 
     while (true)
     {
-        //如果需要获取图像数据或者避障详细信息数据，就得通过LX_CMD_GET_NEW_FRAME刷新
+        // To get image data or detailed obstacle info, refresh with LX_CMD_GET_NEW_FRAME
         auto ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
         if ((LX_SUCCESS != ret)
             && (LX_E_FRAME_ID_NOT_MATCH != ret)
@@ -131,12 +131,12 @@ int main(int argc, char** argv)
             continue;
         }
 
-        //获取避障IO输出结果
+        // Get obstacle IO output result
         int obstacle_io_result;
         checkTC(DcSpecialControl(handle, "GetObstacleIO", (void*)&obstacle_io_result));
         std::cout << " obstacle io result:" << obstacle_io_result << std::endl;
 
-        //获取避障详细信息数据
+        // Get detailed obstacle info
         void* algordata = nullptr;
         checkTC(DcGetPtrValue(handle, LX_PTR_ALGORITHM_OUTPUT, &algordata));
         PrintData(algordata, algor_mode);
@@ -165,7 +165,7 @@ int PrintData(void* data_ptr, int obstacle_mode)
 
         if (obstacle->cloud_output != nullptr)
         {
-            algor_ss << " cloud data "; //print 前10个
+            algor_ss << " cloud data "; // print first 10
             auto cloud_num = obstacle->number_3d < 10 ? obstacle->number_3d : 10;
             for (int i = 0; i < (int)cloud_num; i++)
             {

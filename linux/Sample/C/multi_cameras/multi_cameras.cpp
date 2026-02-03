@@ -1,4 +1,4 @@
-﻿// multi_camera.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+﻿// multi_camera.cpp : This file contains the main function. Program execution begins and ends here.
 //
 #include <iostream>
 #include <string>
@@ -35,10 +35,10 @@ int thread_work(std::string ip);
 
 int main(int argc, char** argv)
 {
-    //日志
+    // Log
     checkTC(DcSetInfoOutput(1, false, "./"), 0);
     std::cout << " call api version:" << DcGetApiVersion() << std::endl;
-    //查找设备
+    // Find devices
     int device_num = 0;
     LxDeviceInfo* p_device_list = NULL;
     checkTC(DcGetDeviceList(&p_device_list, &device_num), 0);
@@ -50,7 +50,7 @@ int main(int argc, char** argv)
     }
     std::cout << "DcGetDeviceList success list: " << device_num << std::endl << std::endl;
 
-    //开启多个线程
+    // Start multiple threads
     std::vector<std::thread> threads_vec;
     for (auto device_index = 0; device_index < device_num; device_index++)
     {
@@ -76,7 +76,7 @@ int main(int argc, char** argv)
 
 int thread_work(std::string ip)
 {
-    //开启相机
+    // Open camera
     DcHandle handle = 0;
     LxDeviceInfo device_info;
     checkTC(DcOpenDevice(OPEN_BY_IP, ip.c_str(), &handle, &device_info), handle);
@@ -85,14 +85,14 @@ int thread_work(std::string ip)
         << ", cameraip:" << device_info.ip << ", firmware_ver:" << device_info.firmware_ver << ", sn:" << device_info.sn
         << ", name:" << device_info.name << " ,img_algor_ver:" << device_info.algor_ver << std::endl;
  
-    //数据流设置，开启太多可能会存在带宽不够的问题
+    // Stream settings; enabling too many streams may cause bandwidth issues
     checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, true), handle);
     checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, false), handle);
     bool rgb_enable = false;
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, &rgb_enable), handle);
-    //开启数据流
+    // Start stream
     checkTC(DcStartStream(handle), handle);
-    //tof参数
+    // TOF parameters
     LxIntValueInfo int_value;
     int tof_width = 0, tof_height = 0, tof_data_type = LX_DATA_UNSIGNED_SHORT;
     checkTC(DcGetIntValue(handle, LX_INT_3D_IMAGE_WIDTH, &int_value), handle);
@@ -101,7 +101,7 @@ int thread_work(std::string ip)
     tof_height = int_value.cur_value;
     checkTC(DcGetIntValue(handle, LX_INT_3D_DEPTH_DATA_TYPE, &int_value), handle);
     tof_data_type = int_value.cur_value;
-    //rgb参数
+    // RGB parameters
     int rgb_width = 0, rgb_height = 0, rgb_channles = 0, rgb_data_type = LX_DATA_UNSIGNED_CHAR;
     if (rgb_enable) {
         checkTC(DcGetIntValue(handle, LX_INT_2D_IMAGE_WIDTH, &int_value), handle);
@@ -118,14 +118,14 @@ int thread_work(std::string ip)
     {
         if (wait_key == 'q')
             break;
-        //刷新数据
+        // Refresh data
         auto ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
         if ((LX_SUCCESS != ret)
             && (LX_E_FRAME_ID_NOT_MATCH != ret)
             && (LX_E_FRAME_MULTI_MACHINE != ret))
             continue;
 
-        //获取深度数据
+        // Get depth data
         void* depth_data_ptr = nullptr;
         checkTC(DcGetPtrValue(handle, LX_PTR_3D_DEPTH_DATA, &depth_data_ptr), handle);
 #ifdef HAS_OPENCV
@@ -139,7 +139,7 @@ int thread_work(std::string ip)
         cv::waitKey(1);
 #endif
 #endif
-        //获取rgb数据
+        // Get RGB data
         if (rgb_enable) {
             void* rgb_data_ptr = nullptr;
             checkTC(DcGetPtrValue(handle, LX_PTR_2D_IMAGE_DATA, &rgb_data_ptr), handle);
@@ -153,7 +153,7 @@ int thread_work(std::string ip)
 #endif
 #endif
         }
-        //帧率
+        // Frame rate
         static auto _time = std::chrono::system_clock::now();
         auto _time2 = std::chrono::system_clock::now();
         if (std::chrono::duration_cast<std::chrono::seconds>(_time2 - _time).count() > 1)

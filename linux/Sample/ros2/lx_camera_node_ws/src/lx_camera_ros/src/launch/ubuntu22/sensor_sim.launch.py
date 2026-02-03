@@ -19,14 +19,13 @@ def generate_launch_description():
 		{"range_max": 101.0},
 		{"init_range": 100.0},
 
-		#<!-- 虚拟激光数据topic -->
+		#<!-- Virtual laser topic -->
 		{"laser_frame_id": "laser_link"},
 		{"laser_topic_name": "/sim/scan"},
-		#<!-- 虚拟里程计数据topic -->
+		#<!-- Virtual odom topic -->
 		{"odom_frame_id": "base"},
 		{"odom_topic_name": "/sim/odom"},
-		#<!-- 虚拟激光位姿topic -->
+		#<!-- Virtual laser pose topic -->
 		{"laserpose_frame_id": "base"},
 		{"laserpose_topic_name": "/sim/scan_pose"}])
     ])
-

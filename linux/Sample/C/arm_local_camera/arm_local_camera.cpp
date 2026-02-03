@@ -1,4 +1,4 @@
-﻿// single_camera.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+﻿// single_camera.cpp : This file contains the main function. Program execution begins and ends here.
 //
 
 #include <iostream>
@@ -116,8 +116,8 @@ int TestDepth(bool is_enable, DcHandle handle)
     if (!is_enable)
         return 0;
 
-    //理论上不用每次获取图像宽，高，数据类型，只在外层业务涉及roi/bining/depth_calib等会修改设备分辨率情况下需要重新获取，
-    //此处为保险起见每次获取数据前都重新拿宽高
+    // In theory you don't need to query width/height/data type every time.
+    // Re-query only if ROI/binning/depth_calib changes the resolution; done here for safety.
     int width = 0, height = 0;
     LxIntValueInfo int_value;
     checkTC(DcGetIntValue(handle, LX_INT_3D_IMAGE_WIDTH, &int_value));
@@ -131,10 +131,10 @@ int TestDepth(bool is_enable, DcHandle handle)
 
     checkTC(DcGetIntValue(handle, LX_INT_3D_DEPTH_DATA_TYPE, &int_value));
     int data_type = int_value.cur_value;
-    //第yRows行xCol列深度数据
-    //TOF相机深度数据为unsigned short类型，结构光相机（LX_DEVICE_WK)为float类型
-    //点云为float类型，xyz依次存储
-    //LX_DATE_TYPE的定义与opencv CV_8U CV_16U CV_32F一致
+    // Depth data at row yRow, column xCol
+    // TOF camera depth is unsigned short; structured-light camera (LX_DEVICE_WK) is float
+    // Point cloud uses float; xyz stored sequentially
+    // LX_DATE_TYPE matches OpenCV CV_8U / CV_16U / CV_32F
     int yRow = 100, xCol = 100;
     int pose = yRow * width + xCol;
     if (LX_DATA_UNSIGNED_SHORT == data_type)
@@ -148,7 +148,7 @@ int TestDepth(bool is_enable, DcHandle handle)
         float value = data[pose];
     }
 
-    //第yRows行xCol列点云数据
+    // Point cloud data at row yRow, column xCol
     float* xyz_data = nullptr;
     checkTC(DcGetPtrValue(handle, LX_PTR_XYZ_DATA, (void**)&xyz_data));
     float x = xyz_data[pose * 3];
@@ -171,9 +171,9 @@ int TestAmp(bool is_enable, DcHandle handle)
     height = int_value.cur_value;
 
 
-    //第yRows行xCol列数据
-    //TOF相机强度数据为unsigned short类型，结构光相机（LX_DEVICE_WK)为unsigned char类型
-    //LX_DATE_TYPE的定义与opencv CV_8U CV_16U CV_32F一致
+    // Intensity data at row yRow, column xCol
+    // TOF camera intensity is unsigned short; structured-light camera (LX_DEVICE_WK) is unsigned char
+    // LX_DATE_TYPE matches OpenCV CV_8U / CV_16U / CV_32F
     int yRow = 100, xCol = 100;
     int pose = yRow * width + xCol;
     checkTC(DcGetIntValue(handle, LX_INT_3D_AMPLITUDE_DATA_TYPE, &int_value));
@@ -215,9 +215,9 @@ int TestRgb(bool is_enable, DcHandle handle)
     unsigned char* rgb_data = nullptr;
     checkTC(DcGetPtrValue(handle, LX_PTR_2D_IMAGE_DATA, (void**)&rgb_data));
 
-    //第yRows行xCol列数据
-    //2D图像目前只有unsigned char格式
-    //LX_DATE_TYPE的定义与opencv CV_8U CV_16U CV_32F一致
+    // Data at row yRow, column xCol
+    // 2D image currently only uses unsigned char format
+    // LX_DATE_TYPE matches OpenCV CV_8U / CV_16U / CV_32F
     int yRow = 100, xCol = 100;
     int pose = yRow * width + xCol;
     if (1 == channles)

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#搜索设备IP并添加到防火墙白名单中
+# Search device IP and add it to the firewall allowlist
 script_dir=$(cd $(dirname $0);pwd) 
 ARCH=$(uname -m)
 echo "arch:" $ARCH
@@ -23,7 +23,7 @@ else
 fi
 
 
-#判断开启了哪种防火墙
+# Detect which firewall is running
 firewall_status=$(systemctl status ufw | grep Active)
 if [[ $firewall_status == *"active (running)"* ]]; then
 	echo "ufw is running."
@@ -71,7 +71,6 @@ if [[ $firewall_status == *"active (running)"* ]]; then
 else
 	echo "iptables is not running, do nothing."
 fi
-
 
 
 

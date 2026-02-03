@@ -757,12 +757,12 @@ int LxCamera::Check(std::string command, int state) {
   if (LX_SUCCESS == lx_state) {
     return lx_state;
   }
-  const char *m = DcGetErrorString(lx_state); // 获取错误信息
+  const char *m = DcGetErrorString(lx_state); // Get error message
   std_msgs::msg::String msg;
   setlocale(LC_ALL, "");
   msg.data = "#command: " + command +
              " #error code: " + std::to_string(lx_state) + " #report: " + m;
-  pub_error_->publish(msg); // 推送错误信息
+  pub_error_->publish(msg); // Publish error message
   RCLCPP_ERROR(this->get_logger(), "%s", msg.data.c_str());
   return state;
 }

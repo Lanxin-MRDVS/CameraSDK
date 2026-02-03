@@ -1,4 +1,4 @@
-﻿//frame_callback.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+﻿//frame_callback.cpp : This file contains the main function. Program execution begins and ends here.
 //
 
 #include <string>
@@ -34,11 +34,11 @@ void CallbackFunc(FrameInfo* frame, void* usr_data);
 
 int main(int argc, char** argv)
 {
-    //设置日志等级和路径。
+    // Set log level and path.
     //checkTC(DcSetInfoOutput(0, true, ""));
     printf("call api version: %s\n", DcGetApiVersion());
 
-    //查找设备
+    // Find device
     int device_num = 0;
     LxDeviceInfo* p_device_list = NULL;
     checkTC(DcGetDeviceList(&p_device_list, &device_num));
@@ -50,21 +50,22 @@ int main(int argc, char** argv)
     }
     printf("DcGetDeviceList success list: %d\n", device_num);
 
-    //打开相机。SDK基于GIGE协议，会搜索到所有支持GIGE协议的相机，用索引方式打开相机时需要注意
-    //设备打开后会独占权限，其他进程无法再打开相机。如果程序强制结束没有调用DcCloseDevice，需要等待几秒等心跳超时释放权限
+    // Open camera. SDK uses GIGE and will find all GIGE cameras; be careful when opening by index.
+    // After opening, the camera is exclusive; other processes cannot open it.
+    // If the program exits without DcCloseDevice, wait for heartbeat timeout to release.
     std::string open_param;
     int open_mode = OPEN_BY_INDEX; //OPEN_BY_IP;//
     switch (open_mode)
     {
-        //根据ip打开设备
+        // Open device by IP
     case OPEN_BY_IP:
         open_param = "192.168.100.82";
         break;
-        //根据sn打开设备
+        // Open device by SN
     case OPEN_BY_SN:
         open_param = "ccf8981cc50b66b6";
         break;
-        //根据搜索设备列表索引打开设备
+        // Open device by index in the discovered device list
     case OPEN_BY_INDEX:
     default:
         open_param = "0";
@@ -82,12 +83,12 @@ int main(int argc, char** argv)
     printf("device_info\nid: %s\nip: %s\nsn: %s\nfirmware_ver:%s\n",
         device_info.id, device_info.ip, device_info.sn, device_info.firmware_ver);
 
-    //获取数据流状态
+    // Get stream status
     bool depth_enable = false, amp_enable = false, rgb_enable = false;
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, &depth_enable));
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, &amp_enable));
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, &rgb_enable));
-    //获取内置应用算法状态
+    // Get built-in algorithm status
     int app_mode = LX_ALGORITHM_MODE::MODE_ALL_OFF;
     LxIntValueInfo int_value;
     checkTC(DcGetIntValue(handle, LX_INT_ALGORITHM_MODE, &int_value));
@@ -101,16 +102,16 @@ int main(int argc, char** argv)
 
     printf("depth_enable:%d amp_enable:%d rgb_enable:%d app_mode:%d\n", depth_enable, amp_enable, rgb_enable, app_mode);
 
-    //设置回调
+    // Register callback
     checkTC(DcRegisterFrameCallback(handle, CallbackFunc, nullptr));
 
-    //启流
+    // Start stream
     checkTC(DcStartStream(handle));
 
     if (trigger_mode == LX_TRIGGER_MODE::LX_TRIGGER_SOFTWARE) {
         std::thread trigger_pthread = std::thread([&]() {
             do {
-                //软触发模式需要自行控制触发，这里只是示例
+                // Software trigger mode requires manual triggering; this is just an example
                 auto ret = DcSetCmd(handle, LX_CMD_SOFTWARE_TRIGGER);
                 if (ret != LX_SUCCESS) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(300));
@@ -136,8 +137,8 @@ int main(int argc, char** argv)
 
 void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
 {
-    //此函数内部,尽量不要做复杂操作,否则可能阻塞内部数据回调
-    //回调方式不需要再调用LX_CMD_GET_NEW_FRAME
+    // Avoid heavy work inside this callback to prevent blocking internal callbacks
+    // Callback mode does not require LX_CMD_GET_NEW_FRAME
     if (frame_ptr == nullptr)
     {
         return;
@@ -158,7 +159,7 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
         }
     }
 
-    //若需要帧id信息,可选通过此结构体获取, 若需要帧同步, 则可通过将此处接收到的数据缓存到队列中,后续在队列中匹配帧id方式实现
+    // If frame ID is needed, use this struct. For frame sync, cache frames and match IDs in a queue.
     FrameExtendInfo* p_extend_info = nullptr;
     if (frame_ptr->reserve_data != nullptr)
         p_extend_info = (FrameExtendInfo*)frame_ptr->reserve_data;
@@ -170,15 +171,15 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
         if (p_extend_info != nullptr)
             printf("depth frame_id:%d\n", p_extend_info->depth_frame_id);
 
-        //获取点云数据(可选）。点云数据由深度数据转换，与深度数据同步更新
+        // Get point cloud data (optional). It is derived from depth and updated synchronously.
         float* xyz_data = nullptr;
         if (DcGetPtrValue(frame_ptr->handle, LX_PTR_XYZ_DATA, (void**)&xyz_data) != LX_SUCCESS)
             printf("get xyz failed");
         if (xyz_data != nullptr)
         {
-            // xyz_data指向点云数据内存空间由API接口内部管理，数据按照深度图的行列顺序排列方式一致，点云数据在相机坐标系下
-            // 其内存总大小为(frame_ptr->depth_data.frame_width) * (frame_ptr->depth_data.frame_height) * sizeof(float) * 3
-            // 假设获取第yRows = 100 行xCol = 100列点的坐标数据
+            // xyz_data is managed by the API and ordered like the depth image; points are in camera coordinates.
+            // Total size is (frame_width * frame_height * sizeof(float) * 3).
+            // Example: get the point at row yRow=100, col xCol=100.
             int yRow = 100, xCol = 100;
             int pose = yRow * frame_ptr->depth_data.frame_width + xCol;
             float x = xyz_data[pose * 3];

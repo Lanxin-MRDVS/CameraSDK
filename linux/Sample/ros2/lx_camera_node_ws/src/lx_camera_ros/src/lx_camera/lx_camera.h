@@ -36,8 +36,8 @@ public:
 
 private:
   int Check(std::string command, int state);
-  void SetParam();  //向相机写入配置参数
-  void ReadParam(); //读取配置参数
+  void SetParam();  // Write configuration parameters to the camera
+  void ReadParam(); // Read configuration parameters
   bool LxString(const lx_camera_ros::srv::LxString::Request::SharedPtr req,
                 const lx_camera_ros::srv::LxString::Response::SharedPtr res);
   bool LxFloat(const lx_camera_ros::srv::LxFloat::Request::SharedPtr req,

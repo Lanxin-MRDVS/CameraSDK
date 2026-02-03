@@ -1,4 +1,4 @@
-﻿//application_obstacle_v1.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
+﻿//application_obstacle_v1.cpp : This file contains the main function. Program execution begins and ends here.
 //
 
 #include <iostream>
@@ -47,15 +47,15 @@ int main(int argc, char** argv)
     int open_mode = OPEN_BY_INDEX;
     switch (open_mode)
     {
-        //根据ip打开设备
+        // Open device by IP
     case OPEN_BY_IP:
         open_param = "192.168.100.82";
         break;
-        //根据sn打开设备
+        // Open device by SN
     case OPEN_BY_ID:
         open_param = "F13301122647";
         break;
-        //根据搜索设备列表索引打开设备
+        // Open device by index in the discovered device list
     case OPEN_BY_INDEX:
     default:
         open_param = "0";
@@ -69,7 +69,7 @@ int main(int argc, char** argv)
         << "\n cameraip:" << device_info.ip << "\n firmware_ver:" << device_info.firmware_ver << "\n sn:" << device_info.sn
         << "\n name:" << device_info.name << "\n img_algor_ver:" << device_info.algor_ver << std::endl;
 
-    //应用算法
+    // Apply algorithm
     LxIntValueInfo algor_info = { 0 };
     checkTC(DcGetIntValue(handle, LX_INT_ALGORITHM_MODE, &algor_info));
     std::cout << " current LX_INT_ALGORITHM_MODE:" << algor_info.cur_value << std::endl;
@@ -77,24 +77,25 @@ int main(int argc, char** argv)
     int algor_mode = MODE_AVOID_OBSTACLE;
     checkTC(DcSetIntValue(handle, LX_INT_ALGORITHM_MODE, algor_mode));
 
-    //算法版本号
+    // Algorithm version
     char* algor_ver = nullptr;
     checkTC(DcGetStringValue(handle, LX_STRING_ALGORITHM_VERSION, &algor_ver));
     if (algor_ver != nullptr) std::cout << " current algor version:" << algor_ver << std::endl;
 
-    //算法参数，与当前设置的算法有关
+    // Algorithm parameters (depend on current algorithm)
     char* cur_algor_json = nullptr;
     checkTC(DcGetStringValue(handle, LX_STRING_ALGORITHM_PARAMS, &cur_algor_json));
     if (cur_algor_json != nullptr) std::cout << " current algor json param:" << cur_algor_json << std::endl;
 
-	//关闭3D深度图、强度图和2D图像流，以节省带宽。如果需要可以开启
+	// Disable 3D depth, intensity, and 2D image streams to save bandwidth (enable if needed)
     checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, false));
     checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, false));
     checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, false));
 
     checkTC(DcStartStream(handle));
 
-    //仅切换避障检测区域索引参数可以通过以下接口实现。S2,S10等使用避障V1方式的需要上位机配置好每套避障索引参数后才能切换，否则无效
+    // Switch only the obstacle detection region index using the interface below.
+    // For S2/S10 using obstacle V1, the host must preconfigure each index set before switching, otherwise it is invalid.
     int pobstacle_index = 0;
     std::atomic<bool> stop_flag(false);
     std::thread timer_thread([&]() {
@@ -105,9 +106,9 @@ int main(int argc, char** argv)
             {
                 pobstacle_index = 0;
             }
-            //修改避障检测区域索引参数
-			//注意：SetObstacleIndex是快速切换避障区域索引功能，SetObstacleMode是旧的全量配置切换速度较慢,所以这里建议使用SetObstacleIndex
-            //MODE_AVOID_OBSTACLE避障可以支持SetObstacleIndex和SetObstacleMode,MODE_AVOID_OBSTACLE2只能使用SetObstacleMode
+            // Update obstacle detection region index
+			// Note: SetObstacleIndex is fast index switching; SetObstacleMode is legacy full config and slower.
+            // MODE_AVOID_OBSTACLE supports SetObstacleIndex and SetObstacleMode; MODE_AVOID_OBSTACLE2 only supports SetObstacleMode.
             LX_STATE state = DcSpecialControl(handle, "SetObstacleIndex", &pobstacle_index);
 
             int pobstacle_index_now = 0;
@@ -126,18 +127,18 @@ int main(int argc, char** argv)
 
     while (true)
     {
-        //获取避障IO输出结果
+        // Get obstacle IO output result
         int obstacle_io_result;
         LX_STATE state = DcSpecialControl(handle, "GetObstacleIO", (void*)&obstacle_io_result);
         if (state != LX_SUCCESS) {
             std::cout << DcGetErrorString(state) << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            //todo：异常处理
+            // TODO: error handling
         }
         else {
             std::cout << " obstacle io result:" << obstacle_io_result << std::endl;
         }
-        //休眠，防止访问频繁访问设备
+        // Sleep to avoid frequent device access
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 

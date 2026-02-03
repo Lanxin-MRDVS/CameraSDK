@@ -1,6 +1,0 @@
-int32 cmd
-bool  val
-bool  is_set
----
-bool   val
-Result result

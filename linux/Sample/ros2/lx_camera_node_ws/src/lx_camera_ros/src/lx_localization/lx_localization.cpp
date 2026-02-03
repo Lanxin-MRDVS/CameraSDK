@@ -11,7 +11,7 @@
 
 static DcLib *LX_DYNAMIC_LIB = nullptr;
 
-// 定位算法时间戳 ms
+// Localization algorithm timestamp in ms
 static long GetTimestamp() {
   struct timeval tv;
   gettimeofday(&tv, NULL);
@@ -19,8 +19,8 @@ static long GetTimestamp() {
   return t;
 }
 
-// 版本号比较
-// 0: version1 == version2; 1：version1 > version2; -1：version1 < version2
+// Version compare
+// 0: version1 == version2; 1: version1 > version2; -1: version1 < version2
 int CompareVersion(const std::string &version1, const std::string &version2) {
   std::vector<int> v1, v2;
   std::stringstream ss1(version1), ss2(version2);
@@ -49,8 +49,8 @@ int CompareVersion(const std::string &version1, const std::string &version2) {
   }
 }
 
-// 获取相机定位结果附加内容：当前地图、定位置信度
-// 算法模块版本不匹配，可能产生错误
+// Get extra localization fields: current map, pose confidence
+// Algorithm module version mismatch may cause errors
 int GetExtentsData(int32_t *extents, const std::string &algo_ver,
                    std::string &map_name, float &pose_confidence,
                    int8_t &reloc_errorcode) {
@@ -103,7 +103,7 @@ void ShowRgb(const sensor_msgs::msg::Image::SharedPtr &msg) {
   cv::waitKey(1);
 }
 
-// check接口调用返回值
+// Check interface call return value
 int LxLocalization::Check(std::string command, int state) {
   LX_STATE lx_state = LX_STATE(state);
   if (LX_SUCCESS != lx_state) {
@@ -261,7 +261,7 @@ void LxLocalization::UploadOdomCallBack(
   q.z = msg->pose.pose.orientation.z;
   q.w = msg->pose.pose.orientation.w;
   data.theta = ToEulerAngles(q).yaw;
-  // 定位模块接收时间戳单位ms
+  // Localization module timestamp unit: ms
   data.timestamp =
       msg->header.stamp.sec * 1e3 + msg->header.stamp.nanosec * 1e-6;
   auto message = nlohmann::json();
@@ -517,11 +517,11 @@ LxLocalization::LxLocalization(DcLib *dynamic_lib)
   static auto s11 = cre_sub<geometry_msgs::msg::PoseWithCovarianceStamped>(
       slpr, BIND(UploadRelocCallBack));
 
-  // 以下为相机SDK操作
+  // SDK operations below
   // set sdk log
   RCLCPP_INFO(this->get_logger(), "Api version: %s", DcGetApiVersion());
   Check("SET_LOG", DcSetInfoOutput(print_level_, enable_screen_print_,
-                                   log_path_.c_str())); // 设置日志等级及路径
+                                   log_path_.c_str())); // Set log level and path
   RCLCPP_INFO(this->get_logger(), "Log file path: %s", log_path_.c_str());
 
   // find device
@@ -562,21 +562,21 @@ LxLocalization::LxLocalization(DcLib *dynamic_lib)
               info.firmware_ver, info.algor_ver);
 
   Check("LX_BOOL_ENABLE_2D_STREAM",
-        DcSetBoolValue(handle_, LX_BOOL_ENABLE_2D_STREAM, 1)); // 开启RGB流
+        DcSetBoolValue(handle_, LX_BOOL_ENABLE_2D_STREAM, 1)); // Enable RGB stream
   Check("LX_INT_ALGORITHM_MODE",
         DcSetIntValue(handle_, LX_INT_ALGORITHM_MODE,
-                      MODE_VISION_LOCATION)); // 设置算法模式为视觉定位
+                      MODE_VISION_LOCATION)); // Set algorithm mode to visual localization
 
   Check("LX_INT_WORK_MODE",
-        DcSetIntValue(handle_, LX_INT_WORK_MODE, 0)); // 设置工作模式为关闭
+        DcSetIntValue(handle_, LX_INT_WORK_MODE, 0)); // Set work mode to off
   Check("LX_BOOL_ENABLE_2D_AUTO_EXPOSURE",
         DcSetBoolValue(handle_, LX_BOOL_ENABLE_2D_AUTO_EXPOSURE,
-                       1)); // 开启2D自动曝光
+                       1)); // Enable 2D auto exposure
   Check("LX_INT_2D_AUTO_EXPOSURE_LEVEL",
         DcSetIntValue(handle_, LX_INT_2D_AUTO_EXPOSURE_LEVEL,
-                      auto_exposure_value_)); // 设置自动曝光值为50
+                      auto_exposure_value_)); // Set auto exposure value
   Check("LX_INT_WORK_MODE",
-        DcSetIntValue(handle_, LX_INT_WORK_MODE, 1)); // 设置算法模式为常开
+        DcSetIntValue(handle_, LX_INT_WORK_MODE, 1)); // Set work mode to always-on
 
   bool is_enable_rgb = false, is_enable_exp = false;
   LxIntValueInfo int_value, exp_val;
@@ -592,7 +592,7 @@ LxLocalization::LxLocalization(DcLib *dynamic_lib)
   char *algo_ver = "0.0.0";
   Check("LX_INT_ALGORITHM_MODE",
         DcGetStringValue(handle_, LX_STRING_ALGORITHM_VERSION,
-                         &algo_ver)); // 获取当前应用算法版本
+                         &algo_ver)); // Get current algorithm version
   algo_ver_ = algo_ver;
   RCLCPP_INFO(this->get_logger(),
               "rgb:%d,algor:%d,auto_exp:%d,exp_val:%d,visloc_algo_ver:%s",
@@ -601,11 +601,10 @@ LxLocalization::LxLocalization(DcLib *dynamic_lib)
   if (!is_enable_rgb || int_value.cur_value != MODE_VISION_LOCATION ||
       !is_enable_exp || exp_val.cur_value != auto_exposure_value_) {
     RCLCPP_ERROR(this->get_logger(), "camera setting failed...");
-    abort(); // 判断值是否正确
+    abort(); // Validate settings
   }
 
-  // 遍历已有地图，判断地图名是否正确
-  // 设置地图、相机外参、激光外参
+  // Validate map name and set map/camera/laser extrinsics
   if (mapping_mode_) {
     map_name_ = "example_map1";
     localization_mode_ = false;
@@ -615,13 +614,13 @@ LxLocalization::LxLocalization(DcLib *dynamic_lib)
   }
   auto message = nlohmann::json();
   nlohmann::json raw_json;
-  raw_json["map_name"] = map_name_;                     // key值为约定值
-  raw_json["external_param"] = camera_extrinsic_param_; // key值为约定值
-  raw_json["laser_external_param"] = laser_extrinsic_param_; // key值为约定值
+  raw_json["map_name"] = map_name_;                     // Reserved key
+  raw_json["external_param"] = camera_extrinsic_param_; // Reserved key
+  raw_json["laser_external_param"] = laser_extrinsic_param_; // Reserved key
   Check("LxCamera_SwitchMap",
         DcSetStringValue(handle_, LX_STRING_ALGORITHM_PARAMS,
                          raw_json.dump().c_str()));
-  // 设置定位模式or建图模式，二者不能同时设置为使能
+  // Set localization or mapping mode; they cannot both be enabled
   Check("LxCamera_Mapping", DcSetBoolValue(handle_, 3113, mapping_mode_));
   Check("LxCamera_Location", DcSetBoolValue(handle_, 3114, localization_mode_));
 
@@ -648,10 +647,10 @@ LxLocalization::LxLocalization(DcLib *dynamic_lib)
 }
 
 LxLocalization::~LxLocalization() {
-  DcSetBoolValue(handle_, 3113, false); // 关闭建图使能
-  DcSetBoolValue(handle_, 3114, false); // 关闭定位使能
-  DcStopStream(handle_);                // 相机启流关闭
-  DcCloseDevice(handle_);               // 关闭相机
+  DcSetBoolValue(handle_, 3113, false); // Disable mapping
+  DcSetBoolValue(handle_, 3114, false); // Disable localization
+  DcStopStream(handle_);                // Stop camera stream
+  DcCloseDevice(handle_);               // Close camera
 }
 
 void LxLocalization::Run() {
@@ -680,7 +679,7 @@ void LxLocalization::Run() {
     std::cout << std::endl;
     std::cout << "-------------------------------------------------"
               << std::endl;
-    // 获取定位算法结果
+    // Get localization algorithm result
     void *app_ptr = nullptr;
     DcGetPtrValue(handle_, LX_PTR_ALGORITHM_OUTPUT, &app_ptr);
     LxLocation *loc_res = (LxLocation *)app_ptr;
@@ -721,19 +720,18 @@ void LxLocalization::Run() {
           "get extents data failed, please check sdk version and update...");
     }
     // status
-    // 算法返回值: 错误码
-    // Unknown           = -1,  //!< 重定位中
-    // Tracking          = 0,   //!< 正常定位中
-    // RelocFailed       = 1,   //!< 重定位失败
-    // Slipping          = 2,   //!< 打滑
-    // Relocating        = 6,   //!< 重定位中
-    // NoTopImage        = 7,   //!< 相机图片输入异常
-    // NoOdom            = 8,   //!< 里程计超时异常
-    // Mapping = 20,  //!<
-    // 正常建图中，建图需要odom,图像以及激光数据（激光or激光位姿至少满足一个）
-    // MappingException = 21,  //!建图异常
-    // NoLaser       = 22,  //!< 激光超时异常，建图时使用
-    // NoLaserPose   = 23,  //!< // 激光位姿数据超时异常，建图时使用
+    // Algorithm return values: status codes
+    // Unknown           = -1,  //!< Relocating
+    // Tracking          = 0,   //!< Normal localization
+    // RelocFailed       = 1,   //!< Relocation failed
+    // Slipping          = 2,   //!< Slipping
+    // Relocating        = 6,   //!< Relocating
+    // NoTopImage        = 7,   //!< Camera image input error
+    // NoOdom            = 8,   //!< Odometry timeout
+    // Mapping = 20,  //!< Mapping in progress; requires odom, image, and laser (laser or laser pose required)
+    // MappingException = 21,  //!< Mapping error
+    // NoLaser       = 22,  //!< Laser timeout (used during mapping)
+    // NoLaserPose   = 23,  //!< Laser pose timeout (used during mapping)
     switch (loc_res->status) {
     case 0: {
       geometry_msgs::msg::PoseStamped alg_val;
@@ -811,7 +809,7 @@ void LxLocalization::Run() {
       break;
     }
 
-    // 获取图像数据
+    // Get image data
     if (LX_SUCCESS != Check("LX_CMD_GET_NEW_FRAME",
                             DcSetCmd(handle_, LX_CMD_GET_NEW_FRAME))) {
       RCLCPP_ERROR(this->get_logger(), "%s",

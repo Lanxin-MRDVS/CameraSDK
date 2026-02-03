@@ -9,7 +9,7 @@ def generate_launch_description():
             output="screen",
             emulate_tty=True,
             parameters=[
-			#<!-- ip、日志路径、流配置、算法、工作模式配置、点云单位 -->
+			#<!-- IP, log path, stream config, algorithm, work mode, point cloud unit -->
 			{"ip" : "0"},
 			{"log_path" : "/var/log/"},
 			{"is_xyz" : 1 },
@@ -20,7 +20,7 @@ def generate_launch_description():
 			{"lx_application" : 2},
 			{"lx_tof_unit" : 1},
 
-			#<!-- 相机位姿配置 -->
+			#<!-- Camera pose config -->
 			{"x" : 0.0},
 			{"y" : 0.0},
 			{"z" : 0.0},
@@ -28,10 +28,10 @@ def generate_launch_description():
 			{"roll" : 0.0},
 			{"pitch" : 0.0},
 			
-			#<!-- 是否使用launch配置 -->
+			#<!-- Whether to use launch parameters -->
 			{"raw_param": 0},
 
-			#<!-- 2D配置 -->
+			#<!-- 2D config -->
 			{"lx_2d_binning" : 0 },
 			{"lx_2d_undistort" : 0 },
 			{"lx_2d_undistort_scale" : 51 },
@@ -40,7 +40,7 @@ def generate_launch_description():
 			{"lx_2d_exposure" : 10001},
 			{"lx_2d_gain" : 101 },
 
-			#<!-- 3D配置 -->
+			#<!-- 3D config -->
 			{"lx_rgb_to_tof" : 0 },
 			{"lx_3d_binning" : 0},
 			{"lx_mulit_mode" : 0 },
@@ -53,8 +53,7 @@ def generate_launch_description():
 			{"lx_3d_second_exposure" : 200},
 			{"lx_3d_gain" : 11},
 			
-			#<!-- 深度 -->
+			#<!-- Depth -->
 			{"lx_min_depth" : 0},
 			{"lx_max_depth" : 8000}])
     ])
-

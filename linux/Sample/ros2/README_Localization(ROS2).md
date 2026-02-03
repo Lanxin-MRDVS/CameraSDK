@@ -1,90 +1,90 @@
-# 前言
+# Preface
 
-本文主要内容为V1Pro相机定位算法模块使用示例说明，本示例基于ROS2平台，经测试在Ubuntu22.04(humble)Linux系统上编译运行，通过调用相机SDK实现建图（采图）、定位等功能。在查阅本文档前请先阅读相机SDK使用说明《`LxCameraApi（C、C++）开发者指南.pdf`》，同时，若运行于Linux平台请按照提示运行`install.sh`脚本，完成环境配置。
+This document describes how to use the V1Pro camera localization algorithm module. The example is based on ROS2 and has been tested on Ubuntu 22.04 (Humble). It uses the camera SDK for mapping (data collection) and localization. Before reading this document, please read the SDK guide **LxCameraApi (C, C++) Developer Guide.pdf**. On Linux, run `install.sh` to configure the environment.
 
-> 注意：若需修改ROS2包的launch文件参数，需在install中的进行修改，在src中修改不生效
+> Note: If you need to change ROS2 launch parameters, edit the source launch files under `src/launch/ubuntu22/` and rebuild. Editing generated files under `install/` will be overwritten.
 
-# 定位算法模块
+# Localization Algorithm Module
 
-## 异常代码
+## Status / Error Codes
 
 ```
 // status
-// 算法返回值: 异常码
-Unknown       = -1,  //!< 重定位中
-Tracking      = 0,   //!< 正常定位中
-RelocFailed   = 1,   //!< 重定位失败
-Slipping      = 2,   //!< 打滑
-Relocating    = 6,   //!< 重定位中
-NoTopImage    = 7,   //!< 相机图像输入异常
-NoOdom        = 8,   //!< 里程计超时异常
-Mapping       = 20,  //!< 正常建图中，建图需要odom,图像以及激光数据（激光数据or激光位姿至少满足一个，如无可发虚拟数据）
-MappingFailed = 21,  //!< 建图异常
-NoLaser       = 22,  //!< 激光超时异常，建图时使用
-NoLaserPose   = 23,  //!< 激光位姿数据超时异常，建图时使用
+// Algorithm return values: status codes
+Unknown       = -1,  //!< Relocating
+Tracking      = 0,   //!< Normal localization
+RelocFailed   = 1,   //!< Relocation failed
+Slipping      = 2,   //!< Slipping
+Relocating    = 6,   //!< Relocating
+NoTopImage    = 7,   //!< Camera image input error
+NoOdom        = 8,   //!< Odometry timeout
+Mapping       = 20,  //!< Mapping in progress; mapping requires odom, image, and laser data (laser data or laser pose must be present; virtual data is allowed)
+MappingFailed = 21,  //!< Mapping error
+NoLaser       = 22,  //!< Laser timeout (used during mapping)
+NoLaserPose   = 23,  //!< Laser pose timeout (used during mapping)
 
-// 附加返回值: 重定位异常码
--1: Unknown          //!< 重定位中（若重定位位姿(x,y,yaw)全为0，会判断为误发，返回代码-1）
-0: Normal            //!< 重定位成功
-1: No image          //!< 重定位失败，图像输入异常
-2: No detection      //!< 重定位失败，特征检测异常
-3: No expectation    //!< 重定位失败，期望地图异常
-4: No both           //!< 重定位失败，特征检测、期望地图都异常
-5: No match          //!< 重定位失败，检测与地图无匹配
-6: Off>30cm          //!< 重定位失败，检测与地图存在匹配，距离超过阈值
-7：invalid request   //!< 重定位失败，重定位请求位姿无效，如NaN
+// Additional return values: relocation result codes
+-1: Unknown          //!< Relocating (if pose (x,y,yaw) is all zeros, it is treated as an invalid request and returns -1)
+0: Normal            //!< Relocation success
+1: No image          //!< Relocation failed: image input error
+2: No detection      //!< Relocation failed: feature detection error
+3: No expectation    //!< Relocation failed: expected map error
+4: No both           //!< Relocation failed: both detection and expected map errors
+5: No match          //!< Relocation failed: no match between detection and map
+6: Off>30cm          //!< Relocation failed: match exists but distance exceeds threshold
+7: invalid request   //!< Relocation failed: invalid requested pose (e.g., NaN)
 ```
 
-## 定位置信度
+## Localization Confidence
 
-在正常定位的状态（异常码为0时），可通过置信度衡量定位结果的质量，定位置信度分布于0~4，其中：
+When status is normal (code 0), confidence can be used to evaluate localization quality. Confidence ranges from 0 to 4:
 
-- 0：不好
-- 1：较差
-- 2-3：一般
-- 4：较好
+- 0: poor
+- 1: low
+- 2-3: medium
+- 4: good
 
-在正常定位的状态时，建议取置信度大于等于1时的定位结果。
+It is recommended to use localization results with confidence >= 1.
 
-## 建图
+## Mapping
 
-- 输入数据
-  - 机器人里程计（绝对）的数据，类型为nav_msgs/Odometry
-  - 机器人激光雷达的数据（辅助建图所需，部分场景可不用激光，可以不输入，请联系技术支持确认），类型为sensor_msgs/LaserScan
-  - 机器人激光位姿的数据（若需视觉地图和激光地图坐标系统一则需传入，否则可不输入），类型为geometry_msgs/PoseStamped
+- Inputs
+  - Robot odometry (absolute), type `nav_msgs/Odometry`
+  - Robot laser scan (optional in some scenarios; contact support to confirm), type `sensor_msgs/LaserScan`
+  - Robot laser pose (required if you need to align visual and laser map frames), type `geometry_msgs/PoseStamped`
 
-- 输出数据
-  - 导出相机中录制的原始数据，离线建图，然后导入视觉地图至相机
+- Outputs
+  - Export raw data recorded by the camera, build the visual map offline, then import the visual map into the camera
 
-## 定位
+## Localization
 
-- 输入数据
-  - 机器人里程计（绝对）数据，类型为nav_msgs::msg::Odometry
+- Inputs
+  - Robot odometry (absolute), type `nav_msgs::msg::Odometry`
 
-- 输出数据
-  - 发送重定位请求，机器人重定位成功后，输出机器人在视觉地图中的位姿，类型为geometry_msgs::msg::PoseStamped
+- Outputs
+  - Send relocation request; after relocation succeeds, the camera outputs the robot pose in the visual map frame (`geometry_msgs::msg::PoseStamped`)
 
-# 编译
+# Build
 
-ROS节点创建步骤：
+ROS2 node build steps:
 
-1. 进入示例程序代码文件目录`Lanxin-MRDVS/Sample/ROS/lx_camera_node_ws`
-2. colcon build
-3. source install/setup.bash
+1. Enter the example workspace directory: `linux/Sample/ros2/lx_camera_node_ws`
+2. `colcon build`
+3. `source install/setup.bash`
 
-# 运行
+# Run
 
-运行ROS示例前，若相机中已经部署ROS主从，需先关闭ROS主从相关设置，否则会因ROS产生相关通讯异常。若相机中有ROS2(humble)环境，需上电后等待约20s左右，再运行ROS示例程序。
+Before running the ROS example, if the camera has ROS master/slave settings enabled, disable them to avoid communication issues. If the camera has a ROS2 (Humble) environment, wait about 20 seconds after power-on before running the example.
 
-## 通讯
+## Communication Test
 
-可以使用虚拟数据调通SDK通讯，确认与相机之间通讯正常。
+You can validate SDK communication using virtual data.
 
-1. source install/setup.bash
+1. `source install/setup.bash`
 
-2. ros2 launch lx_camera_ros sensor_sim.launch.py
+2. `ros2 launch lx_camera_ros sensor_sim.launch.py`
 
-   如下图所示，该节点发出虚拟的激光数据`/sim/scan`、里程计数据`/sim/odom`和激光位姿数据`/sim/scan_pose`，相机通过SDK去接收这些数据，联调通讯。
+   This node publishes virtual laser data `/sim/scan`, odometry `/sim/odom`, and laser pose `/sim/scan_pose`. The camera SDK receives these topics to verify communication.
 
    ```python
    from launch import LaunchDescription
@@ -98,31 +98,31 @@ ROS节点创建步骤：
                output="screen",
                emulate_tty=True,
                parameters=[
-   		#<!-- -135° -->
-   		{"min_ang": -2.35619449},
-   		#<!-- 135° -->
-   		{"max_ang": 2.35619449},
-   		{"angle_increment": 0.00582},
-   		{"time_increment": 0.00006167129},
-   		{"range_min": 0.05},
-   		{"range_max": 101.0},
-   		{"init_range": 100.0},
+               # <!-- -135° -->
+               {"min_ang": -2.35619449},
+               # <!-- 135° -->
+               {"max_ang": 2.35619449},
+               {"angle_increment": 0.00582},
+               {"time_increment": 0.00006167129},
+               {"range_min": 0.05},
+               {"range_max": 101.0},
+               {"init_range": 100.0},
    
-   		#<!-- 虚拟激光数据topic -->
-   		{"laser_frameId": "laser_link"},
-   		{"laser_topic_name": "/sim/scan"},
-   		#<!-- 虚拟里程计数据topic -->
-   		{"odom_frame_id": "base"},
-   		{"odom_topic_name": "/sim/odom"},
-   		#<!-- 虚拟激光位姿topic -->
-   		{"laserpose_frame_id": "base"},
-   		{"laserpose_topic_name": "/sim/scan_pose"}])
+               # <!-- Virtual laser topic -->
+               {"laser_frameId": "laser_link"},
+               {"laser_topic_name": "/sim/scan"},
+               # <!-- Virtual odom topic -->
+               {"odom_frame_id": "base"},
+               {"odom_topic_name": "/sim/odom"},
+               # <!-- Virtual laser pose topic -->
+               {"laserpose_frame_id": "base"},
+               {"laserpose_topic_name": "/sim/scan_pose"}])
        ])
    ```
 
-3. ros2 launch lx_camera_ros mapping.launch.py
+3. `ros2 launch lx_camera_ros mapping.launch.py`
 
-   如下图所示，该节点为接收虚拟传感器数据，然后通过调用相机SDK传入数据。
+   This node receives the virtual sensor data and passes it to the camera SDK.
 
    ```python
    from launch import LaunchDescription
@@ -136,48 +136,48 @@ ROS节点创建步骤：
                output="screen",
                emulate_tty=True,
                parameters=[
-   		#<!-- 相机IP，默认为空时按设备索引获取 -->
-   		{"ip": "192.168.100.82"},
-   		#<!-- 图像显示使能 -->
-   		{"is_show": False},
-   		#<!-- 接收或发布ROS话题名 -->
-   		{"LxCamera_UploadScan": "/sim/scan"},
-   		{"LxCamera_UploadOdom": "/sim/odom"},
-   		{"LxCamera_UploadLaserPose": "/sim/scan_pose"},
-   		{"LxCamera_Error": "LxCamera_Error"},
-   		{"LxCamera_Command": "LxCamera_Command"},
-   		{"LxCamera_Mapping": "LxCamera_Mapping"},
-   		{"LxCamera_Location": "LxCamera_Location"},
-   		{"LxCamera_SetParam": "LxCamera_SetParam"},
-   		{"LxCamera_SwitchMap": "LxCamera_SwitchMap"},
-   		{"LxCamera_DownloadMap": "LxCamera_DownloadMap"},
-   		{"LxCamera_UploadMap": "LxCamera_UploadMap"},
-   		{"LxCamera_LocationResult": "LxCamera_LocationResult"},
-   		{"LxCamera_UploadReloc": "LxCamera_UploadReloc"},
-   		#<!-- 自动曝光期望值，范围[0-100], 默认:50 -->
-   		{"auto_exposure_value": 50},
-   		#<!-- 建图使能, true or false -->
-   		{"mapping_mode": True},
-   		#<!-- 定位使能, true or false -->
-   		{"localization_mode": False},
-   		#<!-- 相机至小车外参, 单位:米, 度数, 格式[x, y, z, yaw, pitch, roll] -->
-   		{"camera_extrinsic_param": [0.34, 0.00, 1.3, -90, 0, 0]},
-   		#<!-- 激光雷达至小车外参, 单位:米, 度数, 格式[x, y, yaw] -->
-   		{"laser_extrinsic_param": [0.34, 0.11, 0.0]} ])
+               # <!-- Camera IP (empty = use device index) -->
+               {"ip": "192.168.100.82"},
+               # <!-- Image display enable -->
+               {"is_show": False},
+               # <!-- ROS topic names -->
+               {"LxCamera_UploadScan": "/sim/scan"},
+               {"LxCamera_UploadOdom": "/sim/odom"},
+               {"LxCamera_UploadLaserPose": "/sim/scan_pose"},
+               {"LxCamera_Error": "LxCamera_Error"},
+               {"LxCamera_Command": "LxCamera_Command"},
+               {"LxCamera_Mapping": "LxCamera_Mapping"},
+               {"LxCamera_Location": "LxCamera_Location"},
+               {"LxCamera_SetParam": "LxCamera_SetParam"},
+               {"LxCamera_SwitchMap": "LxCamera_SwitchMap"},
+               {"LxCamera_DownloadMap": "LxCamera_DownloadMap"},
+               {"LxCamera_UploadMap": "LxCamera_UploadMap"},
+               {"LxCamera_LocationResult": "LxCamera_LocationResult"},
+               {"LxCamera_UploadReloc": "LxCamera_UploadReloc"},
+               # <!-- Auto exposure value [0-100], default 50 -->
+               {"auto_exposure_value": 50},
+               # <!-- Mapping enable -->
+               {"mapping_mode": True},
+               # <!-- Localization enable -->
+               {"localization_mode": False},
+               # <!-- Camera extrinsics (m, deg): [x, y, z, yaw, pitch, roll] -->
+               {"camera_extrinsic_param": [0.34, 0.00, 1.3, -90, 0, 0]},
+               # <!-- Laser extrinsics (m, deg): [x, y, yaw] -->
+               {"laser_extrinsic_param": [0.34, 0.11, 0.0]} ])
        ])
    ```
 
-4. 待算法返回异常码为20（Mapping）时，通讯即正常。
+4. When the algorithm returns status code **20 (Mapping)**, communication is OK.
 
-## 建图
+## Mapping
 
-1. 准备好建图所需的传感器数据
+1. Prepare required sensor data
 
-   - 机器人里程计（绝对）的topic，类型为nav_msgs::msg::Odometry
-   - 机器人激光雷达的topic（部分场景可不用激光，请联系技术支持确认，此时可输入虚拟激光数据），类型为sensor_msgs::msg::LaserScan
-   - 机器人激光位姿的topic（若需视觉地图和激光地图坐标系统一则需传入），类型为geometry_msgs::msg::PoseStamped
+   - Odometry topic (absolute), type `nav_msgs::msg::Odometry`
+   - Laser scan topic (optional; contact support to confirm), type `sensor_msgs::msg::LaserScan`
+   - Laser pose topic (required if you need unified visual/laser frames), type `geometry_msgs::msg::PoseStamped`
 
-2. <font color=red>**按照要求修改launch文件夹`mapping.launch.py`下文件（切记请核对）**</font>，修改实际传入数据的topic名，如激光数据`/scan`、里程计数据`/odom`和激光位姿数据`/scan_pose`。设置已存在地图名（若初次使用或不知道已存在地图名，可设置为默认`"example_map1"`）、相机外参、激光雷达外参等
+2. **Edit `mapping.launch.py` as required** and verify the values: set input topic names (e.g., `/scan`, `/odom`, `/scan_pose`), map name (use existing name or default `"example_map1"`), camera extrinsics, laser extrinsics, etc.
 
    ```python
    from launch import LaunchDescription
@@ -191,94 +191,98 @@ ROS节点创建步骤：
                output="screen",
                emulate_tty=True,
                parameters=[
-   		#<!-- 相机IP，默认为空时按设备索引获取 -->
-   		{"ip": "192.168.100.82"},
-   		#<!-- 图像显示使能 -->
-   		{"is_show": False},
-   		#<!-- 接收或发布ROS话题名 -->
-   		{"LxCamera_UploadScan": "/scan"},
-   		{"LxCamera_UploadOdom": "/odom"},
-   		{"LxCamera_UploadLaserPose": "/scan_pose"},
-   		{"LxCamera_Error": "LxCamera_Error"},
-   		{"LxCamera_Command": "LxCamera_Command"},
-   		{"LxCamera_Mapping": "LxCamera_Mapping"},
-   		{"LxCamera_Location": "LxCamera_Location"},
-   		{"LxCamera_SetParam": "LxCamera_SetParam"},
-   		{"LxCamera_SwitchMap": "LxCamera_SwitchMap"},
-   		{"LxCamera_DownloadMap": "LxCamera_DownloadMap"},
-   		{"LxCamera_UploadMap": "LxCamera_UploadMap"},
-   		{"LxCamera_LocationResult": "LxCamera_LocationResult"},
-   		{"LxCamera_UploadReloc": "LxCamera_UploadReloc"},
-   		#<!-- 自动曝光期望值，范围[0-100], 默认:50 -->
-   		{"auto_exposure_value": 50},
-   		#<!-- 建图使能, true or false -->
-   		{"mapping_mode": True},
-   		#<!-- 定位使能, true or false -->
-   		{"localization_mode": False},
-   		#<!-- 相机至小车外参, 单位:米, 度数, 格式[x, y, z, yaw, pitch, roll] -->
-   		{"camera_extrinsic_param": [0.34, 0.00, 1.3, -90, 0, 0]},
-   		#<!-- 激光雷达至小车外参, 单位:米, 度数, 格式[x, y, yaw] -->
-   		{"laser_extrinsic_param": [0.34, 0.11, 0.0]} ])
+               # <!-- Camera IP (empty = use device index) -->
+               {"ip": "192.168.100.82"},
+               # <!-- Image display enable -->
+               {"is_show": False},
+               # <!-- ROS topic names -->
+               {"LxCamera_UploadScan": "/scan"},
+               {"LxCamera_UploadOdom": "/odom"},
+               {"LxCamera_UploadLaserPose": "/scan_pose"},
+               {"LxCamera_Error": "LxCamera_Error"},
+               {"LxCamera_Command": "LxCamera_Command"},
+               {"LxCamera_Mapping": "LxCamera_Mapping"},
+               {"LxCamera_Location": "LxCamera_Location"},
+               {"LxCamera_SetParam": "LxCamera_SetParam"},
+               {"LxCamera_SwitchMap": "LxCamera_SwitchMap"},
+               {"LxCamera_DownloadMap": "LxCamera_DownloadMap"},
+               {"LxCamera_UploadMap": "LxCamera_UploadMap"},
+               {"LxCamera_LocationResult": "LxCamera_LocationResult"},
+               {"LxCamera_UploadReloc": "LxCamera_UploadReloc"},
+               # <!-- Auto exposure value [0-100], default 50 -->
+               {"auto_exposure_value": 50},
+               # <!-- Mapping enable -->
+               {"mapping_mode": True},
+               # <!-- Localization enable -->
+               {"localization_mode": False},
+               # <!-- Camera extrinsics (m, deg): [x, y, z, yaw, pitch, roll] -->
+               {"camera_extrinsic_param": [0.34, 0.00, 1.3, -90, 0, 0]},
+               # <!-- Laser extrinsics (m, deg): [x, y, yaw] -->
+               {"laser_extrinsic_param": [0.34, 0.11, 0.0]} ])
        ])
    ```
-   
-4. source install/setup.bash
 
-5. ros2 launch lx_camera_ros mapping.launch.py
+3. `source install/setup.bash`
 
-6. 待算法返回异常码为20（Mapping）时，可以推动机器人录制数据
+4. `ros2 launch lx_camera_ros mapping.launch.py`
 
-6. 导出录制数据。通过SDK接口实现该功能，<font color=red>**需先关闭建图使能**</font>，然后导出。或者通过示例的ros2 topic pub的形式导出数据，示例如下:
+5. When status code **20 (Mapping)** is returned, you can move the robot to record data.
 
-   先关闭建图使能：
+6. Export recorded data. This can be done via SDK APIs, **but mapping must be disabled first**. You can also use the ROS2 topic command below:
+
+   Disable mapping:
 
    ```
    ros2 topic pub -1 /lx_localization_node/LxCamera_Mapping std_msgs/msg/String "{data: '0'}"
    ```
 
-   然后，请根据实际情况修改路径，示例：
+   Then export data (adjust the path for your environment):
 
    ```
    ros2 topic pub -1 /lx_localization_node/LxCamera_DownloadMap std_msgs/String "{data: 'your_dir/Lanxin-MRDVS/Sample/ROS2/lx_camera_node_ws/src/lx_camera_ros/map/download_map'}"
    ```
 
-   同时通过`/lx_localization_node/LxCamera_Message`话题查看下发情况：
+   Check status via `/lx_localization_node/LxCamera_Message`:
 
    ```
    ros2 topic echo /lx_localization_node/LxCamera_Message | grep DownloadMap
    ```
 
-   若返回结果如下，且在则导出相应路径中可以看到导出的地图，例如在`/home/fr1511b/v1pro/Lanxin-MRDVS/Sample/ros-v1pro/map`路径下生成`download_map.zip`文件，则导出数据成功。**然后请联系MRDVS相关人员技术支持，并提供建图数据**。
+   If the result is like below and the map file appears (e.g., `download_map.zip`), export succeeded. **Please contact MRDVS support and provide the mapping data.**
 
    ```
    data: "{\"cmd\":\"LxCamera_DownloadMap\",\"result\":0}
    ```
 
-8. 建图完成后，<font color=red>**需先关闭建图使能**</font>，然后将地图包（20240826之前的SDK版本，地图名后缀为.zip；20240826及之后的SDK版本，地图名后缀更改为.bin）导入至相机。通过SDK接口实现该功能，或者通过示例的ros2 topic pub的形式导入数据，示例如下：
+7. After mapping, **disable mapping first**, then import the map file into the camera.
+   - SDK versions **before 2024-08-26**: map suffix is `.zip`
+   - SDK versions **on/after 2024-08-26**: map suffix is `.bin`
+
+   Example:
 
    ```
    ros2 topic pub -1 /lx_localization_node/LxCamera_UploadMap std_msgs/String "{data: '/home/fr1511b/v1pro/Lanxin-MRDVS/Sample/ros-v1pro/map/xz9_231216.bin'}"
    ```
 
-   同时通过`/lx_localization_node/LxCamera_Message`话题查看下发情况：
+   Check status:
 
    ```
    ros2 topic echo /lx_localization_node/LxCamera_Message | grep UploadMap
    ```
 
-   若返回结果如下，则导入地图成功。
+   Success example:
 
    ```
    data: "{\"cmd\":\"LxCamera_UploadMap\",\"result\":0}
    ```
 
-## 定位
+## Localization
 
-1. 准备好建图所需的传感器数据
+1. Prepare required sensor data
 
-   - 机器人里程计的topic，类型为nav_msgs::msg::Odometry
+   - Odometry topic, type `nav_msgs::msg::Odometry`
 
-2. <font color=red>**按照要求修改launch文件夹下`localization.launch.py`（切记请核对）**</font>，设置地图名（已有地图名，如刚才导入的地图）、相机内参等
+2. **Edit `localization.launch.py`** and verify values: map name (an existing map, e.g. the one just imported), camera intrinsics/extrinsics, etc.
 
    ```python
    from launch import LaunchDescription
@@ -292,43 +296,45 @@ ROS节点创建步骤：
                output="screen",
                emulate_tty=True,
                parameters=[
-   		#<!-- 相机IP，默认为空时按设备索引获取 -->
-   		{"ip": "192.168.100.82"},
-   		#<!-- 图像显示使能 -->
-   		{"is_show": False},
-   		#<!-- 接收或发布ROS话题名 -->
-   		{"LxCamera_UploadScan": "/sim/scan"},
-   		{"LxCamera_UploadOdom": "/sim/odom"},
-   		{"LxCamera_UploadLaserPose": "/sim/scan_pose"},
-   		{"LxCamera_Error": "LxCamera_Error"},
-   		{"LxCamera_Command": "LxCamera_Command"},
-   		{"LxCamera_Mapping": "LxCamera_Mapping"},
-   		{"LxCamera_Location": "LxCamera_Location"},
-   		{"LxCamera_SetParam": "LxCamera_SetParam"},
-   		{"LxCamera_SwitchMap": "LxCamera_SwitchMap"},
-   		{"LxCamera_DownloadMap": "LxCamera_DownloadMap"},
-   		{"LxCamera_UploadMap": "LxCamera_UploadMap"},
-   		{"LxCamera_LocationResult": "LxCamera_LocationResult"},
-   		{"LxCamera_UploadReloc": "LxCamera_UploadReloc"},
-   		#<!-- 自动曝光期望值，范围[0-100], 默认:50 -->
-   		{"auto_exposure_value": 50},
-   		#<!-- 建图使能, true or false -->
-   		{"mapping_mode": False},
-   		#<!-- 定位使能, true or false -->
-   		{"localization_mode": True},
-   		#<!-- 重要：定位时地图名需有效，已上传相机并存在；建图时,如果相机中无地图可默认输入"example_map1" -->
-   		{"map_name": "xz9_231216"},
-   		#<!-- 相机至小车外参, 单位:米, 度数, 格式[x, y, z, yaw, pitch, roll] -->
-   		{"camera_extrinsic_param": [0.34, 0.00, 1.3, -90, 0, 0]},
-   		#<!-- 激光雷达至小车外参, 单位:米, 度数, 格式[x, y, yaw] -->
-   		{"laser_extrinsic_param": [0.34, 0.11, 0.0]} ])
+               # <!-- Camera IP (empty = use device index) -->
+               {"ip": "192.168.100.82"},
+               # <!-- Image display enable -->
+               {"is_show": False},
+               # <!-- ROS topic names -->
+               {"LxCamera_UploadScan": "/sim/scan"},
+               {"LxCamera_UploadOdom": "/sim/odom"},
+               {"LxCamera_UploadLaserPose": "/sim/scan_pose"},
+               {"LxCamera_Error": "LxCamera_Error"},
+               {"LxCamera_Command": "LxCamera_Command"},
+               {"LxCamera_Mapping": "LxCamera_Mapping"},
+               {"LxCamera_Location": "LxCamera_Location"},
+               {"LxCamera_SetParam": "LxCamera_SetParam"},
+               {"LxCamera_SwitchMap": "LxCamera_SwitchMap"},
+               {"LxCamera_DownloadMap": "LxCamera_DownloadMap"},
+               {"LxCamera_UploadMap": "LxCamera_UploadMap"},
+               {"LxCamera_LocationResult": "LxCamera_LocationResult"},
+               {"LxCamera_UploadReloc": "LxCamera_UploadReloc"},
+               # <!-- Auto exposure value [0-100], default 50 -->
+               {"auto_exposure_value": 50},
+               # <!-- Mapping enable -->
+               {"mapping_mode": False},
+               # <!-- Localization enable -->
+               {"localization_mode": True},
+               # <!-- Important: map name must exist on the camera. For mapping, use default "example_map1" if no map exists -->
+               {"map_name": "xz9_231216"},
+               # <!-- Camera extrinsics (m, deg): [x, y, z, yaw, pitch, roll] -->
+               {"camera_extrinsic_param": [0.34, 0.00, 1.3, -90, 0, 0]},
+               # <!-- Laser extrinsics (m, deg): [x, y, yaw] -->
+               {"laser_extrinsic_param": [0.34, 0.11, 0.0]} ])
        ])
-   
    ```
 
-4. source install/setup.bash
+3. `source install/setup.bash`
 
-5. 发送重定位请求。将机器人移动至指定地点，发送该点位在视觉地图中的坐标即可（一般地，录图起始点坐标为(x=0, y=0, yaw=0)）<font color=red>**(注意：直接发重定位请求位姿（x=0, y=0, yaw=0）会被当成误发，可以规避坐标零点，如重定位请求位姿（x=0.01, y=0.00, yaw=0）)**</font>，此部分可以通过SDK接口实现，或在示例的ros2 topic pub的形式发布重定位请求：
+4. Send a relocation request. Move the robot to a target location and send that pose in the visual map. Usually the starting pose of mapping is (x=0, y=0, yaw=0).
+   **Important:** a relocation request at (0,0,0) is treated as invalid. Use a small offset such as (0.01, 0.00, 0).
+
+   Example topic command:
 
    ```
    ros2 topic pub -1 /lx_localization_node/LxCamera_UploadReloc geometry_msgs/msg/PoseWithCovarianceStamped "{
@@ -346,31 +352,31 @@ ROS节点创建步骤：
    }"
    ```
 
-   同时通过`/lx_localization_node/LxCamera_Message`话题查看下发情况：
+   Check status:
 
    ```
    ros2 topic echo /lx_localization_node/LxCamera_Message | grep UploadReloc
    ```
 
-   若返回结果如下，则导入地图成功。
+   Success example:
 
    ```
    data: "{\"cmd\":\"LxCamera_UploadReloc\",\"result\":0}
    ```
 
-6. 待算法返回异常码为0（Tracking）时，并且可以订阅到`/lx_localization_node/LxCamera_LocationResult`即定位OK。此时，相机返回的为机器人在视觉地图中的位姿。
+5. When status code **0 (Tracking)** is returned and `/lx_localization_node/LxCamera_LocationResult` is published, localization is OK. The camera outputs the robot pose in the visual map.
 
-# 常见问题
+# FAQ
 
-运行该示例出现问题时，可通过相机SDK日志快速排查，常见问题如下：
+When issues occur, check the SDK logs first. Common cases:
 
-1. 若通过ROS示例会出现卡顿、数据通讯异常，考虑ROS主从问题，去掉相关设置即可
-2. 若关闭ROS示例程序后重新运行失败，考虑相机流占用问题，请耐心等待10-20s，再重新打开
-3. 若出现SDK库加载失败、网络频繁丢包等问题，请确认配置脚本`install.sh`是否运行生效
-4. 重定位成功时程序崩溃，考虑ROS相机内部配置问题，请联系相关人员解决
+1. If ROS example stutters or communication is unstable, check and disable ROS master/slave settings on the camera.
+2. If restarting the ROS example fails, it may be a stream lock; wait 10-20 seconds and retry.
+3. If SDK library load fails or packets drop frequently, check whether `install.sh` was run successfully.
+4. If the program crashes after relocation succeeds, it may be a camera internal configuration issue; contact support.
 
-# 参考
+# References
 
-- LxCameraApi（C、C++）开发者指南.pdf
-- LxCameraViewer使用说明书.pdf
-- V1Pro用户使用手册.pdf
+- LxCameraApi (C, C++) Developer Guide.pdf
+- LxCameraViewer User Manual.pdf
+- V1Pro User Manual.pdf
