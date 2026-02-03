@@ -1,0 +1,39 @@
+name: Build (ROS2)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    env:
+      ROS_DISTRO: humble
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup ROS2
+        uses: ros-tooling/setup-ros@v0.7
+        with:
+          required-ros-distributions: humble
+
+      - name: Install ROS2 dependencies
+        run: |
+          sudo apt-get update
+          rosdep update
+          cd linux/Sample/ros2/lx_camera_node_ws
+          rosdep install --from-paths src --ignore-src -r -y
+
+      - name: Install SDK headers/libs to /opt
+        run: |
+          sudo mkdir -p /opt/Lanxin-MRDVS/include /opt/Lanxin-MRDVS/lib
+          sudo cp -r linux/SDK/include/* /opt/Lanxin-MRDVS/include/
+          sudo cp -r linux/SDK/lib/linux_x64/* /opt/Lanxin-MRDVS/lib/
+
+      - name: Build (colcon)
+        run: |
+          cd linux/Sample/ros2/lx_camera_node_ws
+          colcon build --event-handlers console_direct+ --symlink-install
