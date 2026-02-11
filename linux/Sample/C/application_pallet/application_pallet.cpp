@@ -9,21 +9,19 @@
 
 using namespace std;
 
-#define checkTC(state) {LX_STATE val=state;                            \
-    if(val != LX_SUCCESS){                                             \
-        if(val == LX_E_RECONNECTING){                                  \
-            std::cout << " device reconnecting" << std::endl;}         \
-        else if(val == LX_E_NOT_SUPPORT){                                  \
-            std::cout << " device not support" << std::endl;}         \
-        else{                                                          \
-            std::cout << DcGetErrorString(val)<<std::endl;             \
-            std::cout << " press any key to exit!" << std::endl;       \
-            DcCloseDevice(handle);                                     \
-            getchar();                                                 \
-            return -1;                                                 \
-        }                                                              \
-    }                                                                  \
-}
+#define checkTC(state) {LX_STATE val=state;                             \
+if(LX_SUCCESS!=val){                                                    \
+    if(val > 0){                                                        \
+        printf("WARNING %s\n", DcGetErrorString(val));}                 \
+    else if(val == LX_E_RECONNECTING){                                  \
+        printf("device reconnecting\n"); }                              \
+    else{                                                               \
+        printf("%s. press any key to exit!\n", DcGetErrorString(val));  \
+        getchar();                                                      \
+        DcCloseDevice(handle);                                          \
+        return -1;                                                      \
+    }                                                                   \
+}}
 
 int PrintData(void* data_ptr);
 

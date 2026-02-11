@@ -2,28 +2,18 @@ cmake_minimum_required(VERSION 3.10)
 set(CMAKE_CXX_STANDARD 14)
 project(lx_camera_ros)
 
-execute_process(COMMAND lsb_release -r COMMAND cut -f 2 OUTPUT_VARIABLE LX_DYNAMIC)
-string(STRIP ${LX_DYNAMIC} ${LX_DYNAMIC})
-if (${LX_DYNAMIC} VERSION_LESS_EQUAL "18.04")
-	message(STATUS "Use Normal Link: ${LX_DYNAMIC}")
-	SET(LAUNCH_DIR "${CMAKE_SOURCE_DIR}/src/launch/ubuntu18/")
-else()
-	add_definitions(-DLX_DYNAMIC)
-	message(STATUS "Use Dnamic Link: ${LX_DYNAMIC}")
-	SET(LAUNCH_DIR "${CMAKE_SOURCE_DIR}/src/launch/ubuntu22/")
-endif ()
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${LAUNCH_DIR}/pallet.launch.py ${CMAKE_SOURCE_DIR}/launch/)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${LAUNCH_DIR}/mapping.launch.py ${CMAKE_SOURCE_DIR}/launch/)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${LAUNCH_DIR}/localization.launch.py ${CMAKE_SOURCE_DIR}/launch/)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${LAUNCH_DIR}/obstacle.launch.py ${CMAKE_SOURCE_DIR}/launch/)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${LAUNCH_DIR}/obstacleV2.launch.py ${CMAKE_SOURCE_DIR}/launch/)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${LAUNCH_DIR}/sensor_sim.launch.py ${CMAKE_SOURCE_DIR}/launch/)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${LAUNCH_DIR}/localization.launch.py ${CMAKE_SOURCE_DIR}/launch/)
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${LAUNCH_DIR}/lx_camera_ros.launch.py ${CMAKE_SOURCE_DIR}/launch/)
+add_definitions(-DLX_DYNAMIC)
 
 if (NOT DEFINED CMAKE_SUPPRESS_DEVELOPER_WARNINGS)
     set(CMAKE_SUPPRESS_DEVELOPER_WARNINGS 1 CACHE INTERNAL "No dev warnings")
 endif ()
+
+# 启用性能优化和 CPU 特定指令集
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native -mtune=native")
+
+# 启用 OpenMP
+find_package(OpenMP REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 
 #ament_cmake
 find_package(ament_cmake REQUIRED)
@@ -65,8 +55,8 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/src
 )
 #SDK
-include_directories(/opt/Lanxin-MRDVS/include)
-set(LX_LIB_PATH /opt/Lanxin-MRDVS/lib)
+include_directories(/opt/MRDVS/include)
+set(LX_LIB_PATH /opt/MRDVS/lib)
 link_directories(${LX_LIB_PATH})
 set(LX_LIB ${LX_LIB_PATH}/libLxCameraApi.so)
 add_definitions(-DLX_LIB="${LX_LIB}")

@@ -43,4 +43,7 @@ add_exe(application_obstacle_v1)
 add_exe(application_obstacle_v2)
 add_exe(application_pallet)
 add_exe(frame_callback)
+add_exe(application_location)
+add_exe(imu_callback)
+add_exe(lidarpoint_callback)
 

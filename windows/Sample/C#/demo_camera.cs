@@ -1,4 +1,4 @@
-﻿#define HAS_OPENCV
+#define HAS_OPENCV
 
 using System.Runtime.InteropServices;
 using static lx.LxCamera;

@@ -4,6 +4,7 @@
 #include "tf2_ros/transform_broadcaster.h"
 #include "utils/json.hpp"
 #include <array>
+#include <algorithm>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 #include <string>
@@ -17,6 +18,31 @@ static long GetTimestamp() {
   gettimeofday(&tv, NULL);
   long t = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
   return t;
+}
+
+struct CameraCalibMatrices {
+  std::array<double, 9> K{};
+  std::array<double, 14> D{};
+  LX_DISTORTION_MODEL distortion_model;
+};
+
+static bool GetCameraCalibration(DcHandle handle, int type,
+    CameraCalibMatrices& out) {
+    LxIntrinsicParameters* calib = nullptr;
+    if (LX_SUCCESS != DcGetPtrValue(handle,
+        0 == type ? LX_PTR_2D_INTRINSIC_PARAMETERS : LX_PTR_3D_INTRINSIC_PARAMETERS,
+        (void**)&calib))
+        return false;
+
+    for (size_t i = 0; i < 9; ++i) {
+        out.K[i] = static_cast<double>(calib->intrinsics[i]);
+    }
+    out.distortion_model = calib->distortion_model;
+    out.D.fill(0.0);
+    for (size_t i = 0; i < calib->num_distortion_coeffs; ++i) {
+        out.D[i] = static_cast<double>(calib->distortion_coeffs[i]);
+    }
+    return true;
 }
 
 // 版本号比较
@@ -589,7 +615,7 @@ LxLocalization::LxLocalization(DcLib *dynamic_lib)
         DcGetBoolValue(handle_, LX_BOOL_ENABLE_2D_STREAM, &is_enable_rgb));
   Check("LX_INT_ALGORITHM_MODE",
         DcGetIntValue(handle_, LX_INT_ALGORITHM_MODE, &int_value));
-  char *algo_ver = "0.0.0";
+  char *algo_ver = nullptr;
   Check("LX_INT_ALGORITHM_MODE",
         DcGetStringValue(handle_, LX_STRING_ALGORITHM_VERSION,
                          &algo_ver)); // 获取当前应用算法版本
@@ -631,12 +657,14 @@ LxLocalization::LxLocalization(DcLib *dynamic_lib)
   DcGetIntValue(handle_, LX_INT_2D_IMAGE_HEIGHT, &int_value);
   rgb_camera_info_.height = int_value.cur_value;
 
-  float *intr = nullptr;
-  DcGetPtrValue(handle_, LX_PTR_3D_NEW_INTRIC_PARAM, (void **)&intr);
-  rgb_camera_info_.d =
-      std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8], intr[9], intr[10], intr[11], intr[12], intr[13], intr[14], intr[15],intr[16],intr[17]};
-  rgb_camera_info_.k =
-      std::array<double, 9>{intr[0], 0, intr[2], 0, intr[1], intr[3], 0, 0, 1};
+  CameraCalibMatrices rgb_calib;
+  if (GetCameraCalibration(handle_, 0, rgb_calib)) {
+    rgb_camera_info_.d.assign(rgb_calib.D.begin(), rgb_calib.D.end());
+    rgb_camera_info_.k = rgb_calib.K;
+  } else {
+    rgb_camera_info_.d.clear();
+    rgb_camera_info_.k.fill(0.0);
+  }
   rgb_info_publisher_->publish(rgb_camera_info_);
 
   if (LX_SUCCESS != Check("START_STREAM", DcStartStream(handle_))) {

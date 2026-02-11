@@ -1,0 +1,3 @@
+#pragma once
+
+#define LX_CAMERA_API_VERSION V2.4.60,20260126

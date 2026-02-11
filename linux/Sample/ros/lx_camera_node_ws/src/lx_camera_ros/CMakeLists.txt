@@ -47,8 +47,8 @@ if (NOT DEFINED CMAKE_SUPPRESS_DEVELOPER_WARNINGS)
 endif ()
 
 #SDK
-include_directories(/opt/Lanxin-MRDVS/include/)
-link_directories(/opt/Lanxin-MRDVS/lib/)
+include_directories(/opt/MRDVS/include/)
+link_directories(/opt/MRDVS/lib/)
 #pcl
 find_package(PCL QUIET REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})

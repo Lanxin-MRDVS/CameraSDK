@@ -26,7 +26,11 @@ LX_API_STR DcGetApiVersion();
 /**
  * @brief Set the level of log
  * 
- * @param print_level [in]print_level 0: info All debug messages 1: warn Important and warning debug messages 2: error Only error messages are output.
+ * @param print_level [in]print_level
+ 0: info All debug messages 
+ 1: warn Important and warning debug messages 
+ 2: error Only error messages are output.
+ 3: no output
  * @param enable_screen_print [in]Whether to print in the window
  * @param log_path [in]Log file save path
  * @return LX_API 
@@ -63,10 +67,10 @@ LX_API DcLog(const char* str);
  * @return LX_API 
  */
 #ifdef __cplusplus
-LX_EXPORT LX_STATE LX_STDC DcGetDeviceList(LxDeviceInfo** devlist, int* devnum, LX_DEVICE_SERIALS lx_serials = LX_SERIAL_ALL);
+LX_API DcGetDeviceList(LxDeviceInfo** devlist, int* devnum, LX_DEVICE_SERIALS lx_serials = LX_SERIAL_ALL);
 #else
 //纯C风格接口，原接口逐步弃用
-LX_API DcGetDeviceList(LxDeviceInfo** devlist, int* devnum);
+LX_API DcGetDeviceList(LxDeviceInfo** devlist, int* devnum, LX_DEVICE_SERIALS lx_serials);
 #endif
 
 //~chinese:
@@ -323,6 +327,25 @@ LX_API DcSetCmd(DcHandle handle, int cmd);
  */
 LX_API DcSpecialControl(DcHandle handle, const char* command, void* value);
 
+//~chinese
+//功能：LX_CAMERA_FEATURE定义之外的特殊操作，具体功能和参数由字符串command确定
+//参数：[in]handle                 设备句柄
+//      [in]command                指令(具体详见demo)
+//                                 SetObstacleIndex,GetObstacleIndex,SetObstacleMode,GetObstacleIO,SetOdomData,SetRelocPose,SetLaserData,ImportLocationMapFile,EnableBuildMap,EnableLocation,ExportLocationMapFile
+// 
+//      [in][out]value             设置时为对应入参，获取时为对应出参，无需外部分配内存
+//      [in]timeout_ms             超时时间
+//~english
+/**
+ * @brief Special operations outside the definition of LX_CAMERA_FEATURE, with specific functions and parameters defined by the string command
+ * 
+ * @param handle[in]Device handle  
+ * @param command[in]Command      
+ * @param value[in][out]Input parameter when setting, output parameter when getting, no need to allocate memory externally. 
+ * @param timeout_ms[in] Control timeout_ms, ms. if timeout_ms<=300 then call once else try call timeout_ms/300 times before timeout, if timeout_ms <1 then timeout_ms=LX_INT_GVCP_TIME_OUT default 1800ms
+ * @return LX_API 
+ */
+LX_API DcSpecialControlExtend(DcHandle handle, const char* command, void* value, int timeout_ms);
 
 //~chinese
 //功能：设置ROI区域, 输入数值若不是8的整数倍,内部会自动处理为目标值最近的8的整倍数
@@ -450,12 +473,12 @@ LX_API DcWriteUserData(DcHandle handle, int start_address, char* data, int data_
 LX_API DcReadUserData(DcHandle handle, int start_address, char** data, int& data_size);
 
 //~chinese
-//功能: 保存点云，可直接调用
+//功能: 保存点云，可直接调用。需要在采集数据线程中调用否则数据会有异常
 //参数：[in]handle                设备句柄
 //      [in]filename              文件名，支持txt,ply和pcd格式。txt格式按图像顺序保存所有数据，ply和pcd仅保存非零数据
 //~english
 /**
- * @brief Save the point cloud, which can be called directly
+ * @brief Save the point cloud, which can be called directly.It needs to be called in the data collection thread, otherwise the data will have exceptions.
  * 
  * @param handle[in]Device handle  
  * @param filename[in]File name, supports txt, ply and pcd formats. txt format saves all data in image order, ply and pcd only save non-zero data 
@@ -533,21 +556,23 @@ LX_API DcGetPtpEnable(bool* is_enable);
  */
 LX_API DcSetParallelThread(int thread_num);
 
-//~chinese:
-//功能: 开启SDK内部日志功能，默认开启
-//参数：[in]is_enable     是否使能
-//~english:
 /**
- * @brief Enable SDK inner log 
-
- *
- * @param is_enable [bool]
- * @return LX_API
+ * 功能：2d图像传输采用jpeg压缩，设置jpeg解码方式，
+ * 参数：{int} mode: 参考JPEG_DECODE_METHOD
  */
-LX_API DcSetLogEnable(bool is_enable);
+LX_API DcSetJpegDecodeMethod(int mode);
 
+/**
+ * 功能：设置日志文件滚动存储最大数量
+ */
+LX_API DcSetMaxLogFile(int count);
+LX_API DcGetMaxLogFile(int* count);
+/**
+ * 功能：设置单个日志文件最大容量，单位byte
+ */
+LX_API DcSetMaxLogFileSize(int size);
+LX_API DcGetMaxLogFileSize(int* size);
 
-//以下IMU数据采集只有部分设备型号支持
 
 //~chinese
 //功能: 注册IMU传感器数据回调函数,收到新的数据时自动调用
@@ -576,34 +601,5 @@ LX_API DcRegisterImuDataCallback(DcHandle handle, LX_IMUDATA_CALLBACK func, void
     * @return LX_API
     */
 LX_API DcUnregisterImuDataCallback(DcHandle handle);
-
-//~chinese
-//功能: 启动IMU数据监听
-//参数：[in]handle      设备句柄
-//      [in]acc_range 加速度量程 0:±2g，1:±4g，2:±8g，3:±16g
-//      [in]gry_range 角速度量程 0: 2000*PI/180 rad/s, 1: 1000*PI/180 rad/s, 2: 500*PI/180 rad/s, 3:250*PI/180 rad/s, 4:125*PI/180 rad/s
-//~english
-/**
-    * @brief Start IMU data listening
-    *
-    * @param handle[in]Device handle
-    * @param acc_range[in]acc range 0:±2g，1:±4g，2:±8g，3:±16g
-    * @param gry_range[in]gry range 0: 2000*PI/180 rad/s, 1: 1000*PI/180 rad/s, 2: 500*PI/180 rad/s, 3:250*PI/180 rad/s, 4:125*PI/180 rad/s
-    * @return LX_API
-    */
-LX_API DcStartIMU(DcHandle handle, uint16_t acc_range, uint16_t gry_range);
-
-//~chinese
-//功能: 停止IMU数据监听
-//参数：[in]handle      设备句柄
-//~english
-/**
-* @brief Start IMU data listening
-*
-* @param handle[in]Device handle
-* @return LX_API
-*/
-LX_API DcStopImu(DcHandle handle);
-
 
 #endif

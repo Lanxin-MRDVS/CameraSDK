@@ -1,4 +1,4 @@
-from launch import LaunchDescription
+﻿from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
 from launch.conditions import IfCondition
@@ -12,7 +12,7 @@ def generate_launch_description():
   
   return LaunchDescription([
     # 声明参数，可以通过命令行传递参数值
-    DeclareLaunchArgument('enable_rviz', default_value='true', description='Whether to launch rviz2'),
+    DeclareLaunchArgument('enable_rviz', default_value='false', description='Whether to launch rviz2'),
 
     # 启动节点lx_camera_node
     Node(
@@ -22,53 +22,50 @@ def generate_launch_description():
         output="screen",
         emulate_tty=True,
         parameters=[
-            # <!-- ip、日志路径、流配置、算法、工作模式配置、点云单位 -->
-        	  {"ip": "0"},
-            {"log_path": "/var/log/"},
-            {"is_xyz": 1},
-            {"is_depth": 1},
-            {"is_amp": 1},
-            {"is_rgb": 1},
-            {"lx_work_mode": 0},
-            {"lx_application": 0},
-            {"lx_tof_unit": 1},
+            # <!-- base config:gpu, jpeg decode,ip、log -->
+            {"enable_gpu": 0},
+            {"ip": ""},
+            {"log_level": 1},
+            {"log_path": "./log/"},
 
+            # <!-- stream -->
+            {"is_depth": 1},
+            # <!-- pointcloud, 0:close, 1:xyz, with rgb when RGBD_ALIGN_MODE enabled
+		    #   2:xyz with intensity(enable 3D_AMP_STREAM) and timestamp -->
+            {"is_xyz": 1},
+            {"LX_BOOL_ENABLE_3D_AMP_STREAM": 0},
+            {"LX_BOOL_ENABLE_2D_STREAM": 1},
+            {"LX_BOOL_ENABLE_IMU": 0},
+            #<!-- 0:mm,  1:m-->
+            {"LX_INT_XYZ_UNIT": 0},
+
+            # <!-- 2D配置，如需生效，取消其注释 -->
+            #{"LX_INT_RGBD_ALIGN_MODE": 1},
+            #{"LX_INT_ALGORITHM_MODE": 0},
+            #{"LX_INT_WORK_MODE": 0},
+            #{"LX_INT_3D_FPS": 20},
+            #{"LX_BOOL_ENABLE_2D_UNDISTORT": 1},
+            #{"LX_INT_2D_UNDISTORT_SCALE": 1},
+            #{"LX_INT_2D_BINNING_MODE": 1},
+            #{"LX_BOOL_ENABLE_3D_UNDISTORT": 1},
+            #{"LX_INT_3D_UNDISTORT_SCALE": 1},
+            #{"LX_INT_3D_BINNING_MODE": 1},
+            #{"LX_BOOL_ENABLE_MULTI_MACHINE": 0},
+            #{"LX_BOOL_ENABLE_MULTI_EXPOSURE_HDR": 1},
+            #{"LX_INT_FIRST_EXPOSURE": 1000},
+            #{"LX_INT_SECOND_EXPOSURE": 50},
+            #{"LX_INT_MIN_DEPTH": 0},
+            #{"LX_INT_MAX_DEPTH": 8000},
+            
             # <!-- 相机位姿配置 -->
             {"x": 0.0},
             {"y": 0.0},
             {"z": 0.0},
             {"roll": 0.0},
             {"pitch": 0.0},
-            {"yaw": 0.0},
-
-            # <!-- 是否使用launch配置 -->
-            {"raw_param": 0},
-
-            # <!-- 2D配置 -->
-            {"lx_2d_binning": 0},
-            {"lx_2d_undistort": 0},
-            {"lx_2d_undistort_scale": 51},
-            {"lx_2d_auto_exposure": 0},
-            {"lx_2d_auto_exposure_value": 11},
-            {"lx_2d_exposure": 10001},
-            {"lx_2d_gain": 101},
-
-            # <!-- 3D配置 -->
-            {"lx_rgb_to_tof": 0},
-            {"lx_3d_binning": 0},
-            {"lx_mulit_mode": 0},
-            {"lx_3d_undistort": 0},
-            {"lx_3d_undistort_scale": 0},
-            {"lx_hdr": 0},
-            {"lx_3d_auto_exposure": 1},
-            {"lx_3d_auto_exposure_value": 50},
-            {"lx_3d_first_exposure": 1100},
-            {"lx_3d_second_exposure": 200},
-            {"lx_3d_gain": 11},
-
-            # <!-- 深度 -->
-            {"lx_min_depth": 0},
-            {"lx_max_depth": 8000}]),
+            {"yaw": 0.0}
+            ]
+    ),
 
     # 启动节点rviz2（只有在enable_rviz为True时才会启动）
     Node(

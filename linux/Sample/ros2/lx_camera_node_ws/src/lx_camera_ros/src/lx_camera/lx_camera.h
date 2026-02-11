@@ -1,13 +1,14 @@
 #ifndef _LX_CAMERAM_ROS_H_
 #define _LX_CAMERAM_ROS_H_
 
-#include <pcl/common/common_headers.h>
 #include "utils/dynamic_link.h"
+#include <pcl/common/common_headers.h>
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "image_transport/image_transport.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/point_cloud.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -25,6 +26,51 @@
 #include "lx_camera_ros/srv/lx_int.hpp"
 #include "lx_camera_ros/srv/lx_string.hpp"
 
+#include <Eigen/Core>
+#include <Eigen/Dense>
+
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
+// 自定义包含时间戳的点云类型
+struct PointXYZIT
+{
+    PCL_ADD_POINT4D
+    uint32_t intensity;
+    double timestamp;
+    uint16_t row_pos;
+    uint16_t col_pos;
+    PointXYZIT() : intensity(0), timestamp(0.0), row_pos(0), col_pos(0) {}
+    PointXYZIT(float x, float y, float z, uint32_t i, double t) 
+        : intensity(i), timestamp(t), row_pos(0), col_pos(0) {
+        this->x = x;
+        this->y = y;
+        this->z = z;
+    }
+    PointXYZIT(float x, float y, float z, uint32_t i, double t, uint16_t r, uint16_t c)
+        : intensity(i), timestamp(t), row_pos(r), col_pos(c) {
+        this->x = x;
+        this->y = y;
+        this->z = z;
+    }
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+} EIGEN_ALIGN16;
+
+// 注册自定义点云类型
+POINT_CLOUD_REGISTER_POINT_STRUCT(PointXYZIT,
+    (float, x, x)
+    (float, y, y)
+    (float, z, z)
+    (std::uint32_t, intensity, intensity)
+    (double, timestamp, timestamp)
+    (std::uint16_t, row_pos, row_pos)
+    (std::uint16_t, col_pos, col_pos)
+)
+
+typedef PointXYZIT PointType;
+
+
 class LxCamera : public rclcpp::Node {
 public:
   explicit LxCamera(DcLib *dynamic_lib);
@@ -36,8 +82,6 @@ public:
 
 private:
   int Check(std::string command, int state);
-  void SetParam();  //向相机写入配置参数
-  void ReadParam(); //读取配置参数
   bool LxString(const lx_camera_ros::srv::LxString::Request::SharedPtr req,
                 const lx_camera_ros::srv::LxString::Response::SharedPtr res);
   bool LxFloat(const lx_camera_ros::srv::LxFloat::Request::SharedPtr req,
@@ -59,6 +103,7 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr pub_tof_info_;
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr pub_rgb_info_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_cloud_;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_lidarCloud_;
   rclcpp::Publisher<lx_camera_ros::msg::FrameRate>::SharedPtr pub_temper_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_location_;
   rclcpp::Publisher<lx_camera_ros::msg::Obstacle>::SharedPtr pub_obstacle_;
@@ -74,32 +119,7 @@ private:
   rmw_qos_profile_t qos_;
   std::string log_path_;
   std::string ip_ = "0";
-  int raw_param_ = 0;
 
-  int lx_2d_binning_;
-  int lx_2d_undistort_;
-  int lx_2d_undistort_scale_;
-  int lx_2d_auto_exposure_;
-  int lx_2d_auto_exposure_value_;
-  int lx_2d_exposure_;
-  int lx_2d_gain_;
-
-  int lx_rgb_to_tof_;
-  int lx_3d_binning_;
-  int lx_mulit_mode_;
-  int lx_3d_undistort_;
-  int lx_3d_undistort_scale_;
-  int lx_hdr_;
-  int lx_3d_auto_exposure_;
-  int lx_3d_auto_exposure_value_;
-  int lx_3d_first_exposure_;
-  int lx_3d_second_exposure_;
-  int lx_3d_gain_;
-
-  int lx_tof_unit_;
-  int lx_min_depth_;
-  int lx_max_depth_;
-  int lx_work_mode_;
   int is_depth_ = 0;
   int is_amp_ = 0;
   int is_rgb_ = 0;
@@ -107,6 +127,7 @@ private:
   int rgb_type_ = 0;
   int inside_app_ = 0;
   int rgb_channel_ = 0;
+  int lx_rgbd_align = 0;
   float install_x_ = 0.0, install_y_ = 0.0, install_z_ = 0.0,
         install_yaw_ = 0.0, install_roll_ = 0.0, install_pitch_ = 0.0;
 };

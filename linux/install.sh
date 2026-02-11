@@ -31,34 +31,46 @@ then
 fi
 
 
-echo "move SDK to /opt/Lanxin-MRDVS"
+echo "move SDK to /opt/MRDVS"
+DST_PATH="/opt/MRDVS"
 $SUDO rm -rf /opt/Lanxin-MRDVS
-$SUDO mkdir /opt/Lanxin-MRDVS
-$SUDO cp -r ./SDK/include /opt/Lanxin-MRDVS/
-$SUDO mkdir /opt/Lanxin-MRDVS/lib
+$SUDO rm -rf ${DST_PATH}
+$SUDO mkdir ${DST_PATH}
+$SUDO cp -r ./SDK/include ${DST_PATH}
+$SUDO mkdir ${DST_PATH}/lib
 
 ARCH=$(uname -m)
 echo "arch:" $ARCH
 if [ "$(echo $ARCH | grep "arm")" != "" ]; then
-	$SUDO cp -r ./SDK/lib/linux_arm32/* /opt/Lanxin-MRDVS/lib/
+	$SUDO cp -r ./SDK/lib/linux_arm32/* ${DST_PATH}/lib/
 elif [ "$(echo $ARCH | grep "aarch")" != "" ]; then
-	$SUDO cp -r ./SDK/lib/linux_aarch64/* /opt/Lanxin-MRDVS/lib/
+	$SUDO cp -r ./SDK/lib/linux_aarch64/* ${DST_PATH}/lib/
 elif [ "$(echo $ARCH | grep "x86_64")" != "" ]; then
-	$SUDO cp -r ./SDK/lib/linux_x64/* /opt/Lanxin-MRDVS/lib/
+	$SUDO cp -r ./SDK/lib/linux_x64/* ${DST_PATH}/lib/
 else 
 	echo "not found matched platform"
 	exit
 fi
 
 echo ""
-echo "export path: /opt/Lanxin-MRDVS/lib/"
-export LD_LIBRARY_PATH=/opt/Lanxin-MRDVS/lib/:$LD_LIBRARY_PATH
-BASH_FILE=~/.bashrc 
-if ! grep -Fq "Lanxin-MRDVS" $BASH_FILE; then
-	sed -i '$a \export LD_LIBRARY_PATH=/opt/Lanxin-MRDVS/lib/:$LD_LIBRARY_PATH' $BASH_FILE
-	source $BASH_FILE 
-fi
+echo "export path: ${DST_PATH}/lib/"
+export LD_LIBRARY_PATH=${DST_PATH}/lib/:$LD_LIBRARY_PATH
 
+echo $SHELL
+if [ $SHELL = '/bin/bash' ]; then
+	
+	BASH_FILE=~/.bashrc 
+	if ! grep -Fq "/MRDVS/" $BASH_FILE; then
+		sed -i '$a \export LD_LIBRARY_PATH='${DST_PATH}'/lib/:$LD_LIBRARY_PATH' $BASH_FILE
+		source $BASH_FILE 
+	fi
+else
+	BASH_FILE=~/.zshrc 
+	if ! grep -Fq "/MRDVS/" $BASH_FILE; then
+		sed -i '$a \export LD_LIBRARY_PATH=${DST_PATH}/lib/:$LD_LIBRARY_PATH' $BASH_FILE
+		source $BASH_FILE 
+	fi
+fi
 
 echo ""
 echo "set socket buffer size"

@@ -7,6 +7,8 @@
 #include <string>
 #include <tf/tf.h>
 #include <tf/transform_broadcaster.h>
+#include <algorithm>
+#include <array>
 
 // 定位算法时间戳ms
 static long GetTimestamp() {
@@ -14,6 +16,35 @@ static long GetTimestamp() {
   gettimeofday(&tv, NULL);
   long t = tv.tv_sec * 1000L + tv.tv_usec / 1000L;
   return t;
+}
+
+struct CameraCalibMatrices {
+  std::array<double, 9> K{};
+  std::array<double, 14> D{};
+};
+
+static bool GetCameraCalibration(DcHandle handle, int type,
+    CameraCalibMatrices& out) {
+    LxIntrinsicParameters* calib = nullptr;
+    if (LX_SUCCESS != DcGetPtrValue(handle,
+        0 == type ? LX_PTR_2D_INTRINSIC_PARAMETERS : LX_PTR_3D_INTRINSIC_PARAMETERS,
+        (void**)&calib))
+        return false;
+
+    out.K = { static_cast<double>(calib->intrinsics[0]), 0.0,
+             static_cast<double>(calib->intrinsics[4]), 0.0,
+             static_cast<double>(calib->intrinsics[2]),
+             static_cast<double>(calib->intrinsics[5]), 0.0, 0.0, 1.0 };
+
+    out.D.fill(0.0);
+    if (calib->distortion_coeffs && calib->num_distortion_coeffs > 0) {
+        const size_t copy =
+            std::min<size_t>(calib->num_distortion_coeffs, out.D.size());
+        for (size_t i = 0; i < copy; ++i) {
+            out.D[i] = static_cast<double>(calib->distortion_coeffs[i]);
+        }
+    }
+    return true;
 }
 
 // 版本号比较
@@ -266,7 +297,7 @@ LxLocalization::LxLocalization() {
   Check("LX_INT_ALGORITHM_MODE",
         DcGetIntValue(handle_, LX_INT_ALGORITHM_MODE, &int_value));
 
-  char *algo_ver = "0.0.0";
+  char *algo_ver = nullptr;
   Check("LX_INT_ALGORITHM_MODE",
         DcGetStringValue(handle_, LX_STRING_ALGORITHM_VERSION,
                          &algo_ver)); // 获取当前应用算法版本
@@ -308,12 +339,14 @@ LxLocalization::LxLocalization() {
   DcGetIntValue(handle_, LX_INT_2D_IMAGE_HEIGHT, &int_value);
   rgb_camera_info_.height = int_value.cur_value;
 
-  float *intr = nullptr;
-  DcGetPtrValue(handle_, LX_PTR_2D_NEW_INTRIC_PARAM, (void **)&intr);
-  rgb_camera_info_.D =
-      std::vector<double>{intr[4], intr[5], intr[6], intr[7], intr[8], intr[9], intr[10], intr[11], intr[12], intr[13], intr[14], intr[15], intr[16], intr[17]};
-  rgb_camera_info_.K = boost::array<double, 9>{intr[0], 0, intr[2], 0, intr[1],
-                                               intr[3], 0, 0,       1};
+  CameraCalibMatrices rgb_calib;
+  if (GetCameraCalibration(handle_, 0, rgb_calib)) {
+    rgb_camera_info_.D.assign(rgb_calib.D.begin(), rgb_calib.D.end());
+    std::copy(rgb_calib.K.begin(), rgb_calib.K.end(), rgb_camera_info_.K.begin());
+  } else {
+    rgb_camera_info_.D.clear();
+    rgb_camera_info_.K.assign(0.0);
+  }
   rgb_info_publisher_.publish(rgb_camera_info_);
 
   if (LX_SUCCESS != Check("START_STREAM", DcStartStream(handle_))) {

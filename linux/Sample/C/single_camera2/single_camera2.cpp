@@ -5,40 +5,44 @@
 #include <thread>
 #include "lx_camera_api.h"
 
-//#undef HAS_OPENCV
 #ifdef HAS_OPENCV
+#define ENABLE_VISION
 #include "opencv2/opencv.hpp"
 using namespace cv;
 #endif
 using namespace std;
 
 static char wait_key = '0';
-#define checkTC(state) {LX_STATE val=state;                            \
-    if(val != LX_SUCCESS){                                             \
-        if(val == LX_E_RECONNECTING){                                  \
-            printf("device reconnecting\n"); }                         \
-        else if(val == LX_E_NOT_SUPPORT){                              \
-            printf("device not support\n");                          \
-        }                                                               \
-        else{                                                          \
-            printf("%s\n", DcGetErrorString(val));                     \
-            printf("press any key to exit!\n");                        \
-            wait_key = getchar();                                      \
-            DcCloseDevice(handle);                                     \
-            return -1;                                                 \
-        }                                                              \
-    }                                                                  \
-}
+#define checkTC(state) {LX_STATE val=state;                             \
+if(LX_SUCCESS!=val){                                                    \
+    if(val > 0){                                                        \
+        printf("WARNING %s\n", DcGetErrorString(val));}                 \
+    else if(val == LX_E_RECONNECTING){                                  \
+        printf("device reconnecting\n"); }                              \
+    else{                                                               \
+        printf("%s. press any key to exit!\n", DcGetErrorString(val));  \
+        wait_key = getchar();                                           \
+        DcCloseDevice(handle);                                          \
+        return -1;                                                      \
+    }                                                                   \
+}}
 
 int TestFrame(DcHandle handle);
 void WaitKey()
 {
     printf("**********press 'q' to exit********\n\n");
-    wait_key = getchar();
+    while (1) {
+        wait_key = getchar();
+        if (wait_key == 'q' || wait_key == 'Q')
+            break;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 }
 
 int main(int argc, char** argv)
 {
+    DcSetInfoOutput(1, true, "");
+
     DcHandle handle = 0;
     printf("call api version: %s\n", DcGetApiVersion());
 
@@ -91,14 +95,15 @@ int main(int argc, char** argv)
         device_info.id, device_info.ip, device_info.sn, device_info.firmware_ver);
 
     //获取数据流开启状态，如需调整可以调用DcSetBoolValue。
-    bool test_depth = false, test_amp = false, test_rgb = false;
+    bool test_depth = true, test_amp = false, test_rgb = true;
+    //checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, test_depth));
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, &test_depth));
-    checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, &test_amp));
-    checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, &test_rgb));
 
-    //RGBD对齐，rgb和depth的图像尺寸和坐标会保持一致。
-    //提供两中对齐方式，以depth为基准和以rgb为基准。以rgb为基准时深度和强度图像坐标不一致。
-    //checkTC(DcSetIntValue(handle, LX_INT_RGBD_ALIGN_MODE, LX_RGBD_ALIGN_MODE::DEPTH_TO_RGB));
+    //checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, test_amp));
+    checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, &test_amp));
+
+    //checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, test_rgb));
+    checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, &test_rgb));
 
     //可以根据需要,是否开启帧同步模式, 开启该模式, 内部会对每一帧做同步处理后返回
     //若不需要不同数据流之间同步, 则不需要开启此功能, 内部会优先保证数据实时性，也可以通过帧ID和时间戳判断是否同步
@@ -108,12 +113,19 @@ int main(int argc, char** argv)
 
     /*其他操作。相机的设置、参数的获取建议在数据流开启之前操作，尤其涉及到图像尺寸变化的内容*/
 
+    //RGBD对齐，rgb和depth的图像尺寸和坐标会保持一致。提供多种对齐方式
+    //checkTC(DcSetIntValue(handle, LX_INT_RGBD_ALIGN_MODE, LX_RGBD_ALIGN_MODE::DEPTH_TO_RGB));
+
+    //设置可能失败，以获取的状态为准
+    LxIntValueInfo ivalue;
+    checkTC(DcGetIntValue(handle, LX_INT_RGBD_ALIGN_MODE, &ivalue));
+    int rgbd_align_mode = ivalue.cur_value;
+
     //触发模式
-    LxIntValueInfo info;
     LX_TRIGGER_MODE trigger_mode = LX_TRIGGER_MODE_OFF;  
-    //DcSetIntValue(handle, LX_INT_TRIGGER_MODE, trigger_mode);
-    if(DcGetIntValue(handle, LX_INT_TRIGGER_MODE, &info) == LX_SUCCESS)
-        trigger_mode = static_cast<LX_TRIGGER_MODE>(info.cur_value);
+    //DcSetIntValue(handle, LX_INT_TRIGGER_MODE, LX_TRIGGER_MODE::LX_TRIGGER_MODE_OFF);
+    if (DcGetIntValue(handle, LX_INT_TRIGGER_MODE, &ivalue) == LX_SUCCESS)
+        trigger_mode = static_cast<LX_TRIGGER_MODE>(ivalue.cur_value);
 
     //开启数据流
     checkTC(DcStartStream(handle));
@@ -140,6 +152,8 @@ int main(int argc, char** argv)
         }
 
         ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
+        //ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME_3D);
+        //ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME_2D);
 
         if ((LX_SUCCESS != ret)
             //开启帧同步时，在超时范围内没有找到匹配的帧（丢包），会返回LX_E_FRAME_ID_NOT_MATCH
@@ -150,7 +164,7 @@ int main(int argc, char** argv)
             if (LX_E_RECONNECTING == ret) {
                 printf("device reconnecting\n");
             }
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
 
@@ -168,7 +182,7 @@ int TestFrame(DcHandle handle)
 {
     FrameInfo* frame_ptr = nullptr;
     if (LX_SUCCESS != DcGetPtrValue(handle, LX_PTR_FRAME_DATA, (void**)&frame_ptr)) {
-		printf("DcGetPtrValue failed\n");
+        printf("DcGetPtrValue failed\n");
         return 1;
     }
     if (!frame_ptr) {
@@ -179,7 +193,7 @@ int TestFrame(DcHandle handle)
     if (frame_ptr->frame_state != LX_SUCCESS) {
         if (frame_ptr->frame_state == LX_E_FRAME_ID_NOT_MATCH)
             printf("frame id not match\n");
-        else if(frame_ptr->frame_state == LX_E_FRAME_MULTI_MACHINE)
+        else if (frame_ptr->frame_state == LX_E_FRAME_MULTI_MACHINE)
             printf("found multi machine signal\n");
         else {
             printf("new frame not correct\n");
@@ -209,7 +223,11 @@ int TestFrame(DcHandle handle)
             CV_MAKETYPE(depth_data.frame_data_type, depth_data.frame_channel), depth_data.frame_data).clone();
         cv::Mat xyz_image = cv::Mat(depth_data.frame_height, depth_data.frame_width,
             CV_32FC3, xyz).clone();
-
+        if (wait_key == 's') {
+            cv::imwrite("depth.pgm", depth_image);
+            DcSaveXYZ(handle, "xyz.pcd");
+        }
+#ifdef ENABLE_VISION
         cv::Mat show;
         depth_image.convertTo(show, CV_8U, 1.0 / 16);
         cv::applyColorMap(show, show, COLORMAP_JET);
@@ -217,6 +235,7 @@ int TestFrame(DcHandle handle)
         cv::resizeWindow("depth", 640, 480);
         cv::imshow("depth", show);
         cv::waitKey(1);
+#endif
 #endif
     }
 
@@ -231,7 +250,11 @@ int TestFrame(DcHandle handle)
 #ifdef HAS_OPENCV
         cv::Mat amp_image = cv::Mat(amp_data.frame_height, amp_data.frame_width,
             CV_MAKETYPE(amp_data.frame_data_type, amp_data.frame_channel), amp_data.frame_data).clone();
+        if (wait_key == 's') {
+            cv::imwrite("amp.pgm", amp_image);
+        }
 
+#ifdef ENABLE_VISION
         cv::Mat show;
         if (amp_image.type() == CV_16U)
             amp_image.convertTo(show, CV_8U, 1.0 / 8);
@@ -242,6 +265,7 @@ int TestFrame(DcHandle handle)
         cv::resizeWindow("amp", 640, 480);
         cv::imshow("amp", show);
         cv::waitKey(1);
+#endif
 #endif
     }
 
@@ -256,11 +280,16 @@ int TestFrame(DcHandle handle)
 #ifdef HAS_OPENCV
         cv::Mat rgb_image = cv::Mat(rgb_data.frame_height, rgb_data.frame_width,
             CV_MAKETYPE(rgb_data.frame_data_type, rgb_data.frame_channel), rgb_data.frame_data).clone();
+        if (wait_key == 's') {
+            cv::imwrite("rgb.png", rgb_image);
+        }
 
+#ifdef ENABLE_VISION
         cv::namedWindow("rgb", 0);
         cv::resizeWindow("rgb", 640, 480);
         cv::imshow("rgb", rgb_image);
         cv::waitKey(1);
+#endif
 #endif
     }
 

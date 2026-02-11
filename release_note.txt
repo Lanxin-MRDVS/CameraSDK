@@ -1,0 +1,364 @@
+************************
+2.4.60.260126
+1、某些C++平台可能找不到GetDeviceList符号。调整头文件，需要重新编译。注意！！！
+2、增加函数返回警告类型，LX_E_NOT_SUPPORT调整为LX_W_NOT_SUPPORT，可能导致判断逻辑兼容问题
+3、需要算法库运算但Dataprocess加载失败时，原本逻辑为限制此部分功能，改为直接报错
+4、安装路径调整为MRDVS，如果手动拷贝文件需要注意路径设置，正常执行安装会自动配置路径
+
+1、修复算法可能重复调用导致点云偶发异常
+2、修复频繁开关相机时内存泄漏问题
+
+1、增加新内参接口LX_PTR_2D_INTRINSIC_PARAMETERS，LX_PTR_3D_INTRINSIC_PARAMETERS，支持鱼眼模型，原来枚举接口保留但不建议使用
+2、增加IMU接口:IMU使能，IMU量程设置（默认0最小量程），IMU结构体，数据回调接口。启停通过StartStream和StopStream控制。
+3、增加雷达接口，LX_PTR_XYZIRT_DATA，对应结构体LxPointCloudData和LxPointXYZIRT。注意开启反畸变和rgbd对齐后每个点的时间戳不准
+4、增加稀疏对齐，优化rgbd对齐算法。对齐到rgb时强制rgb反畸变，此时开启tof反畸变则无空洞，但牺牲精度。
+5、增加lx_camera_api_version.h。通过strings命令可查看so的version信息
+6、增加点云单位和坐标系设置LX_INT_XYZ_UNIT，LX_INT_XYZ_COORDINATE。仅影响点云数据，如有额外外参转换需谨慎使用
+7、增加jpeg压缩比设置LX_INT_2D_ENCODE_RATIO，增加2d数据输出格式LX_INT_2D_IMAGE_OUTPUT_FORMAT，针对个别定制需求，功能待完善。需谨慎使用。增加rkmpp硬件解码
+8、增加GetNewFrame3D 和GetNewFrame2D，可以仅获取需要的数据减少资源占用。注意，rgbd对齐情况下可能异常
+9、增加允许丢包填充数据的接口。一帧数据丢包数少于阈值，会用无效值填充并保留当前帧，否则丢弃当前帧
+10、增加lidar、imu示例
+11、其他增加线程名称、操作超时接口LX_INT_GVCP_TIME_OUT等
+
+1、优化ptp时间同步，正常情况下同步精度±1ms，网络拥堵情况下误差增大，但不超过10ms。SDK自动启动ptp主机，因此网络内多个SDK运行时可能导致时间同步异常。支持关闭ptp服务
+2、优化内存和资源占用。GPU功能优化，支持大部分算法功能，nvidia平台可能不完全支持
+3、优化反畸变系数，开启反畸变时调节畸变系数可保留不同程度的视场角
+3、优化日志，日志文件滚动存储，默认最大数量为10个，支持设置文件数量和文件大小
+4、更新ros和ros2，减少点云拷贝，增加lx_lidar_ros.launch，调整launch设置
+5、优化LxCameraViewer显示，增加部分功能。vtk驱动异常时自动禁用点云显示功能
+6、其他已知问题修复和调整
+7、更新图像算法库LxDataProcess 1.3.6.260113
+
+========================
+API & Compatibility Updates
+1.Fixed symbol lookup issue for "GetDeviceListon" certain C++ platforms (requires recompilation)
+2.Changed warning type from LX_E_NOT_SUPPORTto LX_W_NOT_SUPPORT (may affect compatibility logic)
+3.Enhanced error handling: now reports error instead of limiting functionality when DataProcess fails to load
+4.Change installation path from Lanxin-MRDVS to MRDVS(manual file copying requires path adjustment)
+
+Bug Fixes
+1.Fixed occasional point cloud anomalies caused by repeated algorithm calls
+2.Fixed memory leaks during frequent camera on/off operations
+
+New Features
+1.Added new intrinsic parameter interfaces supporting fisheye model
+2.Added IMU support
+3.Added LiDAR interface
+4.Added RGBD_sparse and optimized RGB-D alignment
+5.Added packet loss tolerance with invalid value filling for minor packet loss
+
+Performance & Optimization
+1.Optimized PTP time synchronization (±1ms accuracy normally, <10ms under network congestion)
+2.Optimized LX_INT_3D_UNDISTORT_SCALE with adjustable FOV preservation
+3.Enhanced logging with rolling file storage (default: 10 files max)
+4.Enhanced memory and resource management. Improved GPU functionality support
+
+Others
+1.Added version header file (lx_camera_api_version.h)
+2.Added LiDAR and IMU usage examples
+3.other bug fix and optimize
+4.LxDataProcess v1.3.6.260113
+
+
+
+************************
+2.4.50.0816
+1、SDK/上位机软件统一版本号，安装包不带固件
+2、修复1.3.66引入的distance2最小最大距离范围外数据未赋零值缺陷
+3、取消图像算法上移后无法配置应用算法模式限制
+4、修复H3相关缺陷
+6、增加避障增加寄存器索引快速切换接口
+7、完善sdk demo示例
+8、修复避障算法1参数异常
+9、增加linux_x86平台UI
+9、UI支持多用户连接，但功能受限
+10、UI增加部分功能，优化显示
+11、修复其他已知缺陷
+12、LxDataProcess更新到1.3.0
+
+========================
+1.LxCameraApi and LxCameraViewer use same version.
+2.fix conflict of LX_INT_CALCULATE_UP and LX_INT_ALGORITHM_MODE 
+3.fix H3
+4.fix MODE_AVOID_OBSTACLE
+5.linux LxCameraViewer and supports restricted access to connect the camera device
+6.other bug fix and optimize
+7.LxDataProcess v1.3.0
+
+
+
+************************
+1.3.60
+SDK V2.4.38
+	1.修复部分环境打开相机偶现崩溃问题，并支持500台相机同时接入稳定
+    2.修复部分环境gige获取数据线程安全问题
+	3.支持通用应用算法获取方式
+	4.修复某些情况下外参获取错误问题
+	5.优化gige寄存器通信机制减少cpu占用
+	6.悟空协议修复偶现获取图像数据、固件升级异常、优化调用逻辑等
+	7.悟空协议支持获取应用算法结果、滤波配置等
+	8.新增ptp时间同步开关接口、gige心跳策略调整等
+	9.完善csharp demo示例
+	10.完善ros demo示例
+	11.支持S10/H4设备相机型号
+	12.修复特权模式接口支持设备2个并行访问
+	13、修复避障V1掩膜图在某些参数下计算生成错误问题
+	14.更新图像算法库到1.2.28
+	
+LxCameraViewer V2.3.8
+	1.连续存图功能
+    2.2.3电源版版新增相关的IO接口模式配置、端接电阻开关配置，以及多频配置
+	3.支持S10产品应用算法配置
+	4.地面空洞应用算法配置和检测结果显示
+	5.设备系统镜像信息显示
+	6.部分UI使用细节优化
+	7.支持管理员用户登录时临时修改设备最大访问连接数2个
+	8.新增置信度和填充配置滤波参数
+
+========================
+	support S10 serials
+	fix some bugs,and add some features
+LxDataProcess V1.2.28
+
+
+
+************************
+1.3.47.0611
+SDK V2.4.23
+	1.优化日志输出
+	2.使用opencv的jpg解码
+	3.linux新增设置设备防火墙白名单脚本工具
+    4.ptp授时同步策略改为打开时同步并过滤相同IP，特权用户不开启同步
+	5.新增CAN地址和协议类型设置
+    6.新增M4V1_1, M4ProV1_1和 S2MaxV1_1型号设备支持
+	7.修复和优化部分内部逻辑
+	8.取消TOF曝光和HDR配置的限制逻辑
+	9.支持S2MAX
+	10.新增软触发和相关设置，0416调整软触发接口
+	11.新增自动曝光范围，内部自动限制曝光最大值
+	12.新增参数导入导出，新增参数组切换
+	13.新增IO工作模式，支持手动设置IO状态
+	14.调整滤波设置
+	15.修复回调方式重连后不更新的问题
+	16.不用的部分枚举挪到内部
+	17.更新ROS和文档
+	18.更新避障IO输出结果的逻辑，优化S2仅获取IO输出耗时的问题
+	19.修复linux重连时CPU使用率高的问题
+	20.算法库加载失败时，保留基本使用功能
+	21.启流等待时间设为5s
+LxCameraViewer V2.2.32
+    1.新增SDK GPU设置
+	2.新增金字塔BINNING配置
+	3.新增硬件接口IO输出和控制模式
+	4.修复S2避障缺陷
+	5.优化部分界面显示以及提示
+	6.完善CAN、modubus相关参数配置
+	7.应用算法相关配置使用调整
+	8.新增扇形避障区域设置
+	9.同步M系列新增功能
+	10.调整伪彩显示，修复切换算法点云视角问题
+	11.应用算法增加外参标定
+	12.增加相机型号显示，增加特殊权限多次连接相机
+	13.修复一些显示问题
+	14.修复一些说明问题
+	15.修复回调方式没有避障算法2结果的问题
+	16.增加硬件栏：IO输出模式，can和modbus设置
+	
+========================
+1.3.47.0611
+SDK V2.4.23
+	fix some bugs
+	add some configure capability
+LxDataProcess 1.2.19
+    fix some bugs	
+fireware 	
+	reduced data processing time
+
+
+
+/****增加交叉编译链，跨平台一键编译****/
+1.3.35.0124
+SDK V2.4.9
+	1.头文件兼容以前版本，通过c++宏定义区分。文件结构调整。
+	2.增加HDR使能，自动曝光，算法上移
+	3.能力集文件规范化，旧的版本默认初始化能力集
+	4.未查找到相机时允许单播连接相机
+	5.RGBD帧同步
+	6.修复linux非管理员模式不保存日志的问题
+	7.时间戳改为us
+	8.SDK默认开启日志，修改日志文件名
+	9.增加ros2，更新ROS示例
+	10.支持H3全部功能和V1 T2部分功能
+	11.调整保存点云接口
+	12.调整IP设置接口，增加子网和网关设置
+	13.linux增加环境配置脚本和网络缓存配置脚本
+	14.帧回调包含丢包的帧
+	15.兼容悟空基本功能
+	16.GVSP无数据时以心跳判断是否重连
+	17.优化未启动数据流的逻辑
+	18.常开模式不允许修改图像尺寸的操作，增加对应的错误码
+
+LxCameraViewer V2.2.19
+	1.更新图标
+	2.增加英文版
+	3.增加点云快捷键
+	4.修复无写权限导致崩溃问题
+	5.开放帧率、内外参、触发模式、畸变系数、算法上移
+	6.增加一键导入滤波文件，一键导入避障参数
+	7.修复界面说明不匹配的问题
+	8.调整修改IP方式
+	9.优化点云拖动消失的问题
+	10.支持视觉定位相关功能
+	11.增加悟空兼容
+	12.增加防火墙、网卡设置
+	13.增加按键精灵
+	14.修复已知的一些问题
+
+LxDataProcess V1.2.0
+
+
+
+************************
+1.3.10.0823
+SDK v2.3.1
+	1.优化相机开关，关闭时延迟释放，打开时新建对象
+	2.优化重连时反应慢的问题
+	3.点云单位由m改为mm
+	4.去除异常捕获
+	5.多通道收流适配
+	6.windows添加防火墙列表
+	7.软件自动获取管理员权限
+	8.增加结构体获取数据
+	9.托盘对接结构体调整
+	10.增加获取设置避障和获取避障结果的接口
+LxCameraViewer V2.2.7
+	1.修复Win11多次启停流闪退的问题
+	2.完善本地点云功能，优化点云加载和点云视角问题，增加多种点云保存和加载功能
+	3.不支持的功能不报错不使能
+	4.修复rgb异常问题
+	5.日志添加到SDK
+	6.修复启停流点云视角重置
+	7.增加vtk检测，避免不支持时崩溃
+	8.修复加载agv和坐标转换时偶发崩溃
+	9.增加托盘对接
+	10.修复一些已知问题
+LxDataProcess V1.0.8
+	1.通用算法库支持S2功能正常
+
+M4 V1.0.6_230629
+	1.动态加载算法
+	2.ptp时间同步
+S2 V1.0.1_230629
+	1.修复恢复出厂设置
+	2.修复图像尺寸问题
+	3.修复硬件自检逻辑
+	4.增加看门狗。
+
+
+
+************************
+1.3.0.0616
+SDK:V2.2.2
+	1.文件传输改为TCP，linux不再支持ftp传输，windows暂时保持。0608之前的相机版本需要升级，否则linux传文件会报错。
+	（减少依赖库，上位机兼容性更好，比如linux的点云显示问题。文件的名称和路径与SDK无关，嵌入式兼容性更好）
+	2.查找相机优化（多线程加速）。关闭相机优化（定时关闭，避免多线程关闭导致崩溃）。
+
+内外工具分离，对外版LxCameraViewer，对内版LxCameraTool，不提供完整安装包，仅提供更新的部分
+TOOL:V2.2.1
+	1.跟进生产反馈问题
+	2.采用新加密工具（linux加密结果与windows不一致问题）
+	3.liunx点云显示正常	
+Viewer：V2.2.1
+	1.正式发布
+固件：
+M4-update-V1.0.6_230614
+    1. 解决相机内参有时获取不对问题
+    2. 算法在json文件时，加了sync同步功能，防止文件为空
+    3. 增加tcp接收文件功能
+    4. 解决异常时权限释放问题
+    5. 解决异常时线程无法退出
+    6. 支持sc230ai, 升级后要在重启一次
+    7. 打包托盘识别算法V0.3.1
+S2-update-V1.0.1_230607
+    1. TOF驱动：更改了驱动的寄存器列表
+    2. RGB驱动：修改了RGB失效时IIC通信尝试次数过多问题。
+    3. 增加了TCP接收文件的功能。
+    4. 增加了程序退出段错误、调用栈捕获。
+    5. 修复了常开模式下package分包内存越界。	
+
+
+
+************************
+V1.2.0_0602
+SDK:V2.2.1_230526
+	1. 增加串口modbus地址
+	2. 更新示例代码和ROS
+	3. 优化请求重发机制
+	4. 修复关闭自动曝光后参数更新问题
+	5. getframe时如果停流则立即退出
+	6. 避障相关功能
+	7. 修复日志库等级设置
+	8. 增加相机生产状态（已标定，质检OK，质检NG)
+	9. 修复可能导致不稳定的一些逻辑（参数设置多次发送）
+	10. 增加网卡协商状态
+	
+UI:V2.1.1_230526
+	3. 修复自动曝光等级设置无效
+	4. 质检增加点云准度和平面角度，增加调焦评价
+	5. 开关流合并到显示
+	6. 修复windows点云显示可能闪退的问题
+	7. 获取数据逻辑调整
+	8. 优化一键标定
+	9. 避障相关优化
+	10. 增加一键标定
+	11. 增加相机模型显示
+固件：
+M4-update-V1.0.6_230530
+M4固件V1.0.6_230520更新了kernel，此版本升级之后不能往旧版回退。
+V1.0.6_230520之前的版本必须先升级这一版才能继续往更新的版本升级
+	1. 增加modbus rtu协议，适配MA01-AXCX4040模块，避障功能切换通过短接DI1实现,DO1 DO2 DO3 分别对应避障结果0,1,2，modbus地址通过sdk配置，没有配置，设备遍历，会比较耗时
+    2. 增加读取tof模组温度传感器功能
+    3. 解决版本号显示不对问题
+	4. 修复内置算法切换bug
+    5. 修改避障算法调用方式
+	6.增加UDP和RS485通讯
+	7.增加常开模式，网络和SDK断开时相机正常工作
+	8.修复RGB自动曝光闪烁问题
+	9.相机部分硬件异常时不影响正常工作，反馈异常状态
+
+S2-update-V1.0.1_230601
+    1. 修复了打开相机失败率高（启流慢，直接点击序列号右击打开/关闭相机图像出现大约9秒的黑图）的问题。
+    2. 开启了RGB AE的自动模式。
+    3. 修改了断开时关闭工作模式下不断流、IO状态有误的问题。
+    4. 修改了网络带宽反馈错误的问题。
+    5. 修改了TOF驱动，新增了配置参数。
+    6. 修改避障功能，使用IO和UDP两种方式输出避障结果（描述:UDP:[IO1-IO2]）：无障碍:0:[0-0]  预警:1:[0-1]  警告:2:[1-0]  初始化:3:[1-1] 。IO输出状态与二极管相同：1代表导通，0代表截止。
+    7. 增加了开机即启流的工作模式。
+
+
+
+************************
+V1.1.0_0506
+SDK:V2.2.0_0506
+1. 去除evpp依赖库，更换日志库
+2. 优化S2内参标定
+3. 修复内参标定识别错误导致的崩溃
+4. 修复相机断电后重连无数据流的bug
+5. M4 rgb压缩增加mjpeg和jpeg格式
+UI:V2.1.0_0506
+1. ID不支持重复修改
+2. 优化机械臂存图
+3. 优化电流测试
+4. UI调整避障说明
+5. UI调整文件保存位置
+6. UI增加2D编码格式切换
+7. UI增加应用算法开启状态
+8. 支持中文路径
+9. 点云显示伪彩
+10. mac支持单独修改
+11. 更新用户手册
+M4固件：V1.0.5_230506
+1. 增加自动曝光
+2. M4修改IP后无需重启
+3. S2打包驱动更新
+

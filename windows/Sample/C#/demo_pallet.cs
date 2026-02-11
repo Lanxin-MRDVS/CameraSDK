@@ -1,4 +1,4 @@
-﻿using System.Runtime.InteropServices;
+using System.Runtime.InteropServices;
 using static lx.LxCamera;
 using static lxApplication.LxApplication;
 using System.Net.Http.Headers;

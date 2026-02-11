@@ -8,3 +8,11 @@ step 0: cd lx_camera_node_ws
 step 1: colcon build
 step 2: source install/setup.bash
 Step 3: ros2 launch lx_camera_ros lx_camera_ros.launch.py
+
+Note: If, when running a ROS2 program, the subscription topic has a frame rate that is too low, it may be due to improper configuration of the device's DDS policy. You can change it to cyclonedds. The specific steps are as follows:
+step 0：sudo apt update
+step 1：sudo apt install ros-<Your ROS2 version>-rmw-cyclonedds-cpp ，For example, if it is the humble system, then use:sudo apt install ros-humble-rmw-cyclonedds-cpp
+step 2：cd lx_camera_node_ws
+step 3: source install/setup.bash
+step 4：export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+Step 5: ros2 launch lx_camera_ros lx_camera_ros.launch.py

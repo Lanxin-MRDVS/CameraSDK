@@ -6,36 +6,35 @@
 #include "lx_camera_api.h"
 #include "lx_camera_application.h"
 
-#undef HAS_OPENCV
 #ifdef HAS_OPENCV
+#define ENABLE_VISION
 #include "opencv2/opencv.hpp"
 using namespace cv;
 #endif
 
 static char wait_key = '0';
-#define checkTC(state) {LX_STATE val=state;                                 \
-    if(val!= LX_SUCCESS){                                                   \
-        if(val == LX_E_NOT_SUPPORT) {                                       \
-            printf("not support this operator\n");                          \
-        }else if(val == LX_E_RECONNECTING){                                 \
-            printf("device reconnecting\n");                                \
-        } else  if(val == LX_ERROR || val == LX_E_INPUT_ILLEGAL){           \
-            printf("press any key to exit!\n");                             \
-            wait_key = getchar();                                        \
-            return -1;                                                      \
-         } else{                                                            \
-            printf("press any key to continue\n");                          \
-            wait_key = getchar();                                        \
-         }                                                                  \
-     }                                                                      \
-}
+#define checkTC(state) {LX_STATE val=state;                             \
+if(LX_SUCCESS!=val){                                                    \
+    if(val > 0){                                                        \
+        printf("WARNING %s\n", DcGetErrorString(val));}                 \
+    else if(val == LX_E_RECONNECTING){                                  \
+        printf("device reconnecting\n"); }                              \
+    else{                                                               \
+        printf("%s. press any key to exit!\n", DcGetErrorString(val));  \
+        wait_key = getchar();                                           \
+        DcCloseDevice(handle);                                          \
+        return -1;                                                      \
+    }                                                                   \
+}}
 
 void CallbackFunc(FrameInfo* frame, void* usr_data);
 
 int main(int argc, char** argv)
 {
+    DcHandle handle = 0;
+
     //设置日志等级和路径。
-    //checkTC(DcSetInfoOutput(0, true, ""));
+    checkTC(DcSetInfoOutput(1, true, ""));
     printf("call api version: %s\n", DcGetApiVersion());
 
     //查找设备
@@ -71,7 +70,6 @@ int main(int argc, char** argv)
         break;
     }
 
-    DcHandle handle = 0;
     LxDeviceInfo device_info;
     LX_STATE lx_state = DcOpenDevice((LX_OPEN_MODE)open_mode, open_param.c_str(), &handle, &device_info);
     if (LX_SUCCESS != lx_state) {
@@ -208,12 +206,14 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
         cv::Mat depth_image = cv::Mat(depth_data.frame_height, depth_data.frame_width,
             CV_MAKETYPE(depth_data.frame_data_type, depth_data.frame_channel), depth_data.frame_data);
 
+#ifdef ENABLE_VISION
         cv::Mat show;
         depth_image.convertTo(show, CV_8U, 1.0 / 16);
         applyColorMap(show, show, COLORMAP_JET);
         cv::namedWindow("depth", 0);
         //cv::resizeWindow("depth", 640, 480);
         cv::imshow("depth", show);
+#endif
     }
 
     if (frame_ptr->amp_data.frame_data != nullptr) {
@@ -226,20 +226,22 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
             amp_image.convertTo(show, CV_8U, 1.0 / 8);
         else
             show = amp_image;
-
+#ifdef ENABLE_VISION
         cv::namedWindow("amp", 0);
         //cv::resizeWindow("amp", 640, 480);
         cv::imshow("amp", show);
+#endif
     }
 
     if (frame_ptr->rgb_data.frame_data != nullptr) {
         FrameDataInfo rgb_data = frame_ptr->rgb_data;
         cv::Mat rgb_image = cv::Mat(rgb_data.frame_height, rgb_data.frame_width,
             CV_MAKETYPE(rgb_data.frame_data_type, rgb_data.frame_channel), rgb_data.frame_data);
-
+#ifdef ENABLE_VISION
         cv::namedWindow("rgb", 0);
         //cv::resizeWindow("rgb", 640, 480);
         cv::imshow("rgb", rgb_image);
+#endif
     }
 
     cv::waitKey(1);
