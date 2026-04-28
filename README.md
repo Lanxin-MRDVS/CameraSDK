@@ -2,7 +2,7 @@
 
 ## Document
 - Camera SDK(LxCameraApi) Development Guide
-- LxCameraViewer User Manual https://github.com/Lanxin-MRDVS/CameraSDK/blob/master/Document/LxCameraViewer_User_Manual.md
+- LxCameraViewer User Manual [Clikck here](https://github.com/Lanxin-MRDVS/CameraSDK/blob/master/Document/LxCameraViewer_User_Manual.md)
 - LxCameraSDK-Python User Manual
 
 ## linux
