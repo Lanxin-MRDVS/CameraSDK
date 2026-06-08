@@ -312,7 +312,7 @@ The ROS/ROS2 samples publish images, depth, amplitude, point clouds, IMU, frame 
 - Product knowledge base: [MRDVS Hub 2.0](https://hub.mrdvs.cn/)
 - GitHub repository: [Lanxin-MRDVS/CameraSDK](https://github.com/Lanxin-MRDVS/CameraSDK)
 - Issue feedback: [GitHub Issues](https://github.com/Lanxin-MRDVS/CameraSDK/issues)
-- Product inquiry: [WhatsApp`+86 13370882355`](https://wa.link/9yw2hz{target=_blank})
+- Product inquiry: [WhatsApp`+86 13370882355`](https://wa.link/9yw2hz)
 
 ---
 
