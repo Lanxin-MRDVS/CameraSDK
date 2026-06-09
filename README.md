@@ -5,8 +5,8 @@
 <h1 align="center">LxCameraSDK</h1>
 
 <p align="center">
-  Industrial camera SDK for MRDVS visual hardware products.<br>
-  面向迈尔微视视觉硬件产品的工业相机开发套件。
+  3D Industrial camera SDK for MRDVS visual hardware products.<br>
+  面向迈尔微视视觉硬件产品的3D工业相机开发套件。
 </p>
 
 <p align="center">
