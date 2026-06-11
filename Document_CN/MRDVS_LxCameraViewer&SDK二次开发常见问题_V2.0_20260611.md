@@ -2,7 +2,7 @@
   <img src="../assets/mrdvs_logo.png" alt="MRDVS Logo" width="300">
 </p>
 
-<h1 align="center">LxCameraSDK设备二次开发常见问题</h1>
+<h1 align="center">LxCameraViewer&SDK二次开发常见问题</h1>
 
 <p align="center">
   面向MRDVS视觉硬件产品的上位机软件、视觉成像和SDK二次开发问题整理。
