@@ -89,7 +89,7 @@ For official product information, visit [MRDVS Hub 2.0](https://hub.mrdvs.cn/).
 
 - LxCameraSDK C/C++ Developer Guide [Click here](https://github.com/Lanxin-MRDVS/CameraSDK/blob/master/Document_EN/MRDVS_LxCameraSDK_C-Cpp_DeveloperGuide_V1.0_20260604.pdf)
 - LxCameraSDK Python Developer Guide [Click here](https://github.com/Lanxin-MRDVS/CameraSDK/blob/master/Document_EN/LxCameraSDK-Python%20User%20Manual_EN.PDF)
-- LxCameraViewer User Manual [Click here](https://github.com/Lanxin-MRDVS/CameraSDK/blob/master/Document_EN/LxCameraViewer%20User%20Manual.pdf)
+- LxCameraViewer User Manual [Click here](https://github.com/Lanxin-MRDVS/MRDVS-wiki/blob/main/lxcameraviewer-user-manual.md)
 
 
 ## Supported Platforms
