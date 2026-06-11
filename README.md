@@ -600,3 +600,11 @@ ROS/ROS2示例会发布图像、深度、强度、点云、IMU、帧率、托盘
 - 问题反馈：[GitHub Issues](https://github.com/Lanxin-MRDVS/CameraSDK/issues)
 - 产品咨询：`400-025-6680`
 
+---
+
+<p align="center">
+  <sub><em>Last updated: June 2026</em></sub><br>
+  <sub><em>Hangzhou Lanxin Technology Co., Ltd. & MRDVS Co., Ltd.</em></sub><br>
+  <sub><em>All Rights Reserved.</em></sub>
+</p>
+
