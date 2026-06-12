@@ -5,7 +5,8 @@
 <h1 align="center">LxCameraViewer & SDK Development FAQ</h1>
 
 <p align="center">
-  Frequently asked questions for PC host software, vision imaging, and SDK-based development for MRDVS visual hardware products.
+  <a href="https://mrdvs.com/">Official Website</a> |
+  <a href="https://hub.mrdvs.cn/">Knowledge Base</a>
 </p>
 
 <p align="center">
@@ -19,13 +20,13 @@
 
 ## Contents
 
-- [Notes](#notes)
+- [Overview](#overview)
 - [Quick Check Sequence](#quick-check-sequence)
 - [PC Host Software and Vision Imaging Issues](#pc-host-software-and-vision-imaging-issues)
 - [SDK Error Codes and Issue Handling](#sdk-error-codes-and-issue-handling)
 - [Items to Be Supplemented](#items-to-be-supplemented)
 
-## Notes
+## Overview
 
 This document is compiled from common issues in the company knowledge base. It is mainly intended for LxCameraSDK-based development, LxCameraViewer host-side debugging, and preliminary issue handling in field scenarios.
 
