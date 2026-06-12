@@ -5,7 +5,8 @@
 <h1 align="center">LxCameraViewer&SDK二次开发常见问题</h1>
 
 <p align="center">
-  面向MRDVS视觉硬件产品的上位机软件、视觉成像和SDK二次开发问题整理。
+  <a href="https://www.mrdvs.cn/">官方网站</a> |
+  <a href="https://hub.mrdvs.cn/">知识社区</a>
 </p>
 
 <p align="center">
@@ -19,13 +20,13 @@
 
 ## 目录
 
-- [说明](#说明)
+- [概览](#概览)
 - [快速排查顺序](#快速排查顺序)
 - [上位机软件和视觉成像问题](#上位机软件和视觉成像问题)
 - [二次开发错误码和问题处理](#二次开发错误码和问题处理)
 - [需补充事项](#需补充事项)
 
-## 说明
+## 概览
 
 本文根据公司知识库中的常见问题整理，主要用于LxCameraSDK二次开发、LxCameraViewer上位机调试和现场问题初步排查。
 
