@@ -61,16 +61,13 @@ MRDVS is dedicated to helping robots understand the world through 3D vision and 
 
 MRDVS serves embodied intelligence robots, lawn-mowing robots, commercial cleaning robots, low-speed autonomous vehicles, intelligent wheelchairs, industrial mobile robots, and warehouse logistics automation scenarios. Based on iToF, dToF, binocular structured light, AI algorithms, and multi-sensor fusion, MRDVS continuously iterates visual hardware and algorithm solutions to help robots operate more safely, stably, and intelligently.
 
-For official product information, visit [MRDVS Hub 2.0](https://hub.mrdvs.cn/).
-
 ### Visual Hardware Products
 
 | Product line | Description | Typical applications | Image |
 | --- | --- | --- | --- |
 | S Series dToF LiDAR-Vision Fusion Sensor | Designed for complex indoor and outdoor environments, the S Series combines solid-state LiDAR and visual perception. It supports high-precision ranging, semantic obstacle avoidance, and SLAM mapping, with a maximum ranging distance of 42 m and a maximum field of view of 140 degrees. | Mobile robot SLAM, semantic obstacle avoidance, indoor and outdoor environment perception | <img src="./assets/S-series.png" alt="S Series" width="2000"> |
 | M Series ToF Depth Camera | An RGB-D depth camera based on Sony iToF chips. It is optimized for working distances up to 5 m and adapts to different lighting conditions, object textures, and real-time detection requirements. | Pallet recognition, bin stacking, volume measurement, robotic arm visual guidance, depalletizing and grasping | <img src="./assets/M-series.png" alt="M Series" width="2000"> |
-| V Series Visual Navigation Camera | A full-stack embedded positioning system that fuses 2D LiDAR, vision, and IMU. It provides stable and continuous localization data without relying on external preset markers. | Indoor unmanned forklifts, commercial cleaning robots, digital retrofit of traditional manual forklifts, warehouse localization | <img src="./assets/V-series.png" alt="V Series" width="2000"> |
-| H Series High-Precision Structured-Light Camera | A high-precision 3D camera based on binocular coded structured light, designed for high-precision recognition, grasping, and real-time 3D feedback. | Automated production, logistics sorting, robotic operation, high-precision recognition and grasping | <img src="./assets/H-series.png" alt="H Series" width="2000"> |
+| V Series Fusion-SLAM RTLS Device | A full-stack embedded positioning system that fuses 2D LiDAR, vision, and IMU. It provides stable and continuous localization data without relying on external preset markers. | Indoor unmanned forklifts, commercial cleaning robots, digital retrofit of traditional manual forklifts, warehouse localization | <img src="./assets/V-series.png" alt="V Series" width="2000"> |
 
 ### Industrial Solutions
 
@@ -309,7 +306,6 @@ The ROS/ROS2 samples publish images, depth, amplitude, point clouds, IMU, frame 
 
 ## Support and Feedback
 
-- Product knowledge base: [MRDVS Hub 2.0](https://hub.mrdvs.cn/)
 - GitHub repository: [Lanxin-MRDVS/CameraSDK](https://github.com/Lanxin-MRDVS/CameraSDK)
 - Issue feedback: [GitHub Issues](https://github.com/Lanxin-MRDVS/CameraSDK/issues)
 - Product inquiry: [WhatsApp`+86 13370882355`](https://wa.link/9yw2hz)
