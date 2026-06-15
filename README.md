@@ -2,7 +2,7 @@
   <img src="./assets/mrdvs_logo.png" alt="MRDVS Logo" width="300">
 </p>
 
-<h1 align="center">LxCameraSDK</h1>
+<h1 align="center">MRDVS 3D Camera SDK</h1>
 
 <p align="center">
   3D Industrial camera SDK for MRDVS visual hardware products.<br>
