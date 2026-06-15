@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://hub.mrdvs.cn/">MRDVS Hub 2.0</a> |
+  <a href="https://hub.mrdvs.cn/">中文知识社区</a> |
   <a href="#english">English</a> |
   <a href="#中文">中文</a>
 </p>
