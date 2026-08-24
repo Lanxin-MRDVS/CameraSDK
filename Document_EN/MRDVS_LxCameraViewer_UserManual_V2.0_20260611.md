@@ -454,7 +454,7 @@ _Figure 6_
 
 _Figure 7_
 
-**3.7.2.4 Filtering Settings /// \[low signal detect]，\[Smooth Level]，\[Noise Level]，\[Time Level]在操作软件中没有选项**
+**3.7.2.4 Filtering Settings**
 
 | Setting                  | Description                                                                                                                                        |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -472,9 +472,8 @@ _Figure 7_
 
 ![Filtering Settings](https://pub-f1dc758884b94eaba9d8c5d3d7575b62.r2.dev/lxcameraviewer/3.7/3.7.2/p7.png)
 
-_Figure 8_ /// figure 8 和figure 7 重复了
-
-**3.7.2.5 Hardware Interface /// 我用的中只有Get IO status一个选项**
+_Figure 8_ 
+**3.7.2.5 Hardware Interface**
 
 | Setting                     | Description                                                               |
 | --------------------------- | ------------------------------------------------------------------------- |
@@ -490,7 +489,7 @@ _Figure 8_ /// figure 8 和figure 7 重复了
 
 _Figure 9_
 
-**3.7.2.6 Collection Settings /// trigger mode 在我这个系统中没有**
+**3.7.2.6 Collection Settings**
 
 | Setting                          | Description                                                                                                                                                                                                                                |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -527,6 +526,22 @@ _Figure 10_
 ![Function Settings](https://pub-f1dc758884b94eaba9d8c5d3d7575b62.r2.dev/lxcameraviewer/3.7/3.7.2/p11.png)
 
 _Figure 11_
+
+**Firmware Upgrade**
+
+To upgrade the camera firmware:
+
+1. Open the target camera from the **Device List**.
+2. Expand **[Function Settings]**.
+3. Click **[Execute]** next to **[Update Version]**.
+4. Select the corresponding firmware upgrade package (`.bin`).
+5. Click **[Open]** to start the upgrade.
+
+> **Note:** Do not disconnect the camera from power during the upgrade. Wait until the upgrade is complete and the camera reconnects.
+
+![Firmware Upgrade](https://pub-7b25325ec91643989210e56dc1a181a4.r2.dev/lxcameraviewer_usermanual/fireware.png)
+
+*Figure 12*
 
 **3.7.3 Apply Algorithms**
 
