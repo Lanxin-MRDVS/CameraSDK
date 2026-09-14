@@ -2,7 +2,7 @@
   <img src="../assets/mrdvs_logo.png" alt="MRDVS Logo" width="300">
 </p>
 
-<h1 align="center">LxCameraViewer & SDK Development FAQ</h1>
+<h1 align="center">SDK FAQs</h1>
 
 <p align="center">
   <a href="https://mrdvs.com/">Official Website</a> |
@@ -11,8 +11,8 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/document-FAQ-2563EB" alt="Document">
-  <img src="https://img.shields.io/badge/version-V2.0-0F172A" alt="Version">
-  <img src="https://img.shields.io/badge/date-2026--06--11-475569" alt="Date">
+  <img src="https://img.shields.io/badge/version-V2.1-0F172A" alt="Version">
+  <img src="https://img.shields.io/badge/date-2026--09--14-475569" alt="Date">
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-0891B2" alt="Platform">
 </p>
 
@@ -22,15 +22,16 @@
 
 - [Overview](#overview)
 - [Quick Check Sequence](#quick-check-sequence)
+- [Camera Hardware Issues](#camera-hardware-issues)
 - [PC Host Software and Vision Imaging Issues](#pc-host-software-and-vision-imaging-issues)
+- [Application Algorithm Issues](#application-algorithm-issues)
 - [SDK Error Codes and Issue Handling](#sdk-error-codes-and-issue-handling)
-- [Items to Be Supplemented](#items-to-be-supplemented)
 
 ## Overview
 
 This document is compiled from common issues in the company knowledge base. It is mainly intended for LxCameraSDK-based development, LxCameraViewer host-side debugging, and preliminary issue handling in field scenarios.
 
-Items whose causes or solutions are not clearly stated in the original records are marked as "To be supplemented" or "Not specified in the original record". For issues involving hardware replacement, log analysis, or version upgrade, it is recommended to confirm the device SN, firmware version, SDK version, host software version, and device logs together.
+For issues involving hardware replacement, log analysis, or version upgrade, it is recommended to confirm the device SN, firmware version, SDK version, host software version, and device logs together.
 
 ## Quick Check Sequence
 
@@ -42,6 +43,16 @@ When the camera fails to open, no stream data is received, no image is displayed
 4. Confirm whether multiple processes or multiple users are connected to the same camera at the same time.
 5. Confirm whether the host software, SDK, firmware, and Dataprocess algorithm library versions are compatible.
 6. Save the device logs, host software logs, current parameters, and issue screenshots for further analysis.
+
+## Camera Hardware Issues
+
+| No. | Symptom | Possible Cause | Recommended Action |
+| --- | --- | --- | --- |
+| 1 | The power indicator does not light, or the blue indicator is dim. | Unstable power-supply voltage. | Use a `24 VDC, 2 A` power supply. |
+| 2 | The camera restarts automatically and frequently. | Not specified in the original record. | 1. Check bandwidth utilization.<br>2. Check whether the power supply meets the requirements. |
+| 3 | The obstacle-avoidance result in the host software is normal, but the I/O result is abnormal. | Not specified in the original record. | 1. Check whether the I/O wiring is correct.<br>2. Check whether the function cable is intact.<br>3. Check whether the firmware is the May release or later. |
+| 4 | The network adapter shows disconnected. | Abnormal network connection. | Check whether the network, network adapter, and switch are operating normally and whether communication is being blocked. |
+| 5 | During CANopen communication, no data is received or the received data does not match. | Not specified in the original record. | 1. Check whether the baud rate and CAN ID match.<br>2. Check whether the CAN cable is connected correctly. |
 
 ## PC Host Software and Vision Imaging Issues
 
@@ -65,6 +76,27 @@ When the camera fails to open, no stream data is received, no image is displayed
 | 16 | The edge accuracy of nearby white objects is poor, applicable to the S Series. | Glare. | Enable the glare optimization algorithm. Note that black object detection may become incomplete after this option is enabled. |
 | 17 | Large-area overexposure appears at the reflective column position, applicable to the S Series. | Glare. | Enable the glare suppression algorithm. |
 | 18 | Black object imaging is incomplete, applicable to the S Series. | High-exposure mode needs to be enabled. | Enable high-exposure mode and set TOF register `100130B0` to `240`. |
+
+## Application Algorithm Issues
+
+| No. | Symptom | Possible Cause | Recommended Action |
+| --- | --- | --- | --- |
+| 1 | Black pallet recognition fails. | The black pallet is not fully imaged. | 1. In `3D Settings` of the host software, set `High Exposure` to `1400`.<br>2. In `Filter`, set `Low Signal Threshold` to `20`.<br>3. In `Filter`, set `Small Signal Detection` to `1`. |
+| 2 | PalletPro detection is normal, but the vehicle controller receives an abnormal detection result or a failure. | The software version and embedded algorithm version are inconsistent. | Update the embedded algorithm firmware. |
+| 3 | Extrinsic calibration reports that the ground is not detected. | The ground point cloud is not imaged. | Open the camera in the host software, set `High Exposure` in `3D Settings` to `1400`, and set `Low Signal Threshold` in `Filter Settings` to `10`. Perform extrinsic calibration, then restore the original parameters after calibration is complete. |
+| 4 | Near-field extrinsic calibration fails. | Not specified in the original record. | 1. Check whether the pallet is fully imaged.<br>2. Confirm that the distance between the pallet and the camera is approximately `1300 mm`. |
+| 5 | Pallet recognition returns `failed-1` or `-11`. | No data or insufficient data. | Use the host software to confirm that the camera outputs images normally and check whether excessive filtering removes too much point cloud data. |
+| 6 | Pallet recognition returns `failed-2`, `-12`, or `-16`. | Too little point cloud data; no pallet leg is detected. | Possible causes include:<br>1. The camera or fork height has changed.<br>2. The pallet leg is occluded.<br>3. The camera or fork has a large pitch angle.<br>4. Pallet-leg imaging is insufficient.<br>5. A reflector is too close to the pallet leg and affects imaging.<br>Use PalletPro to confirm the condition, then adjust the relevant parameters, reflector position, or forklift pose as needed. |
+| 7 | Pallet recognition returns `failed-3` or `-13`. | The pallet-leg dimensions do not meet the requirements, or no pallet leg is detected. | The pallet-leg features are outside the recognition range. Adjust the pallet-leg width or pallet-width range as needed. |
+| 8 | Pallet recognition returns `failed-4` or `-14`. | The camera installation height is not set. | Set the installation-height parameter or perform extrinsic calibration. |
+| 9 | Pallet recognition returns `failed-5` or `-15`. | Pallet validation fails; pallet crossbar detection is abnormal or the pallet tilt angle is too large. | If the crossbar is not detected, disable flying-pixel filtering in the host software, adjust the docking distance to move the camera closer to the pallet, or change the crossbar detection ratio. |
+| 10 | Pallet recognition returns `failed-7`. | The pallet-leg widths within the field of view differ excessively. | Check whether a reflector near the pallet or proximity to a wall is affecting the imaging of the outer pallet legs. |
+| 11 | Pallet recognition returns `failed-8`. | The pallet tilt angle within the field of view is too large (>30°). | Reposition the pallet so that it is properly aligned. |
+| 12 | After switching the obstacle-avoidance configuration through communication or I/O, the configuration shown in the host software does not change. | Not specified in the original record. | 1. Confirm that the target obstacle-avoidance configuration has been set in advance.<br>2. Stop and restart streaming, then check whether the configuration changes. |
+| 13 | The software displays an abnormal obstacle-avoidance output, for example `1000`. | Algorithm version mismatch. | Upgrade the algorithm firmware. |
+| 14 | No I/O output is available. | 1. For S2/S2 Max, confirm whether pull-up wiring is used.<br>2. For S10/S10 Pro, confirm the firmware version. | 1. For S2/S2 Max, connect a pull-up resistor as required by the customer application.<br>2. For S10/S10 Pro, upgrade to algorithm firmware version `V1.1.050E06_250527` or later. |
+| 15 | No obstacle is present in front of the camera, but obstacle avoidance triggers an obstacle alarm. | Not specified in the original record. | 1. Check the host software version.<br>2. Check the camera firmware version.<br>3. Check whether the obstacle-avoidance parameter configuration has been applied. |
+| 16 | After a firmware update, the application-algorithm software for storage location detection, volume detection, or human detection cannot open the camera. | Not specified in the original record. | Restart the camera again, then enable `Real-time Refresh` under `Global Settings` in the application-algorithm software. |
 
 ## SDK Error Codes and Issue Handling
 
@@ -105,20 +137,10 @@ When the camera fails to open, no stream data is received, no image is displayed
 | 33 | How to determine in software whether the camera is a Lite version or a standard version with RGB. | Not specified in the original record. | Call `DcGetBoolValue(handle,LX_BOOL_ENABLE_2D_STREAM,&test_rgb)`. If the camera is a Lite version, the API returns not supported. |
 | 34 | Time synchronization method. | SDK and PTP synchronization. | Synchronization is performed automatically on each API call. No additional trigger is required. |
 
-## Items to Be Supplemented
-
-The following items are not sufficiently described in the original records and should be supplemented later based on field cases:
-
-1. "No object is present in the front space, but point cloud data exists" lacks a clear cause and solution.
-2. "The image is split into three parts after stream acquisition" lacks a clear solution.
-3. For RGB image abnormality, skewed depth image, and obvious point cloud layering, the current recommendation is hardware replacement. It is recommended to supplement the judgment criteria, log requirements, and repair conditions.
-4. For "ROS2 conflicts with the SDK library", it is recommended to supplement the specific project directory, CMake linking method, and example description.
-5. For items involving version upgrades, confirm the minimum available version and recommended version before release.
-
 ---
 
 <p align="center">
-  <sub><em>Last updated: June 2026</em></sub><br>
+  <sub><em>Last updated: September 2026</em></sub><br>
   <sub><em>Hangzhou Lanxin Technology Co., Ltd. & MRDVS Co., Ltd.</em></sub><br>
   <sub><em>All Rights Reserved.</em></sub>
 </p>
