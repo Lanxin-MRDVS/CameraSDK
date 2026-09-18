@@ -102,7 +102,7 @@ LxCamera::LxCamera() {
     pub_obstacle_ =
         nh_->advertise<lx_camera_ros::Obstacle>("LxCamera_Obstacle", 1);
     pub_cloud_ = nh_->advertise<sensor_msgs::PointCloud2>("LxCamera_Cloud", 10);
-    pub_lidarCloud_ = nh_->advertise<sensor_msgs::PointCloud2>("LxCamera_LidarCloud", 10);
+    //pub_lidarCloud_ = nh_->advertise<sensor_msgs::PointCloud2>("LxCamera_LidarCloud", 10);
     kPubImu = nh_->advertise<sensor_msgs::Imu>("LxCamera_Imu", 20);
 
     ros::ServiceServer cmd =
@@ -526,7 +526,7 @@ void LxCamera::Run() {
                         pcl::toROSMsg(*cloud, msg_lidarCloud);
                         msg_lidarCloud.header.stamp = ros::Time().fromSec(data->timebase / 1000000.0);
                         msg_lidarCloud.header.frame_id = "mrdvs_tof";
-                        pub_lidarCloud_.publish(msg_lidarCloud);
+                        pub_cloud_.publish(msg_lidarCloud);
                     }
                     else {
                     }

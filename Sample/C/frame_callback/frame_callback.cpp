@@ -176,8 +176,8 @@ void CallbackFunc(FrameInfo* frame_ptr, void* usr_data)
         {
             // xyz_data指向点云数据内存空间由API接口内部管理，数据按照深度图的行列顺序排列方式一致，点云数据在相机坐标系下
             // 其内存总大小为(frame_ptr->depth_data.frame_width) * (frame_ptr->depth_data.frame_height) * sizeof(float) * 3
-            // 假设获取第yRows = 100 行xCol = 100列点的坐标数据
-            int yRow = 100, xCol = 100;
+            // 假设获取中间点坐标数据
+            int yRow = frame_ptr->depth_data.frame_height / 2, xCol = frame_ptr->depth_data.frame_width / 2;
             int pose = yRow * frame_ptr->depth_data.frame_width + xCol;
             float x = xyz_data[pose * 3];
             float y = xyz_data[pose * 3 + 1];

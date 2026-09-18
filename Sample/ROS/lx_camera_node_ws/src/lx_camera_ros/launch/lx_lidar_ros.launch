@@ -26,7 +26,7 @@
 	<param name="LX_INT_RGBD_ALIGN_MODE"                value="1" />
 	<param name="LX_INT_ALGORITHM_MODE"                 value="0" />
 	<param name="LX_INT_WORK_MODE"                      value="0" />
-	<param name="LX_INT_3D_FPS"													value="20" />
+	<param name="LX_INT_3D_FPS"                         value="20" />
 	<param name="LX_BOOL_ENABLE_2D_UNDISTORT"           value="0" />
 	<param name="LX_INT_2D_UNDISTORT_SCALE"             value="1" />
 	<param name="LX_INT_2D_BINNING_MODE"                value="1" />

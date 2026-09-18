@@ -97,8 +97,15 @@ int main(int argc, char** argv)
 
     int pobstacle_index = 0;
     std::atomic<bool> stop_flag(false);
-    std::thread timer_thread([&]() {
+    char key = '0';
+    std::thread([&]() {
         while (!stop_flag) {
+            //q键退出，其他键切换避障区域
+            key = getchar();
+            if (key == 'q') {
+                stop_flag = true;
+            }
+
             if (pobstacle_index < 4)
                 pobstacle_index++;
             else
@@ -112,9 +119,9 @@ int main(int argc, char** argv)
 
             std::this_thread::sleep_for(std::chrono::seconds(2));
         }
-    });
+    }).detach();
 
-    while (true)
+    while (!stop_flag)
     {
         //如果需要获取图像数据或者避障详细信息数据，就得通过LX_CMD_GET_NEW_FRAME刷新
         auto ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);

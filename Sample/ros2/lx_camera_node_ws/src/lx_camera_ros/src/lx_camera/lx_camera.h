@@ -103,7 +103,7 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr pub_tof_info_;
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr pub_rgb_info_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_cloud_;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_lidarCloud_;
+  //rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_lidarCloud_;
   rclcpp::Publisher<lx_camera_ros::msg::FrameRate>::SharedPtr pub_temper_;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_location_;
   rclcpp::Publisher<lx_camera_ros::msg::Obstacle>::SharedPtr pub_obstacle_;

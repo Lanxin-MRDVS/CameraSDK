@@ -6,7 +6,8 @@ from LxCameraSDK.lx_camera_define import *
 from LxCameraSDK.lx_camera_api import LxCamera
 
 # Initialize camera
-camera = LxCamera('D:\Program Files\Lanxin-MRDVS\SDK\lib\win_x64\LxCameraApi.dll')
+camera = LxCamera('LxCameraApi.so')
+#camera = LxCamera('LxCameraApi.dll')
 
 
 def check_ret(_ret):

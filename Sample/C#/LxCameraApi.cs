@@ -1,84 +1,148 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Timers;
-using System.Drawing;
-using System.Windows.Input;
-using System.IO;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;//调用C++dll必须引用的命名空间
+﻿using System;
+using System.Runtime.InteropServices;
 
 namespace lx
 {
     public unsafe class LxCamera
     {
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetApiVersion", ExactSpelling = false)]
+        /*** 委托定义 (对应C中的回调函数指针类型) ***/
+        public delegate void LX_FRAME_CALLBACK(ref FrameInfo frame, IntPtr usr_data);
+        public delegate void LX_CAMERA_STATUS_CALLBACK(ref CameraStatus status, IntPtr usr_data);
+        public delegate void LX_IMUDATA_CALLBACK(ref LxImuData imu_data, IntPtr usr_data);
+
+        /*** DLL 函数导入 ***/
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetApiVersion")]
         private static extern IntPtr _DcGetApiVersion();
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetInfoOutput", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetInfoOutput", CharSet = CharSet.Ansi)]
         public static extern LX_STATE DcSetInfoOutput(int print_level, bool enable_screen_print, string log_path);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcLog", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcLog", CharSet = CharSet.Ansi)]
         public static extern LX_STATE DcLog(string str);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetDeviceList", ExactSpelling = false)]
-        public static extern LX_STATE DcGetDeviceList(out IntPtr devlist, ref int devnum);
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetDeviceList")]
+        public static extern LX_STATE DcGetDeviceList(out IntPtr devlist, ref int devnum, LX_DEVICE_SERIALS lx_serials);
+        // 提供默认参数版本以方便调用
+        public static LX_STATE DcGetDeviceList(out IntPtr devlist, ref int devnum)
+        {
+            return DcGetDeviceList(out devlist, ref devnum, LX_DEVICE_SERIALS.LX_SERIAL_ALL);
+        }
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcOpenDevice")]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcOpenDevice", CharSet = CharSet.Ansi)]
         public static extern LX_STATE DcOpenDevice(LX_OPEN_MODE openMode, string param, ref long handle, IntPtr info);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcCloseDevice", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcCloseDevice")]
         public static extern LX_STATE DcCloseDevice(long handle);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcStartStream", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcStartStream")]
         public static extern LX_STATE DcStartStream(long handle);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcStopStream", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcStopStream")]
         public static extern LX_STATE DcStopStream(long handle);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcSaveXYZ", ExactSpelling = false)]
-        public static extern LX_STATE DcSaveXYZ(long handle, IntPtr filename);
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetCameraIp", CharSet = CharSet.Ansi)]
+        public static extern LX_STATE DcSetCameraIp(long handle, string ip, string netmask, string gateway);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetCameraIp", ExactSpelling = false)]
-        public static extern LX_STATE DcSetCameraIp(long handle, IntPtr ip, IntPtr netmask, IntPtr gateway);
-
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetIntValue", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetIntValue")]
         public static extern LX_STATE DcSetIntValue(long handle, int cmd, int value);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetIntValue", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetIntValue")]
         public static extern LX_STATE DcGetIntValue(long handle, int cmd, ref LxIntValueInfo value);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetFloatValue", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetFloatValue")]
         public static extern LX_STATE DcSetFloatValue(long handle, int cmd, float value);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetFloatValue", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetFloatValue")]
         public static extern LX_STATE DcGetFloatValue(long handle, int cmd, ref LxFloatValueInfo value);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetBoolValue", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetBoolValue")]
         public static extern LX_STATE DcSetBoolValue(long handle, int cmd, bool value);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetBoolValue", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetBoolValue")]
         public static extern LX_STATE DcGetBoolValue(long handle, int cmd, ref bool value);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetStringValue", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetStringValue", CharSet = CharSet.Ansi)]
         public static extern LX_STATE DcSetStringValue(long handle, int cmd, string value);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetStringValue", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetStringValue")]
         public static extern LX_STATE DcGetStringValue(long handle, int cmd, out IntPtr value);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetPtrValue", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetPtrValue")]
         public static extern LX_STATE DcGetPtrValue(long handle, int cmd, out IntPtr value);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetCmd", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetCmd")]
         public static extern LX_STATE DcSetCmd(long handle, int cmd);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcSpecialControl", ExactSpelling = false)]
-        public static extern LX_STATE DcSpecialControl(long handle, string param, ref IntPtr value);
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSpecialControl", CharSet = CharSet.Ansi)]
+        public static extern LX_STATE DcSpecialControl(long handle, string param, IntPtr value);
 
-        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetROI", ExactSpelling = false)]
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSpecialControlExtend", CharSet = CharSet.Ansi)]
+        public static extern LX_STATE DcSpecialControlExtend(long handle, string param, IntPtr value, int timeout_ms);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetROI")]
         public static extern LX_STATE DcSetROI(long handle, int offsetx, int offsety, int width, int height, int img_type);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcRegisterFrameCallback")]
+        public static extern LX_STATE DcRegisterFrameCallback(long handle, LX_FRAME_CALLBACK func, IntPtr usr_data);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcUnregisterFrameCallback")]
+        public static extern LX_STATE DcUnregisterFrameCallback(long handle);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcRegisterCameraStatusCallback")]
+        public static extern LX_STATE DcRegisterCameraStatusCallback(long handle, LX_CAMERA_STATUS_CALLBACK func, IntPtr usr_data);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcUnregisterCameraStatusCallback")]
+        public static extern LX_STATE DcUnregisterCameraStatusCallback(long handle);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcRegisterImuDataCallback")]
+        public static extern LX_STATE DcRegisterImuDataCallback(long handle, LX_IMUDATA_CALLBACK func, IntPtr usr_data);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcUnregisterImuDataCallback")]
+        public static extern LX_STATE DcUnregisterImuDataCallback(long handle);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetErrorString")]
+        public static extern IntPtr _DcGetErrorString(LX_STATE state);
+        public static string DcGetErrorString(LX_STATE state)
+        {
+            return Marshal.PtrToStringAnsi(_DcGetErrorString(state));
+        }
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetGpuEnable")]
+        public static extern LX_STATE DcSetGpuEnable(bool is_enable);
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetGpuEnable")]
+        public static extern LX_STATE DcGetGpuEnable(ref bool is_enable);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetPtpEnable")]
+        public static extern LX_STATE DcSetPtpEnable(bool is_enable);
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetPtpEnable")]
+        public static extern LX_STATE DcGetPtpEnable(ref bool is_enable);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetParallelThread")]
+        public static extern LX_STATE DcSetParallelThread(int thread_num);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetJpegDecodeMethod")]
+        public static extern LX_STATE DcSetJpegDecodeMethod(int mode);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetMaxLogFile")]
+        public static extern LX_STATE DcSetMaxLogFile(int count);
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetMaxLogFile")]
+        public static extern LX_STATE DcGetMaxLogFile(ref int count);
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetMaxLogFileSize")]
+        public static extern LX_STATE DcSetMaxLogFileSize(int size);
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcGetMaxLogFileSize")]
+        public static extern LX_STATE DcGetMaxLogFileSize(ref int size);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSetParamPath", CharSet = CharSet.Ansi)]
+        public static extern LX_STATE DcSetParamPath(long handle, string filepath);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcWriteUserData", CharSet = CharSet.Ansi)]
+        public static extern LX_STATE DcWriteUserData(long handle, int start_address, byte[] data, int data_size);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcReadUserData")]
+        public static extern LX_STATE DcReadUserData(long handle, int start_address, out IntPtr data, out int data_size);
+
+        [DllImport("LxCameraApi.dll", EntryPoint = "DcSaveXYZ", CharSet = CharSet.Ansi)]
+        public static extern LX_STATE DcSaveXYZ(long handle, string filename);
 
         public enum LX_STATE
         {
@@ -117,6 +181,7 @@ namespace lx
 			LX_W_NOT_SUPPORT               = 2, //功能不支持
 			LX_W_LOAD_DATAPROCESSLIB_ERROR = 25, //加载图像处理算法库失败，不影响其他功能
         };
+
         public enum LX_DEVICE_TYPE
         {
             LX_DEVICE_M2 = 1001,
@@ -133,15 +198,87 @@ namespace lx
             LX_DEVICE_S2MaxV2,
             LX_DEVICE_S2MaxV1_1 = 2005,
             LX_DEVICE_S3 = 2101,
+            LX_DEVICE_S10 = 2108,
+            LX_DEVICE_S10PRO = 2109,
+            LX_DEVICE_S10ULTRA = 2110,
+
+            LX_DEVICE_S11 = 2201,
 
             LX_DEVICE_I1 = 3001,
             LX_DEVICE_I2,
             LX_DEVICE_T1 = 4001,
             LX_DEVICE_T2,
+
             LX_DEVICE_H3 = 5001,
+            LX_DEVICE_H4 = 5002,
+
             LX_DEVICE_V1Pro = 6001,
+            LX_DEVICE_V2Pro = 6002,
 
             LX_DEVICE_NULL = 0
+        };
+
+        public enum LX_DEVICE_SERIALS
+        {
+            LX_SERIAL_GIGE = 1,
+            LX_SERIAL_WK,
+            LX_SERIAL_OTHER,
+            LX_SERIAL_ALL,
+            LX_SERIAL_LOCAL_LOOP,
+        };
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct LxDeviceInfo
+        {
+            public long handle;
+            public LX_DEVICE_TYPE dev_type;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+            public byte[] id; // 改为byte[]
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+            public byte[] ip;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+            public byte[] sn;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+            public byte[] mac;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+            public byte[] firmware_ver;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+            public byte[] algor_ver;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+            public byte[] name;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+            public byte[] reserve;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+            public byte[] reserve2;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
+            public byte[] reserve3;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 128)]
+            public byte[] reserve4;
+        }
+
+        public enum LX_CAMERA_STATUS
+        {
+            STATUS_CLOSED,
+            STATUS_OPENED_UNSTARTED,
+            STATUS_STARTED,
+            STATUS_CONNECTING,
+            STATUS_CONNECT_SUCCESS
+        };
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct CameraStatus
+        {
+            public LX_CAMERA_STATUS camera_state;
+            public ulong status_time;
+            public IntPtr reserve_data;
+        };
+
+        public enum LX_OPEN_MODE
+        {
+            OPEN_BY_INDEX = 0,     //按搜索列表中索引下标方式打开，对应的参数为索引号，当搜索到的设备列表发生变化时，选择打开的设备也会不一样
+            OPEN_BY_IP = 1,        //按搜索列表中对应ip方式打开，对应的参数为设备ip或ip:port
+            OPEN_BY_SN = 2,        //按搜索列表中对应sn方式打开，对应的参数为设备sn
+            OPEN_BY_ID = 3,        //按搜索列表中对应id方式打开，对应的参数为设备id
         };
         public enum LX_BINNING_MODE
         {
@@ -183,7 +320,6 @@ namespace lx
 			LX_DISTORTION_FISHEYE   =15, //鱼眼畸变模型[k1,k2,k3,k4]
 			LX_DISTORTION_SCARAMUZZA=16
 		};
-
 
         public enum LX_CAMERA_FEATURE
         {
@@ -368,47 +504,24 @@ namespace lx
 
         };
 
-        [StructLayout(LayoutKind.Sequential)]
-        public struct LxDeviceInfo
-        {
-            public long handle;               //设备唯一标识
-            public LX_DEVICE_TYPE dev_type;       //设备类型
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-            public char[] id;                   //设备id
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-            public char[] ip;                   //设备ip:port
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-            public char[] sn;                   //设备序列号
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-            public char[] mac;                  //设备mac地址
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-            public char[] firmware_ver;         //设备软件版本号
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-            public char[] algor_ver;            //设备算法版本号
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-            public char[] name;                 //设备名称，如：camera_M3_192.168.11.13_9803
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-            public char[] reserve;              //预留字段
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-            public char[] reserve2;             //预留字段2
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
-            public char[] reserve3;             //预留字段3
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 128)]
-            public char[] reserve4;            //预留字段4
-        }
-
         //数据格式。3D强度图和深度图有不同的数据格式，获取数据指针需要使用对应的feature
         public enum LX_DATA_TYPE
         {
             LX_DATA_UNSIGNED_CHAR = 0,
+            LX_DATA_CHAR = 1,
             LX_DATA_UNSIGNED_SHORT = 2,
             LX_DATA_SIGNED_SHORT = 3,
+            LX_DATA_INT = 4,
             LX_DATA_FLOAT = 5,
+            LX_DATA_DOUBLE = 6,
             LX_DATA_OBSTACLE = 16,
             LX_DATA_PALLET = 17,
             LX_DATA_LOCATION = 18,
             LX_DATA_OBSTACLE2 = 19,
-        }
+            LX_DATA_CUSTOM = 100,//相机应用自定义的数据类型
+        };
+
+        [StructLayout(LayoutKind.Sequential)]
         public struct FrameDataInfo
         {
             public LX_DATA_TYPE frame_data_type;
@@ -416,97 +529,145 @@ namespace lx
             public int frame_height;
             public int frame_channel;
             public IntPtr frame_data;
-            public ulong sensor_timestamp;     //sensor出图时间戳
-            public ulong recv_timestamp;       //接收完帧数据时的时间戳
+            public ulong sensor_timestamp;
+            public ulong recv_timestamp;
         };
 
         //数据帧具体信息
+        [StructLayout(LayoutKind.Sequential)]
         public struct FrameInfo
         {
             public LX_STATE frame_state;
             public ulong handle;
-
-            public FrameDataInfo depth_data;   //深度图 
-            public FrameDataInfo amp_data;     //强度图
-            public FrameDataInfo rgb_data;     //rgb图
-            public FrameDataInfo app_data;     //算法输出结果
-            public IntPtr reserve_data;         //扩展预留字段
+            public FrameDataInfo depth_data;
+            public FrameDataInfo amp_data;
+            public FrameDataInfo rgb_data;
+            public FrameDataInfo app_data;
+            public IntPtr reserve_data;
         };
+
+        [StructLayout(LayoutKind.Sequential)]
         public struct FrameExtendInfo
         {
             public uint depth_frame_id;
             public uint amp_frame_id;
             public uint rgb_frame_id;
             public uint app_frame_id;
-            public IntPtr reserve_data1; // 预留字段
-            public IntPtr reserve_data2; // 预留字段
-            public IntPtr reserve_data3; // 预留字段
+            public IntPtr reserve_data1;
+            public IntPtr reserve_data2;
+            public IntPtr reserve_data3;
         }
 
-		//雷达点数据结构体，注意！！！开启3D反畸变或者rgbd对齐后时间戳不准！！！区域索引和行列位置也会相应变化
-		public struct LxPointXYZIRT {
-			public float x;
-			public float y;
-			public float z;
-			public uint intensity;  //该点对应的强度数据，需要使能AMP图之后才有效
-			public uint offset_time;//时间戳相对于timebase的时间偏移单位微秒，实际使用：timebase+offset_time
-			public uchar  roi_index;  //roi区域索引序号
-			public ushort row_pos;    //点在图像中的行位置，从0开始
-			public ushort col_pos;    //点在图像中的列位置，从0开始
-			public uchar  tag;        //预留 
-		};
-
-		//雷达点云数据结构
-		public struct LxPointCloudData {
-			public ulong timebase;    // 基础时间戳，该帧图像开始曝光的时间戳（us）
-			public uint point_num;   // 有效点个数
-			public LxPointXYZIRT* points;// 点数组（内部管理内存）
-		};
-
-		//相机内参的结构体
-		public struct {
-			uint width;              // 图像宽度
-			uint height;             // 图像高度
-			float intrinsics[9];        // 内参3x3矩阵[fx 0 cx; 0 fy cy; 0 0 1]
-			LX_DISTORTION_MODEL distortion_model; // 畸变模型类型
-			float* distortion_coeffs;   // 畸变系数指针（内部管理内存）
-			uchar num_distortion_coeffs; // 畸变系数的数量
-		};
-
-        public enum LX_OPEN_MODE
+        //雷达点数据结构体，注意！！！开启3D反畸变或者rgbd对齐后时间戳不准！！！区域索引和行列位置也会相应变化
+        [StructLayout(LayoutKind.Sequential)]
+        public unsafe struct LxPointXYZIRT
         {
-            OPEN_BY_INDEX = 0,     //按搜索列表中索引下标方式打开，对应的参数为索引号，当搜索到的设备列表发生变化时，选择打开的设备也会不一样
-            OPEN_BY_IP = 1,        //按搜索列表中对应ip方式打开，对应的参数为设备ip或ip:port
-            OPEN_BY_SN = 2,        //按搜索列表中对应sn方式打开，对应的参数为设备sn
-            OPEN_BY_ID = 3,        //按搜索列表中对应id方式打开，对应的参数为设备id
+            public float x;
+            public float y;
+            public float z;
+            public uint intensity;  //该点对应的强度数据，需要使能AMP图之后才有效
+            public uint offset_time;//时间戳相对于timebase的时间偏移单位微秒，实际使用：timebase+offset_time
+            public byte roi_index;  //roi区域索引序号 (将uchar改为byte)
+            public ushort row_pos;    //点在图像中的行位置，从0开始
+            public ushort col_pos;    //点在图像中的列位置，从0开始
+            public byte tag;        //预留 (将uchar改为byte)
         };
+
+        //雷达点云数据结构
+        [StructLayout(LayoutKind.Sequential)]
+        public unsafe struct LxPointCloudData
+        {
+            public ulong timebase;    // 基础时间戳，该帧图像开始曝光的时间戳（us）
+            public uint point_num;   // 有效点个数
+            public LxPointXYZIRT* points;// 点数组（内部管理内存）
+        };
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct LxImuRawData
+        {
+            public short acc_x;
+            public short acc_y;
+            public short acc_z;
+            public short gry_x;
+            public short gry_y;
+            public short gry_z;
+            public int status;
+            public ulong sensor_time;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+            public short[] resveredData;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct LxImuSinkData
+        {
+            public float acc_x;
+            public float acc_y;
+            public float acc_z;
+            public float gry_x;
+            public float gry_y;
+            public float gry_z;
+            public ulong sensor_timestamp;
+            public ulong recv_timestamp;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct LxImuData
+        {
+            public LX_STATE frame_state;
+            public ulong handle;
+            public LxImuRawData imu_raw_data;
+            public LxImuSinkData imu_data;
+        }
+
+        //相机内参的结构体
+        [StructLayout(LayoutKind.Sequential)]
+        public unsafe struct LxIntrinsicParameters
+        {
+            public uint width;              // 图像宽度
+            public uint height;             // 图像高度
+            public fixed float intrinsics[9]; // 内参3x3矩阵[fx 0 cx; 0 fy cy; 0 0 1] (修复：使用fixed数组)
+            public LX_DISTORTION_MODEL distortion_model; // 畸变模型类型
+            public float* distortion_coeffs;   // 畸变系数指针（内部管理内存）
+            public byte num_distortion_coeffs; // 畸变系数的数量 (将uchar改为byte)
+        }
+
+        public enum JPEG_DECODE_METHOD
+        {
+            JPEG_DECODE_TURBOJPEG = 0,
+            JPEG_DECODE_DP = 1,
+            JPEG_DECODE_RKMPP = 2,
+            JPEG_DECODE_GPU = 3
+        };
+
+        [StructLayout(LayoutKind.Sequential)]
         public struct LxIntValueInfo
         {
-            public bool set_available;   //当前值是否可设置, true-可设置，false-不可设置
-            public int cur_value;        //当前值
-            public int max_value;        //最大值
-            public int min_value;        //最小值
-            public int reserve1;       //预留字段
-            public int reserve2;       //预留字段
-            public int reserve3;       //预留字段
-            public int reserve4;       //预留字段
+            public bool set_available;
+            public int cur_value;
+            public int max_value;
+            public int min_value;
+            public int reserve1;
+            public int reserve2;
+            public int reserve3;
+            public int reserve4;
         }
+
+        [StructLayout(LayoutKind.Sequential)]
         public struct LxFloatValueInfo
         {
-            public bool set_available;     //当前值是否可设置, true-可设置，false-不可设置
-            public float cur_value;        //当前值
-            public float max_value;        //最大值
-            public float min_value;        //最小值
-            public float reserve1;       //预留字段
-            public float reserve2;       //预留字段
-            public float reserve3;       //预留字段
-            public float reserve4;       //预留字段
+            public bool set_available;
+            public float cur_value;
+            public float max_value;
+            public float min_value;
+            public float reserve1;
+            public float reserve2;
+            public float reserve3;
+            public float reserve4;
         }
 
         public static string DcGetApiVersion()
         {
-            string str = Marshal.PtrToStringAnsi(_DcGetApiVersion());
-            return str;
+            return Marshal.PtrToStringAnsi(_DcGetApiVersion());
         }
     }
 }

@@ -95,8 +95,14 @@ int main(int argc, char** argv)
     //仅切换避障检测区域索引参数可以通过以下接口实现。S2,S10等使用避障V1方式的需要上位机配置好每套避障索引参数后才能切换，否则无效
     int pobstacle_index = 0;
     std::atomic<bool> stop_flag(false);
-    std::thread timer_thread([&]() {
+    char key = '0';
+    std::thread([&]() {
         while (!stop_flag) {
+            //q键退出，其他键切换避障区域
+            key = getchar();
+            if (key == 'q') {
+                stop_flag = true;
+            }
             if (pobstacle_index < 4)
                 pobstacle_index++;
             else
@@ -120,9 +126,9 @@ int main(int argc, char** argv)
 
             std::this_thread::sleep_for(std::chrono::seconds(2));
         }
-     });
+     }).detach();
 
-    while (true)
+    while (!stop_flag)
     {
         //获取避障IO输出结果
         int obstacle_io_result;

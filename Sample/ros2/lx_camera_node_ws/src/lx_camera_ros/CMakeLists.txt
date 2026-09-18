@@ -77,8 +77,11 @@ add_executable(${TARGET_NAME}
 				${PROJECT_SOURCE_DIR}/src/lx_camera/lx_camera.cpp 
 				${PROJECT_SOURCE_DIR}/src/lx_camera/lx_camera_node.cpp 
 				${PROJECT_SOURCE_DIR}/src/utils/dynamic_link.cpp)
-# rosidl_target_interfaces(${TARGET_NAME} ${PROJECT_NAME} "rosidl_typesupport_cpp")
+if(0)
+rosidl_target_interfaces(${TARGET_NAME} ${PROJECT_NAME} "rosidl_typesupport_cpp")
+else()
 rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} rosidl_typesupport_cpp)
+endif()
 ament_target_dependencies(${TARGET_NAME} ${dependencies} rosidl_default_runtime )
 target_link_libraries(${TARGET_NAME}
                       ${PCL_LIBRARIES} 

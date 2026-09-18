@@ -88,29 +88,26 @@ int main(int argc, char** argv)
         device_info.id, device_info.ip, device_info.sn, device_info.firmware_ver);
 
     //获取数据流状态
-    bool depth_enable = false, amp_enable = false, rgb_enable = false;
+    bool depth_enable = true, amp_enable = false, rgb_enable = false;
+    //开启深度数据，点云是在SDK中通过深度数据转换
+    checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, depth_enable));
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, &depth_enable));
+
+    //强度和rgb不强制开启，但是开启后可以给点云增加强度信息或者图像信息
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, &amp_enable));
     checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, &rgb_enable));
 
     checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_SYNC_FRAME, true));
 
-    //关闭RGB图像处理，节省解码和其它图像处理占用的资源
-    //checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_RGB_PROC, false));
-
     //获取内置应用算法状态
-    int app_mode = LX_ALGORITHM_MODE::MODE_ALL_OFF;
     LxIntValueInfo int_value;
-    checkTC(DcGetIntValue(handle, LX_INT_ALGORITHM_MODE, &int_value));
-    app_mode = int_value.cur_value;
-
     LX_TRIGGER_MODE trigger_mode;
     if (DcGetIntValue(handle, LX_INT_TRIGGER_MODE, &int_value) == LX_E_NOT_SUPPORT)
         trigger_mode = LX_TRIGGER_MODE_OFF;
     else
         trigger_mode = static_cast<LX_TRIGGER_MODE>(int_value.cur_value);
 
-    printf("depth_enable:%d amp_enable:%d rgb_enable:%d app_mode:%d\n", depth_enable, amp_enable, rgb_enable, app_mode);
+    printf("depth_enable:%d amp_enable:%d rgb_enable:%d\n", depth_enable, amp_enable, rgb_enable);
 
     //设置回调
     checkTC(DcRegisterFrameCallback(handle, CallbackFunc, nullptr));
@@ -172,10 +169,10 @@ bool SavePointCloudToPCD(const LxPointCloudData* pointcloud_data, const std::str
     // 写入PCD文件头
     file << "# .PCD v0.7 - Point Cloud Data file format\n";
     file << "VERSION 0.7\n";
-    file << "FIELDS x y z intensity time\n";
-    file << "SIZE 4 4 4 4 2\n";
-    file << "TYPE F F F U I\n";
-    file << "COUNT 1 1 1 1 1\n";
+    file << "FIELDS x y z intensity time index row col\n";
+    file << "SIZE 4 4 4 4 4 2 2 2\n";
+    file << "TYPE F F F U I U U U\n";
+    file << "COUNT 1 1 1 1 1 1 1 1\n";
     file << "WIDTH " << total_points << "\n";
     file << "HEIGHT 1\n";
     file << "VIEWPOINT 0 0 0 1 0 0 0\n";
@@ -185,9 +182,11 @@ bool SavePointCloudToPCD(const LxPointCloudData* pointcloud_data, const std::str
     // 写入点云数据
     for (uint32_t i = 0; i < total_points; ++i) {
         const LxPointXYZIRT& point = pointcloud_data->points[i];
-        file << std::fixed << std::setprecision(6)
+        file << std::fixed << std::setprecision(3) << std::setw(8)
              << point.x << " " << point.y << " " << point.z
-            << " " << point.intensity << " " << point.offset_time << "\n";
+            << " " << std::setw(4)<<point.intensity << " " << std::setw(6) << point.offset_time
+            << " " << std::setw(4) << (ushort)point.roi_index << " " << point.row_pos << " " << point.col_pos
+            << "\n";
     }
 
     file.close();

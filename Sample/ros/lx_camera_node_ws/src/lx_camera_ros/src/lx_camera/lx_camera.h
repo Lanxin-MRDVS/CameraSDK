@@ -116,7 +116,7 @@ private:
   ros::Publisher pub_tof_info_;
   ros::Publisher pub_rgb_info_;
   ros::Publisher pub_cloud_;
-  ros::Publisher pub_lidarCloud_;
+  //ros::Publisher pub_lidarCloud_;
   ros::Publisher pub_temper_;
   ros::Publisher pub_location_;
   ros::Publisher pub_obstacle_;

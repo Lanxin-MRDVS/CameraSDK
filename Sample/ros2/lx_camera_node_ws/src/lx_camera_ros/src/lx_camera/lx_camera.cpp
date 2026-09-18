@@ -119,8 +119,8 @@ LxCamera::LxCamera(DcLib *dynamic_lib) : Node("lx_camera_node") {
   kPubImu = this->create_publisher<sensor_msgs::msg::Imu>("LxCamera_Imu", 20);
   pub_cloud_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
       "LxCamera_Cloud", 10);
-  pub_lidarCloud_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-    "LxCamera_LidarCloud", 10);
+  //pub_lidarCloud_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+  //  "LxCamera_LidarCloud", 10);
 
   pub_tf_ = this->create_publisher<geometry_msgs::msg::TransformStamped>(
       "LxCamera_TF", 1);
@@ -488,7 +488,7 @@ void LxCamera::Run() {
             msg_lidarCloud.header.stamp.sec = ns / 1000000000LL;
             msg_lidarCloud.header.stamp.nanosec = ns % 1000000000LL;
             msg_lidarCloud.header.frame_id = "mrdvs_tof";
-            pub_lidarCloud_->publish(msg_lidarCloud);
+            pub_cloud_->publish(msg_lidarCloud);
           }
 
         }

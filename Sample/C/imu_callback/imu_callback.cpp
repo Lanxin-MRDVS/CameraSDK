@@ -92,9 +92,6 @@ int main(int argc, char** argv)
     //注册IMU数据回调函数
     checkTC(DcRegisterImuDataCallback(handle, ImuDataCallback, nullptr));
 
-    DcSetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, false);
-    DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, false);
-    DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, false);
     //使能IMU
     DcSetBoolValue(handle, LX_BOOL_ENABLE_IMU, true);
     //设置IMU量程

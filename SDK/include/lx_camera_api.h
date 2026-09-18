@@ -9,9 +9,9 @@
 //参数：[out]version  API版本号，无需外部分配内存
 //~english:
 /**
- * @brief Get api version
- * 
- * @return LX_API_STR 
+ * @brief Get the API version.
+ *
+ * @return LX_API_STR API
  */
 LX_API_STR DcGetApiVersion();
 
@@ -24,21 +24,22 @@ LX_API_STR DcGetApiVersion();
 //      [in]log_path            log文件保存路径，可以为空，则保存在当前执行路径
 //~english:
 /**
- * @brief Set the level of log
- * 
- * @param print_level [in]print_level
- 0: info All debug messages 
- 1: warn Important and warning debug messages 
- 2: error Only error messages are output.
- 3: no output
- * @param enable_screen_print [in]Whether to print in the window
- * @param log_path [in]Log file save path
- * @return LX_API 
+ * @brief Set the log output level and output options.
+ *
+ * @param print_level [in] Log output level:
+ *                    0: info  - Output all debug messages.
+ *                    1: warn  - Output important and warning messages.
+ *                    2: error - Output error messages only.
+ *                    3: no output.
+ * @param enable_screen_print [in] Whether to print log messages to the console/window.
+ * @param log_path [in] Path for saving log files. If empty, logs are saved in the current working directory.
+ * @return LX_API
  */
 #ifdef __cplusplus
 LX_API DcSetInfoOutput(int print_level = 1, bool enable_screen_print = false, const char* log_path = "", int language = 0);
 #else
 //纯C风格接口，原接口逐步弃用
+//C-style interface; the legacy interface is being phased out.
 LX_API DcSetInfoOutput(int print_level, bool enable_screen_print, const char* log_path);
 #endif
 
@@ -48,9 +49,9 @@ LX_API DcSetInfoOutput(int print_level, bool enable_screen_print, const char* lo
 //~english:
 /**
  * @brief Allows users to output debugging information to log files.
- * 
+ *
  * @param str [in]String to be output, ending with '\0'.
- * @return LX_API 
+ * @return LX_API
  */
 LX_API DcLog(const char* str);
 
@@ -60,16 +61,17 @@ LX_API DcLog(const char* str);
 //参数  [out]devnum             查找到的相机数量
 //~english:
 /**
- * @brief Search for camera list
- * 
- * @param devlist [out]List of found cameras
- * @param devnum [out]Number of cameras found
- * @return LX_API 
+ * @brief Search for supported cameras.
+ *
+ * @param devlist [out] List of detected cameras.
+ * @param devnum [out] Number of detected cameras.
+ * @return LX_API
  */
 #ifdef __cplusplus
 LX_API DcGetDeviceList(LxDeviceInfo** devlist, int* devnum, LX_DEVICE_SERIALS lx_serials = LX_SERIAL_ALL);
 #else
 //纯C风格接口，原接口逐步弃用
+//C-style interface; the legacy interface is being phased out.
 LX_API DcGetDeviceList(LxDeviceInfo** devlist, int* devnum, LX_DEVICE_SERIALS lx_serials);
 #endif
 
@@ -81,25 +83,53 @@ LX_API DcGetDeviceList(LxDeviceInfo** devlist, int* devnum, LX_DEVICE_SERIALS lx
 //      [out]info               连接成功后返回的相机详细信息
 //~english:
 /**
- * @brief open device  
- * 
- * @param open_mode[in]Open mode, see LX_OPEN_MODE for details. 
- * @param param[in]Fill in different parameters for different opening methods (when the sdk is running inside the camera, fill in "127.0.0.1" here) 
- * @param handle[out]The handle of the device returned after a successful connection, all subsequent interface accesses rely on this handle field. 
- * @param info[out]Camera details returned after successful connection 
- * @return LX_API 
+ * @brief Open a device.
+ *
+ * After the device is opened, the current process has exclusive access and other processes cannot open the camera.
+ * If the program terminates without calling DcCloseDevice, wait a few seconds for the heartbeat timeout to release the access permission.
+ *
+ * @param open_mode [in] Open mode. See LX_OPEN_MODE for details.
+ * @param param [in] Parameter corresponding to the selected open mode. When the SDK runs on the camera itself, use "127.0.0.1".
+ * @param handle [out] Device handle returned after a successful connection. All subsequent API calls for this device use this handle.
+ * @param info [out] Detailed camera information returned after a successful connection.
+ * @return LX_API
  */
 LX_API DcOpenDevice(LX_OPEN_MODE open_mode, const char* param, DcHandle* handle, LxDeviceInfo* info);
+
+//~chinese:
+//功能：打开设备。设备打开后会独占权限，其他进程无法再打开相机。如果程序强制结束没有调用DcCloseDevice，需要等待几秒等心跳超时释放权限, 使用指定网卡IP进行绑定
+//参数：[in]open_mode           打开方式, 具体说明见LX_OPEN_MODE
+//      [in]param               不同的打开方式，填写不同的参数(当sdk运行在相机内部时，此处填写"127.0.0.1")
+//      [in]eth_ip              指定网卡IP, 必须指定, 用于gvsp,imu数据指定网卡接收数据
+//      [out]handle             连接成功后返回的设备句柄,后续所有接口访问都依赖该handle字段
+//      [out]info               连接成功后返回的相机详细信息
+//~english:
+/**
+ * @brief Open a device and bind data reception to a specified Ethernet interface IP address.
+ *
+ * After the device is opened, the current process has exclusive access and other processes cannot open the camera.
+ * If the program terminates without calling DcCloseDevice, wait a few seconds for the heartbeat timeout to release the access permission.
+ *
+ * @param open_mode [in] Open mode. See LX_OPEN_MODE for details.
+ * @param param [in] Parameter corresponding to the selected open mode. When the SDK runs on the camera itself, use "127.0.0.1".
+ * @param eth_ip [in] IP address of the specified Ethernet interface. This parameter is required and is used to receive GVSP and IMU data through that interface.
+ * @param handle [out] Device handle returned after a successful connection. All subsequent API calls for this device use this handle.
+ * @param info [out] Detailed camera information returned after a successful connection.
+ * @return LX_API
+ */
+LX_API DcOpenDeviceFixedEth(LX_OPEN_MODE open_mode, const char* param, const char* eth_ip, DcHandle* handle, LxDeviceInfo* info);
 
 //~chinese
 //功能: 关闭设备。与DcOpenDevice对应，释放权限和资源。
 //参数：[in]handle  设备句柄
 //~english
 /**
- * @brief Close device
- * 
- * @param handle[in]Device handle 
- * @return LX_API 
+ * @brief Close a device and release its access permission and resources.
+ *
+ * This function corresponds to DcOpenDevice.
+ *
+ * @param handle [in] Device handle.
+ * @return LX_API
  */
 LX_API DcCloseDevice(DcHandle handle);
 
@@ -108,10 +138,10 @@ LX_API DcCloseDevice(DcHandle handle);
 //参数：[in]handle  设备句柄
 //~english
 /**
- * @brief Start stream data
- * 
- * @param handle[in]Device handle  
- * @return LX_API 
+ * @brief Start the data stream.
+ *
+ * @param handle [in] Device handle.
+ * @return LX_API
  */
 LX_API DcStartStream(DcHandle handle);
 
@@ -120,10 +150,10 @@ LX_API DcStartStream(DcHandle handle);
 //参数：[in]handle  设备句柄
 //~english
 /**
- * @brief stop stream data
- * 
- * @param handle[in]Device handle  
- * @return LX_API 
+ * @brief Stop the data stream.
+ *
+ * @param handle [in] Device handle.
+ * @return LX_API
  */
 LX_API DcStopStream(DcHandle handle);
 
@@ -136,18 +166,21 @@ LX_API DcStopStream(DcHandle handle);
 //      [in]gateway                网关ip(若传空则内部默认将ip最后网段置为"1"后作为网关)
 //~english
 /**
- * @brief Set camera IP-related parameters
- * 
- * @param handle[in]Device handle  
- * @param ip[in]Device IP
- * @param netmask[in]Subnet Mask (if empty, internal default is "255.255.0.0") 
- * @param gateway[in]gateway ip (if pass empty, internal default will set the last segment of ip to "1" as gateway) 
- * @return LX_API 
+ * @brief Set the camera IP configuration.
+ *
+ * After the IP configuration is changed, the device list also changes. Call DcGetDeviceList again to obtain the updated device list.
+ *
+ * @param handle [in] Device handle. If the device is not connected, obtain the handle by searching for devices first.
+ * @param ip [in] Device IP address.
+ * @param netmask [in] Subnet mask. If null, the default value "255.255.0.0" is used internally.
+ * @param gateway [in] Gateway IP address. If null, the last segment of the device IP address is replaced with "1" and used as the gateway.
+ * @return LX_API
  */
 #ifdef __cplusplus
 LX_API DcSetCameraIp(DcHandle handle, const char* ip, const char* netmask = 0, const char* gateway = 0);
 #else
 //纯C风格接口，原接口逐步弃用
+// C-style interface; the legacy interface is being phased out.
 LX_API DcSetCameraIp(DcHandle handle, const char* ip, const char* netmask, const char* gateway);
 #endif
 
@@ -158,12 +191,12 @@ LX_API DcSetCameraIp(DcHandle handle, const char* ip, const char* netmask, const
 //      [in]value                   设置参数值
 //~english
 /**
- * @brief Set int type parameters
- * 
- * @param handle[in]Device handle  
- * @param cmd[in]Reference LX_CAMERA_FEATURE 
- * @param value[in]Setting parameter values 
- * @return LX_API 
+ * @brief Set an integer parameter.
+ *
+ * @param handle [in] Device handle.
+ * @param cmd [in] Feature identifier. See LX_CAMERA_FEATURE.
+ * @param value [in] Parameter value to set.
+ * @return LX_API
  */
 LX_API DcSetIntValue(DcHandle handle, int cmd, int value);
 
@@ -174,12 +207,12 @@ LX_API DcSetIntValue(DcHandle handle, int cmd, int value);
 //      [out]value                  返回参数结构体
 //~english
 /**
- * @brief Obtain int type parameters
- * 
- * @param handle[in]Device handle  
- * @param cmd[in]Reference LX_CAMERA_FEATURE 
- * @param value[out]Return parameter structure 
- * @return LX_API 
+ * @brief Get an integer parameter.
+ *
+ * @param handle [in] Device handle.
+ * @param cmd [in] Feature identifier. See LX_CAMERA_FEATURE.
+ * @param value [out] Structure containing the returned parameter information.
+ * @return LX_API
  */
 LX_API DcGetIntValue(DcHandle handle, int cmd, LxIntValueInfo* value);
 
@@ -190,12 +223,12 @@ LX_API DcGetIntValue(DcHandle handle, int cmd, LxIntValueInfo* value);
 //      [in]value                   设置参数值
 //~english
 /**
- * @brief Set float type parameters
- * 
- * @param handle[in]Device handle  
- * @param cmd[in]Reference LX_CAMERA_FEATURE 
- * @param value[in]Setting parameter values 
- * @return LX_API 
+ * @brief Set a floating-point parameter.
+ *
+ * @param handle [in] Device handle.
+ * @param cmd [in] Feature identifier. See LX_CAMERA_FEATURE.
+ * @param value [in] Parameter value to set.
+ * @return LX_API
  */
 LX_API DcSetFloatValue(DcHandle handle, int cmd, float value);
 
@@ -206,12 +239,12 @@ LX_API DcSetFloatValue(DcHandle handle, int cmd, float value);
 //      [out]value                  返回参数结构体
 //~english
 /**
- * @brief Obtain float type parameters
- * 
- * @param handle[in]Device handle  
- * @param cmd[in]Reference LX_CAMERA_FEATURE 
- * @param value[out]Return parameter structure 
- * @return LX_API 
+ * @brief Get a floating-point parameter.
+ *
+ * @param handle [in] Device handle.
+ * @param cmd [in] Feature identifier. See LX_CAMERA_FEATURE.
+ * @param value [out] Structure containing the returned parameter information.
+ * @return LX_API
  */
 LX_API DcGetFloatValue(DcHandle handle, int cmd, LxFloatValueInfo* value);
 
@@ -222,12 +255,12 @@ LX_API DcGetFloatValue(DcHandle handle, int cmd, LxFloatValueInfo* value);
 //      [in]value                   设置参数值
 //~english
 /**
- * @brief Set bool type parameters
- * 
- * @param handle[in]Device handle  
- * @param cmd[in]Reference LX_CAMERA_FEATURE 
- * @param value[in]Setting parameter values 
- * @return LX_API 
+ * @brief Set a Boolean parameter.
+ *
+ * @param handle [in] Device handle.
+ * @param cmd [in] Feature identifier. See LX_CAMERA_FEATURE.
+ * @param value [in] Parameter value to set.
+ * @return LX_API
  */
 LX_API DcSetBoolValue(DcHandle handle, int cmd, bool value);
 
@@ -238,12 +271,12 @@ LX_API DcSetBoolValue(DcHandle handle, int cmd, bool value);
 //      [out]value                  返回参数
 //~english
 /**
- * @brief Obtain bool type parameters
- * 
- * @param handle[in]Device handle  
- * @param cmd[in]Reference LX_CAMERA_FEATURE 
- * @param value[out]Return Parameters 
- * @return LX_API 
+ * @brief Get a Boolean parameter.
+ *
+ * @param handle [in] Device handle.
+ * @param cmd [in] Feature identifier. See LX_CAMERA_FEATURE.
+ * @param value [out] Returned parameter value.
+ * @return LX_API
  */
 LX_API DcGetBoolValue(DcHandle handle, int cmd, bool* value);
 
@@ -254,12 +287,12 @@ LX_API DcGetBoolValue(DcHandle handle, int cmd, bool* value);
 //      [in]value                   设置参数值
 //~english
 /**
- * @brief Set string type parameters
- * 
- * @param handle[in]Device handle  
- * @param cmd[in]Reference LX_CAMERA_FEATURE 
- * @param value[in] 
- * @return LX_API 
+ * @brief Set a string parameter.
+ *
+ * @param handle [in] Device handle.
+ * @param cmd [in] Feature identifier. See LX_CAMERA_FEATURE.
+ * @param value [in] Parameter value to set.
+ * @return LX_API
  */
 LX_API DcSetStringValue(DcHandle handle, int cmd, const char* value);
 
@@ -270,12 +303,12 @@ LX_API DcSetStringValue(DcHandle handle, int cmd, const char* value);
 //      [out]value                  返回参数，无需外部分配内存
 //~english
 /**
- * @brief Obtain string type parameters
- * 
- * @param handle[in]Device handle  
- * @param cmd[in]Reference LX_CAMERA_FEATURE 
- * @param value[out]Return parameter, no external memory allocation required 
- * @return LX_API 
+ * @brief Get a string parameter.
+ *
+ * @param handle [in] Device handle.
+ * @param cmd [in] Feature identifier. See LX_CAMERA_FEATURE.
+ * @param value [out] Returned parameter value. No external memory allocation is required.
+ * @return LX_API
  */
 LX_API DcGetStringValue(DcHandle handle, int cmd, char** value);
 
@@ -286,12 +319,12 @@ LX_API DcGetStringValue(DcHandle handle, int cmd, char** value);
 //      [out]value                  返回参数，无需外部分配内存
 //~english
 /**
- * @brief Obtain pointer type parameters
- * 
- * @param handle[in]Device handle  
- * @param cmd[in]Reference LX_CAMERA_FEATURE 
- * @param value[out]Return parameter, no external memory allocation required 
- * @return LX_API 
+ * @brief Get a pointer-type parameter.
+ *
+ * @param handle [in] Device handle.
+ * @param cmd [in] Feature identifier. See LX_CAMERA_FEATURE.
+ * @param value [out] Returned parameter value. No external memory allocation is required.
+ * @return LX_API
  */
 LX_API DcGetPtrValue(DcHandle handle, int cmd, void** value);
 
@@ -301,11 +334,11 @@ LX_API DcGetPtrValue(DcHandle handle, int cmd, void** value);
 //      [in]cmd                     参考LX_CAMERA_FEATURE
 //~english
 /**
- * @brief Execute the corresponding CMD type command
- * 
- * @param handle[in]Device handle  
- * @param cmd[in]Reference LX_CAMERA_FEATURE 
- * @return LX_API 
+ * @brief Execute the command corresponding to the specified CMD-type feature.
+ *
+ * @param handle [in] Device handle.
+ * @param cmd [in] Feature identifier. See LX_CAMERA_FEATURE.
+ * @return LX_API
  */
 LX_API DcSetCmd(DcHandle handle, int cmd);
 
@@ -318,12 +351,15 @@ LX_API DcSetCmd(DcHandle handle, int cmd);
 //      [in][out]value             设置时为对应入参，获取时为对应出参，无需外部分配内存
 //~english
 /**
- * @brief Special operations outside the definition of LX_CAMERA_FEATURE, with specific functions and parameters defined by the string command
- * 
- * @param handle[in]Device handle  
- * @param command[in]Command      
- * @param value[in][out]Input parameter when setting, output parameter when getting, no need to allocate memory externally. 
- * @return LX_API 
+ * @brief Perform a special operation not defined in LX_CAMERA_FEATURE. The operation and its parameters are determined by the command string.
+ *
+ * @param handle [in] Device handle.
+ * @param command [in] Command string. See the demo for details. Supported commands include:
+ *                     SetObstacleIndex, GetObstacleIndex, SetObstacleMode, GetObstacleIO, SetOdomData,
+ *                     SetRelocPose, SetLaserData, ImportLocationMapFile, EnableBuildMap, EnableLocation,
+ *                     and ExportLocationMapFile.
+ * @param value [in,out] Input parameter for a set operation or output parameter for a get operation. No external memory allocation is required.
+ * @return LX_API
  */
 LX_API DcSpecialControl(DcHandle handle, const char* command, void* value);
 
@@ -337,13 +373,16 @@ LX_API DcSpecialControl(DcHandle handle, const char* command, void* value);
 //      [in]timeout_ms             超时时间
 //~english
 /**
- * @brief Special operations outside the definition of LX_CAMERA_FEATURE, with specific functions and parameters defined by the string command
- * 
- * @param handle[in]Device handle  
- * @param command[in]Command      
- * @param value[in][out]Input parameter when setting, output parameter when getting, no need to allocate memory externally. 
- * @param timeout_ms[in] Control timeout_ms, ms. if timeout_ms<=300 then call once else try call timeout_ms/300 times before timeout, if timeout_ms <1 then timeout_ms=LX_INT_GVCP_TIME_OUT default 1800ms
- * @return LX_API 
+ * @brief Perform a special operation not defined in LX_CAMERA_FEATURE, with an extended timeout. The operation and its parameters are determined by the command string.
+ *
+ * @param handle [in] Device handle.
+ * @param command [in] Command string. See the demo for details. Supported commands include:
+ *                     SetObstacleIndex, GetObstacleIndex, SetObstacleMode, GetObstacleIO, SetOdomData,
+ *                     SetRelocPose, SetLaserData, ImportLocationMapFile, EnableBuildMap, EnableLocation,
+ *                     and ExportLocationMapFile.
+ * @param value [in,out] Input parameter for a set operation or output parameter for a get operation. No external memory allocation is required.
+ * @param timeout_ms [in] Timeout in milliseconds. If timeout_ms <= 300, the operation is attempted once; otherwise, it is retried up to timeout_ms / 300 times before timing out. If timeout_ms < 1, LX_INT_GVCP_TIME_OUT is used (default: 1800 ms).
+ * @return LX_API
  */
 LX_API DcSpecialControlExtend(DcHandle handle, const char* command, void* value, int timeout_ms);
 
@@ -357,15 +396,15 @@ LX_API DcSpecialControlExtend(DcHandle handle, const char* command, void* value,
 //      [in]img_type                0-3D图像 1-2D图像
 //~english
 /**
- * @brief Set the ROI area, if the input value is not an integer multiple of 8, it will be automatically processed as the nearest integer multiple of 8 to the target value.
- * 
- * @param handle[in]Device handle  
- * @param offsetx[in]Horizontal offset of the start point in pixels 
- * @param offsety[in]Start Point Vertical Offset Parameter 
- * @param width[in]The width of the roi target area 
- * @param height[in]The height of the roi target area 
- * @param img_type[in] 0-3D image 1-2D image 
- * @return LX_API 
+ * @brief Set the ROI. If an input value is not a multiple of 8, it is automatically adjusted to the nearest multiple of 8.
+ *
+ * @param handle [in] Device handle.
+ * @param offsetx [in] Horizontal offset of the ROI start point, in pixels.
+ * @param offsety [in] Vertical offset of the ROI start point, in pixels.
+ * @param width [in] Width of the ROI.
+ * @param height [in] Height of the ROI.
+ * @param img_type [in] Image type: 0 for 3D image; 1 for 2D image.
+ * @return LX_API
  */
 LX_API DcSetROI(DcHandle handle, int offsetx, int offsety, int width, int height, int img_type);
 
@@ -377,17 +416,18 @@ LX_API DcSetROI(DcHandle handle, int offsetx, int offsety, int width, int height
 //      [in]usr_data    用户自定义参数
 //~english
 /**
- * @brief Register the data frame callback function to be called automatically when new data is received.
- * 
- * @param handle[in]Device handle  
- * @param func[in]Callback function pointer 
- * @param usr_data[in]User-defined parameters 
- * @return LX_API 
+ * @brief Register a data-frame callback that is invoked automatically when new data is received.
+ *
+ * @param handle [in] Device handle.
+ * @param func [in] Callback function pointer.
+ * @param usr_data [in] User-defined data passed to the callback.
+ * @return LX_API
  */
 #ifdef __cplusplus
 LX_API DcRegisterFrameCallback(DcHandle handle, LX_FRAME_CALLBACK func, void* usr_data = 0);
 #else
 //纯C风格接口，原接口逐步弃用
+// C-style interface; the legacy interface is being phased out.
 LX_API DcRegisterFrameCallback(DcHandle handle, LX_FRAME_CALLBACK func, void* usr_data);
 #endif
 
@@ -396,10 +436,10 @@ LX_API DcRegisterFrameCallback(DcHandle handle, LX_FRAME_CALLBACK func, void* us
 //参数：[in]handle      设备句柄
 //~english
 /**
- * @brief Cancel data frame registration callback function
- * 
- * @param handle[in]Device handle  
- * @return LX_API 
+ * @brief Unregister the data-frame callback.
+ *
+ * @param handle [in] Device handle.
+ * @return LX_API
  */
 LX_API DcUnregisterFrameCallback(DcHandle handle);
 
@@ -410,17 +450,18 @@ LX_API DcUnregisterFrameCallback(DcHandle handle);
 //      [in]usr_data    用户自定义参数
 //~english
 /**
- * @brief Register the camera state callback function and call it automatically when the camera state changes.
- * 
- * @param handle[in]Device handle  
- * @param func[in]Callback function pointer 
- * @param usr_data[in]User-defined parameters 
- * @return LX_API 
+ * @brief Register a camera-status callback that is invoked automatically when the camera status changes.
+ *
+ * @param handle [in] Device handle.
+ * @param func [in] Callback function pointer.
+ * @param usr_data [in] User-defined data passed to the callback.
+ * @return LX_API
  */
 #ifdef __cplusplus
 LX_API DcRegisterCameraStatusCallback(DcHandle handle, LX_CAMERA_STATUS_CALLBACK func, void* usr_data = 0);
 #else
 //纯C风格接口，原接口逐步弃用
+//C-style interface; the legacy interface is being phased out.
 LX_API DcRegisterCameraStatusCallback(DcHandle handle, LX_CAMERA_STATUS_CALLBACK func, void* usr_data);
 #endif
 
@@ -429,10 +470,10 @@ LX_API DcRegisterCameraStatusCallback(DcHandle handle, LX_CAMERA_STATUS_CALLBACK
 //参数：[in]handle      设备句柄
 //~english
 /**
- * @brief Cancel camera state registration callback function
- * 
- * @param handle[in]Device handle  
- * @return LX_API 
+ * @brief Unregister the camera-status callback.
+ *
+ * @param handle [in] Device handle.
+ * @return LX_API
  */
 LX_API DcUnregisterCameraStatusCallback(DcHandle handle);
 
@@ -444,13 +485,13 @@ LX_API DcUnregisterCameraStatusCallback(DcHandle handle);
 //      [in]data_size          写入内存的内容长度，最大不超过128kb
 //~english
 /**
- * @brief Write custom content to device
- * 
- * @param handle[in]Device handle  
- * @param start_address[in]Starting address, from 0 
- * @param data[in]Content written to memory, supports up to 128kb of content 
- * @param data_size[in]Length of content written to memory, max. 128kb 
- * @return LX_API 
+ * @brief Write user-defined data to the device.
+ *
+ * @param handle [in] Device handle.
+ * @param start_address [in] Start address, beginning at 0.
+ * @param data [in] Data to write. Up to 128 KB is supported.
+ * @param data_size [in] Length of the data to write, in bytes. The maximum is 128 KB.
+ * @return LX_API
  */
 LX_API DcWriteUserData(DcHandle handle, int start_address, char* data, int data_size);
 
@@ -462,13 +503,15 @@ LX_API DcWriteUserData(DcHandle handle, int start_address, char* data, int data_
 //      [out]data_size         读取的内容长度，最大不超过128kb
 //~english
 /**
- * @brief Read customized content from the device without external memory allocation, but each call to read will reset the memory allocated during the last read.
- * 
- * @param handle[in]Device handle  
- * @param start_address[in]Starting address, from 0 
- * @param data[out]Read the contents of the memory, maximum support for 128kb content 
- * @param data_size[out]Length of read content, max. 128kb 
- * @return LX_API 
+ * @brief Read user-defined data from the device.
+ *
+ * No external memory allocation is required. Before each read, the memory allocated for the previous read is reset.
+ *
+ * @param handle [in] Device handle.
+ * @param start_address [in] Start address, beginning at 0.
+ * @param data [out] Returned data. Up to 128 KB is supported.
+ * @param data_size [out] Length of the returned data, in bytes. The maximum is 128 KB.
+ * @return LX_API
  */
 LX_API DcReadUserData(DcHandle handle, int start_address, char** data, int& data_size);
 
@@ -478,11 +521,13 @@ LX_API DcReadUserData(DcHandle handle, int start_address, char** data, int& data
 //      [in]filename              文件名，支持txt,ply和pcd格式。txt格式按图像顺序保存所有数据，ply和pcd仅保存非零数据
 //~english
 /**
- * @brief Save the point cloud, which can be called directly.It needs to be called in the data collection thread, otherwise the data will have exceptions.
- * 
- * @param handle[in]Device handle  
- * @param filename[in]File name, supports txt, ply and pcd formats. txt format saves all data in image order, ply and pcd only save non-zero data 
- * @return LX_API 
+ * @brief Save the point cloud.
+ *
+ * This function can be called directly, but it must be called from the data-acquisition thread; otherwise, the saved data may be invalid.
+ *
+ * @param handle [in] Device handle.
+ * @param filename [in] Output file name. Supported formats are TXT, PLY, and PCD. TXT saves all data in image order; PLY and PCD save only non-zero data.
+ * @return LX_API
  */
 LX_API DcSaveXYZ(DcHandle handle, const char* filename);
 
@@ -492,11 +537,11 @@ LX_API DcSaveXYZ(DcHandle handle, const char* filename);
 //      [in]filepath                参数文件路径，不包含文件名(大部分情况不需要调用，仅部分相型号机打开时需要参数，如M3，I2等)
 //~english
 /**
- * @brief Setting the parameter path
- * 
- * @param handle[in]Device handle  
- * @param filepath[in]Parameter file path, without file name (most cases do not need to call, only part of the camera type machine to open the parameters needed, such as M3, I2, etc.) 
- * @return LX_API 
+ * @brief Set the parameter-file directory.
+ *
+ * @param handle [in] Device handle.
+ * @param filepath [in] Directory containing the parameter files, excluding the file name. This function is not required in most cases; it is needed only when opening certain camera models that require external parameters, such as M3 and I2.
+ * @return LX_API
  */
 LX_API DcSetParamPath(DcHandle handle, const char* filepath);
 
@@ -505,10 +550,10 @@ LX_API DcSetParamPath(DcHandle handle, const char* filepath);
 //参数：[in]state  函数接口返回的状态
 //~english
 /**
- * @brief Get the description of the function's return status
- * 
- * @param state[in]The status returned by the function interface 
- * @return LX_API_STR 
+ * @brief Get the description corresponding to a function return status.
+ *
+ * @param state [in] Status returned by an API function.
+ * @return LX_API_STR Description of the specified status.
  */
 LX_API_STR DcGetErrorString(LX_STATE state);
 
@@ -518,9 +563,11 @@ LX_API_STR DcGetErrorString(LX_STATE state);
 //参数：[in]is_enable     是否使能
 //~english:
 /**
- * @brief Use gpu to accelerate, must call first. Recommend to set false if it works abnormally.
+ * @brief Enable or disable GPU acceleration for the algorithm library.
  *
- * @param is_enable [bool]
+ * This function must be called before opening the camera; otherwise, the setting does not take effect. GPU acceleration is disabled by default. Some GPU devices may not be supported; disable this option if abnormal behavior occurs.
+ *
+ * @param is_enable [in] Whether GPU acceleration is enabled.
  * @return LX_API
  */
 LX_API DcSetGpuEnable(bool is_enable);
@@ -531,10 +578,11 @@ LX_API DcGetGpuEnable(bool* is_enable);
 //参数：[in]is_enable     是否使能
 //~english:
 /**
- * @brief Enable the PTP time synchronization source service and call it before turning on the camera, otherwise it will be invalid. It is turned on by default
-
+ * @brief Enable or disable the PTP time-synchronization source service.
  *
- * @param is_enable [bool]
+ * This function must be called before opening the camera; otherwise, the setting does not take effect. The service is enabled by default.
+ *
+ * @param is_enable [in] Whether the PTP time-synchronization source service is enabled.
  * @return LX_API
  */
 LX_API DcSetPtpEnable(bool is_enable);
@@ -548,10 +596,11 @@ LX_API DcGetPtpEnable(bool* is_enable);
  */
 //~english:
 /**
- * @brief Multi-threaded parallel computing accelerates the number of threads
+ * @brief Set the number of threads used for multithreaded parallel computation.
  *
- * @param {int} thread_num: Set the number of threads to be computed in parallel, and the default -1 will automatically adjust
- *        Enabling parallel computing will increase CPU consumption, but the computing speed will be greatly improved
+ * Enabling parallel computation increases CPU usage but can significantly improve computation speed.
+ *
+ * @param thread_num [in] Number of threads used for parallel computation. The default value is -1, which enables automatic adjustment.
  * @return LX_API
  */
 LX_API DcSetParallelThread(int thread_num);
@@ -560,15 +609,37 @@ LX_API DcSetParallelThread(int thread_num);
  * 功能：2d图像传输采用jpeg压缩，设置jpeg解码方式，
  * 参数：{int} mode: 参考JPEG_DECODE_METHOD
  */
+//~english:
+/**
+ * @brief Set the JPEG decoding method for 2D image transmission, which uses JPEG compression.
+ *
+ * @param mode [in] JPEG decoding method. See JPEG_DECODE_METHOD.
+ * @return LX_API
+ */
 LX_API DcSetJpegDecodeMethod(int mode);
 
 /**
- * 功能：设置日志文件滚动存储最大数量
+ * 功能：设置日志文件滚动存储最大数量。在DcSetInfoOutput之前调用
+ */
+//~english:
+/**
+ * @brief Set or get the maximum number of log files retained for rolling log storage. Should before calling DcSetInfoOutput.
+ *
+ * @param count [in,out] Maximum number of log files for DcSetMaxLogFile, or the returned maximum number for DcGetMaxLogFile.
+ * @return LX_API
  */
 LX_API DcSetMaxLogFile(int count);
 LX_API DcGetMaxLogFile(int* count);
+
 /**
- * 功能：设置单个日志文件最大容量，单位byte
+ * 功能：设置单个日志文件最大容量，单位byte。在DcSetInfoOutput之前调用
+ */
+//~english:
+/**
+ * @brief Set or get the maximum size of a single log file, in bytes. Should before calling DcSetInfoOutput.
+ *
+ * @param size [in,out] Maximum log-file size for DcSetMaxLogFileSize, or the returned maximum size for DcGetMaxLogFileSize.
+ * @return LX_API
  */
 LX_API DcSetMaxLogFileSize(int size);
 LX_API DcGetMaxLogFileSize(int* size);
@@ -581,11 +652,11 @@ LX_API DcGetMaxLogFileSize(int* size);
 //      [in]usr_data    用户自定义参数
 //~english
 /**
- * @brief Register the imu data callback function to be called automatically when new data is received.
+ * @brief Register an IMU data callback that is invoked automatically when new IMU data is received.
  *
- * @param handle[in]Device handle
- * @param func[in]Callback function pointer
- * @param usr_data[in]User-defined parameters
+ * @param handle [in] Device handle.
+ * @param func [in] Callback function pointer.
+ * @param usr_data [in] User-defined data passed to the callback.
  * @return LX_API
  */
 LX_API DcRegisterImuDataCallback(DcHandle handle, LX_IMUDATA_CALLBACK func, void* usr_data);
@@ -595,11 +666,28 @@ LX_API DcRegisterImuDataCallback(DcHandle handle, LX_IMUDATA_CALLBACK func, void
 //参数：[in]handle      设备句柄
 //~english
 /**
-    * @brief Cancel imu data  registration callback function
-    *
-    * @param handle[in]Device handle
-    * @return LX_API
-    */
+ * @brief Unregister the IMU data callback.
+ *
+ * @param handle [in] Device handle.
+ * @return LX_API
+ */
 LX_API DcUnregisterImuDataCallback(DcHandle handle);
+
+//~chinese
+// 功能: 设置ptp时间来源回调
+// 参数 [in]func,回调函数指针, func=NULL时为取消回调
+// 仅可以设置一次有效回调, 多次无效,已第一次设置为准, 全局共享;
+// 接口线程安全, 但回调函数内逻辑线程安全由设置方保证
+//~english
+/**
+ * @brief Set the PTP time-source callback.
+ *
+ * Only one valid callback can be set. Subsequent attempts to set another callback have no effect; the first valid callback remains active and is shared globally.
+ * The API itself is thread-safe, but the caller is responsible for ensuring thread safety within the callback implementation.
+ *
+ * @param func [in] Callback function pointer. Set func to NULL to unregister the callback.
+ * @return LX_API
+ */
+LX_API DcSetPtpClockCallback(LX_PTP_CLOCK_CALLBACK func);
 
 #endif

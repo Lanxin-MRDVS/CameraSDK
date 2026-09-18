@@ -15,6 +15,7 @@ using namespace cv;
 #include <condition_variable>
 #include <unordered_set>
 #include <atomic>
+#include <chrono>
 
 // GUI 线程控制与交换队列（仅在 HAS_OPENCV 时启用）
 static std::atomic<bool> g_guiExit{ false };
@@ -99,6 +100,8 @@ int main(int argc, char** argv)
 {
     //日志
     checkTC(DcSetInfoOutput(1, false, "./"), 0);
+    DcSetGpuEnable(1);
+    DcSetJpegDecodeMethod(3);
     std::cout << " call api version:" << DcGetApiVersion() << std::endl;
 
     //查找设备
@@ -174,26 +177,33 @@ int thread_work(std::string ip)
     }
     std::cout << "  Camera  " << ip << "  callback registration success!" << std::endl;
 
+    //获取数据流开启状态，如需调整可以调用DcSetBoolValue。
+    bool test_depth = true, test_amp = false, test_rgb = true;
+    //checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, test_depth), handle);
+    checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, &test_depth), handle);;
 
-    //数据流设置，开启太多可能会存在带宽不够的问题
-    checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_DEPTH_STREAM, true), handle);
-    checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, false), handle);
-    bool rgb_enable = false;
-    checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, &rgb_enable), handle);
+    //checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, test_amp), handle);
+    checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_3D_AMP_STREAM, &test_amp), handle);
+
+    //checkTC(DcSetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, test_rgb), handle);
+    checkTC(DcGetBoolValue(handle, LX_BOOL_ENABLE_2D_STREAM, &test_rgb), handle);
+
     //开启数据流
     checkTC(DcStartStream(handle), handle);
     //tof参数
     LxIntValueInfo int_value;
-    int tof_width = 0, tof_height = 0, tof_data_type = LX_DATA_UNSIGNED_SHORT;
-    checkTC(DcGetIntValue(handle, LX_INT_3D_IMAGE_WIDTH, &int_value), handle);
-    tof_width = int_value.cur_value;
-    checkTC(DcGetIntValue(handle, LX_INT_3D_IMAGE_HEIGHT, &int_value), handle);
-    tof_height = int_value.cur_value;
-    checkTC(DcGetIntValue(handle, LX_INT_3D_DEPTH_DATA_TYPE, &int_value), handle);
-    tof_data_type = int_value.cur_value;
+    int depth_width = 0, depth_height = 0, depth_data_type = LX_DATA_UNSIGNED_SHORT;
+    if (test_depth) {
+        checkTC(DcGetIntValue(handle, LX_INT_3D_IMAGE_WIDTH, &int_value), handle);
+        depth_width = int_value.cur_value;
+        checkTC(DcGetIntValue(handle, LX_INT_3D_IMAGE_HEIGHT, &int_value), handle);
+        depth_height = int_value.cur_value;
+        checkTC(DcGetIntValue(handle, LX_INT_3D_DEPTH_DATA_TYPE, &int_value), handle);
+        depth_data_type = int_value.cur_value;
+    }
     //rgb参数
     int rgb_width = 0, rgb_height = 0, rgb_channles = 0, rgb_data_type = LX_DATA_UNSIGNED_CHAR;
-    if (rgb_enable) {
+    if (test_rgb) {
         checkTC(DcGetIntValue(handle, LX_INT_2D_IMAGE_WIDTH, &int_value), handle);
         rgb_width = int_value.cur_value;
         checkTC(DcGetIntValue(handle, LX_INT_2D_IMAGE_HEIGHT, &int_value), handle);
@@ -212,46 +222,52 @@ int thread_work(std::string ip)
         auto ret = DcSetCmd(handle, LX_CMD_GET_NEW_FRAME);
         if ((LX_SUCCESS != ret)
             && (LX_E_FRAME_ID_NOT_MATCH != ret)
-            && (LX_E_FRAME_MULTI_MACHINE != ret))
+            && (LX_E_FRAME_MULTI_MACHINE != ret)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
+        }
 
         //获取深度数据
-        void* depth_data_ptr = nullptr;
-        if (DcGetPtrValue(handle, LX_PTR_3D_DEPTH_DATA, &depth_data_ptr) == LX_SUCCESS && depth_data_ptr != nullptr) {
+        if (test_depth) {
+            void* depth_data_ptr = nullptr;
+            if (DcGetPtrValue(handle, LX_PTR_3D_DEPTH_DATA, &depth_data_ptr) == LX_SUCCESS && depth_data_ptr != nullptr) {
 #ifdef HAS_OPENCV
-            int cvDepth = mapLXToCvDepth(tof_data_type);
-            if (cvDepth >= 0 && tof_width > 0 && tof_height > 0) {
-                cv::Mat depth_image(tof_height, tof_width, CV_MAKETYPE(cvDepth, 1), depth_data_ptr);
-                cv::Mat depth_show;
-                if (cvDepth == CV_16U) {
-                    depth_image.convertTo(depth_show, CV_8U, 1.0 / 16.0);
-                } else if (cvDepth == CV_32F) {
-                    depth_image.convertTo(depth_show, CV_8U, 255.0);
-                } else {
-                    depth_show = depth_image.clone();
-                }
+                int cvDepth = mapLXToCvDepth(depth_data_type);
+                if (cvDepth >= 0 && depth_width > 0 && depth_height > 0) {
+                    cv::Mat depth_image(depth_height, depth_width, CV_MAKETYPE(cvDepth, 1), depth_data_ptr);
+                    cv::Mat depth_show;
+                    if (cvDepth == CV_16U) {
+                        depth_image.convertTo(depth_show, CV_8U, 1.0 / 16.0);
+                    }
+                    else if (cvDepth == CV_32F) {
+                        depth_image.convertTo(depth_show, CV_8U, 255.0);
+                    }
+                    else {
+                        depth_show = depth_image.clone();
+                    }
 
-                GuiItem item;
-                item.name = "depth" + ip;
-                item.img = std::move(depth_show);
-                item.width = 640; item.height = 480;
-                {
-                    std::lock_guard<std::mutex> lk(g_guiMutex);
-                    g_guiQueue.push(std::move(item));
+                    GuiItem item;
+                    item.name = "depth" + ip;
+                    item.img = std::move(depth_show);
+                    item.width = 640; item.height = 480;
+                    {
+                        std::lock_guard<std::mutex> lk(g_guiMutex);
+                        g_guiQueue.push(std::move(item));
+                    }
+                    g_guiCond.notify_one();
                 }
-                g_guiCond.notify_one();
-            }
 #endif
+            }
         }
+
         //获取rgb数据
-        if (rgb_enable) {
+        if (test_rgb) {
             void* rgb_data_ptr = nullptr;
             if (DcGetPtrValue(handle, LX_PTR_2D_IMAGE_DATA, &rgb_data_ptr) == LX_SUCCESS && rgb_data_ptr != nullptr) {
 #ifdef HAS_OPENCV
                 int cvDepthRgb = mapLXToCvDepth(rgb_data_type);
-                int ch = (rgb_channles > 0 && rgb_channles <= 4) ? rgb_channles : 3;
                 if (cvDepthRgb >= 0 && rgb_width > 0 && rgb_height > 0) {
-                    cv::Mat rgb_mat(rgb_height, rgb_width, CV_MAKETYPE(cvDepthRgb, ch), rgb_data_ptr);
+                    cv::Mat rgb_mat(rgb_height, rgb_width, CV_MAKETYPE(cvDepthRgb, rgb_channles), rgb_data_ptr);
                     GuiItem item;
                     item.name = "rgb" + ip;
                     item.img = rgb_mat.clone();
@@ -275,7 +291,7 @@ int thread_work(std::string ip)
             DcGetFloatValue(handle, LX_FLOAT_3D_DEPTH_FPS, &float_info);
             std::cout << "  Camera  " << ip << "  Depth FPS:   " << float_info.cur_value << std::endl;
 
-            if (rgb_enable) {
+            if (test_rgb) {
                 DcGetFloatValue(handle, LX_FLOAT_2D_IMAGE_FPS, &float_info);
                 std::cout << "  Camera  " << ip << "  RGB FPS:   " << float_info.cur_value << std::endl;
             }

@@ -1,14 +1,79 @@
 ************************
+2.4.70.260911
+功能:
+    1. 禁止注册帧回调函数后使用LX_CMD_GET_NEW_FRAME,LX_CMD_GET_NEW_FRAME_2D,LX_CMD_GET_NEW_FRAME_3D主动获取数据;
+    2. 支持USB相机断线重连功能;优化重连效率，修复部分型号重连后启流异常
+    3. 支持sensor binning不同分辨率功能;
+    4. 新增ptp自定义时间源API:DcSetPtpClockCallback
+    5. 支持新版DTOF ROI曝光时间偏移量计算
+
+优化:
+    1. 修复可能崩溃若干问题：ptp析构，多线程析构，重复open/close，优化内存申请方式，文件权限异常，json格式校验，多相机加锁
+	2. 日志库改为spdlog，修复可能存在的同步偶发卡死问题以及偶发崩溃问题
+	3. 优化数据接收，修复漏帧 ID匹配问题
+    4. 修复linux下搜索相机最多10个网卡ip限制问题，强化搜索效率，优化多线程搜索
+    5. 修复指定IP打开相机时,二次输入其他IP时不搜索找不到相机问题;
+	6. 全部支持turbojpeg gpu rkmpp解码方式且保持一致
+
+更新算法库1.4.1.260729
+	1.GPU内存优化，修复可能崩溃的问题
+	2.增加异常校验
+	3.修复部分CPU GPU函数混用可能崩溃的问题
+	4.去除throw未捕获的问题
+	5.隐藏符号
+	6.S11自适应裁剪FOV，仅影响模组
+	
+========================
+Features:
+1. After registering a frame callback function, active data retrieval using LX_CMD_GET_NEW_FRAME, LX_CMD_GET_NEW_FRAME_2D, and LX_CMD_GET_NEW_FRAME_3D is prohibited;
+2. Support USB camera disconnection/reconnection; optimized reconnection efficiency and fixed abnormal stream startup after reconnection on certain models;
+3. Support sensor binning at different resolutions;
+4. Added a custom PTP time source API: DcSetPtpClockCallback;
+5. Support the new DTOF ROI exposure time offset calculation.
+
+Optimizations:
+1. Fixed several potential crash issues: PTP destructor, multi-threaded destructor, repeated open/close, optimized memory allocation, abnormal file permissions, JSON format validation, and multi-camera locking;
+2. Replaced the logging library with spdlog, fixing occasional synchronization deadlocks and occasional crashes;
+3. Optimized data reception and fixed frame loss and ID mismatch issues;
+4. Fixed the issue where camera discovery on Linux was limited to a maximum of 10 NIC IP addresses; improved search efficiency and optimized multi-threaded search;
+5. Fixed the issue where a camera could not be found when entering a different IP after opening a camera with a specified IP without searching;
+6. Full support for turbojpeg, GPU, and rkmpp decoding methods with consistent behavior.
+
+Algorithm library updated to 1.4.1.260729:
+1. GPU memory optimization, fixing potential crash issues;
+2. Added exception validation;
+3. Fixed potential crashes caused by mixing CPU and GPU functions;
+4. Removed uncaught throw issues;
+5. Hidden symbols;
+6. S11 adaptive cropping FOV, affecting modules only.
+
+
+************************
+2.4.60.260321_SP
+1、支持gpu解码jpeg，算法库同步到1.3.6.260321.
+2、增加android支持
+3、更新C#、python示例
+4、增加DcOpenDeviceFixedEth，指定本地IP连接相机
+5、其他优化:增加rgbd对齐示例，更新logo，日志微调等
+
+========================
+1.support GPU jpeg decode
+2.support android
+3.update C# and python demo
+4.add API DcOpenDeviceFixedEth
+5.other update. add rgbd align demo，update logo etc.
+
+
+************************
 2.4.60.260126
-兼容性调整
 1、某些C++平台可能找不到GetDeviceList符号。调整头文件，需要重新编译。注意！！！
 2、增加函数返回警告类型，LX_E_NOT_SUPPORT调整为LX_W_NOT_SUPPORT，可能导致判断逻辑兼容问题
 3、需要算法库运算但Dataprocess加载失败时，原本逻辑为限制此部分功能，改为直接报错
 4、安装路径调整为MRDVS，如果手动拷贝文件需要注意路径设置，正常执行安装会自动配置路径
-修复缺陷
+
 1、修复算法可能重复调用导致点云偶发异常
 2、修复频繁开关相机时内存泄漏问题
-新增功能
+
 1、增加新内参接口LX_PTR_2D_INTRINSIC_PARAMETERS，LX_PTR_3D_INTRINSIC_PARAMETERS，支持鱼眼模型，原来枚举接口保留但不建议使用
 2、增加IMU接口:IMU使能，IMU量程设置（默认0最小量程），IMU结构体，数据回调接口。启停通过StartStream和StopStream控制。
 3、增加雷达接口，LX_PTR_XYZIRT_DATA，对应结构体LxPointCloudData和LxPointXYZIRT。注意开启反畸变和rgbd对齐后每个点的时间戳不准
@@ -20,7 +85,7 @@
 9、增加允许丢包填充数据的接口。一帧数据丢包数少于阈值，会用无效值填充并保留当前帧，否则丢弃当前帧
 10、增加lidar、imu示例
 11、其他增加线程名称、操作超时接口LX_INT_GVCP_TIME_OUT等
-优化
+
 1、优化ptp时间同步，正常情况下同步精度±1ms，网络拥堵情况下误差增大，但不超过10ms。SDK自动启动ptp主机，因此网络内多个SDK运行时可能导致时间同步异常。支持关闭ptp服务
 2、优化内存和资源占用。GPU功能优化，支持大部分算法功能，nvidia平台可能不完全支持
 3、优化反畸变系数，开启反畸变时调节畸变系数可保留不同程度的视场角
