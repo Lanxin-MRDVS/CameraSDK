@@ -2,27 +2,27 @@
 
 **Table of Contents**
 
-1. [Overview](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#1-overview)
-2. [Installation](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#2-installation)
-   * 2.1 [Recommended System Requirements](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#21-recommended-system-requirements)
-   * 2.2 [IP Address and Gateway Configuration](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#22-ip-address-and-gateway-configuration)
-   * 2.3 [Host Computer Installation](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#23-host-computer-installation)
-   * 2.4 [Firewall Configuration](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#24-firewall-configuration)
-3. [LxCameraViewer User Guide](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#3-lxcameraviewer-user-guide)
-   * 3.1 [Software Interface Overview](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#31-software-interface-overview)
-   * 3.2 [Open and Close Device](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#32-open-and-close-device)
-   * 3.3 [Current Information](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#33-current-information)
-   * 3.4 [Device Information](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#34-device-information)
-   * 3.5 [Image, Data Preview and Saving](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#35-image-data-preview-and-saving)
-   * 3.6 [Menu Bar](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#36-menu-bar)
-   * 3.7 [Function Bar](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#37-function-bar)
-4. [Accessing the Camera System](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#4-accessing-the-camera-system)
-5. [Tool Instructions](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#5-tool-instructions)
-   * 5.1 [IP Configuration Tool](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#51-ip-configuration-tool)
-   * 5.2 [Communication Tool](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#52-communication-tool)
-   * 5.3 [Network Card Configuration Tool](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#53-network-card-configuration-tool)
-6. [FAQ and Solutions](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#6-faq-and-solutions)
-7. [Help](MRDVS_LxCameraViewer_UserManual_V1.0_20260611.md#7-help)
+1. [Overview](#1-overview)
+2. [Installation](#2-installation)
+   * 2.1 [Recommended System Requirements](#21-recommended-system-requirements)
+   * 2.2 [IP Address and Gateway Configuration](#22-ip-address-and-gateway-configuration)
+   * 2.3 [Host Computer Installation](#23-host-computer-installation)
+   * 2.4 [Firewall Configuration](#24-firewall-configuration)
+3. [LxCameraViewer User Guide](#3-lxcameraviewer-user-guide)
+   * 3.1 [Software Interface Overview](#31-software-interface-overview)
+   * 3.2 [Open and Close Device](#32-open-and-close-device)
+   * 3.3 [Current Information](#33-current-information)
+   * 3.4 [Device Information](#34-device-information)
+   * 3.5 [Image, Data Preview and Saving](#35-image-data-preview-and-saving)
+   * 3.6 [Menu Bar](#36-menu-bar)
+   * 3.7 [Function Bar](#37-function-bar)
+4. [Accessing the Camera System](#4-accessing-the-camera-system)
+5. [Tool Instructions](#5-tool-instructions)
+   * 5.1 [IP Configuration Tool](#51-ip-configuration-tool)
+   * 5.2 [Communication Tool](#52-communication-tool)
+   * 5.3 [Network Card Configuration Tool](#53-network-card-configuration-tool)
+6. [FAQ and Solutions](#6-faq-and-solutions)
+7. [Help](#7-help)
 
 ***
 
@@ -454,7 +454,7 @@ _Figure 6_
 
 _Figure 7_
 
-**3.7.2.4 Filtering Settings /// \[low signal detect]，\[Smooth Level]，\[Noise Level]，\[Time Level]在操作软件中没有选项**
+**3.7.2.4 Filtering Settings**
 
 | Setting                  | Description                                                                                                                                        |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -472,9 +472,8 @@ _Figure 7_
 
 ![Filtering Settings](https://pub-f1dc758884b94eaba9d8c5d3d7575b62.r2.dev/lxcameraviewer/3.7/3.7.2/p7.png)
 
-_Figure 8_ /// figure 8 和figure 7 重复了
-
-**3.7.2.5 Hardware Interface /// 我用的中只有Get IO status一个选项**
+_Figure 8_ 
+**3.7.2.5 Hardware Interface**
 
 | Setting                     | Description                                                               |
 | --------------------------- | ------------------------------------------------------------------------- |
@@ -490,7 +489,7 @@ _Figure 8_ /// figure 8 和figure 7 重复了
 
 _Figure 9_
 
-**3.7.2.6 Collection Settings /// trigger mode 在我这个系统中没有**
+**3.7.2.6 Collection Settings**
 
 | Setting                          | Description                                                                                                                                                                                                                                |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -527,6 +526,22 @@ _Figure 10_
 ![Function Settings](https://pub-f1dc758884b94eaba9d8c5d3d7575b62.r2.dev/lxcameraviewer/3.7/3.7.2/p11.png)
 
 _Figure 11_
+
+**Firmware Upgrade**
+
+To upgrade the camera firmware:
+
+1. Open the target camera from the **Device List**.
+2. Expand **[Function Settings]**.
+3. Click **[Execute]** next to **[Update Version]**.
+4. Select the corresponding firmware upgrade package (`.bin`).
+5. Click **[Open]** to start the upgrade.
+
+> **Note:** Do not disconnect the camera from power during the upgrade. Wait until the upgrade is complete and the camera reconnects.
+
+![Firmware Upgrade](https://pub-7b25325ec91643989210e56dc1a181a4.r2.dev/lxcameraviewer_usermanual/fireware.png)
+
+*Figure 12*
 
 **3.7.3 Apply Algorithms**
 
