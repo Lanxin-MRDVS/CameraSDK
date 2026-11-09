@@ -621,3 +621,7 @@ ROS/ROS2示例会发布图像、深度、强度、点云、IMU、帧率、托盘
   <sub><em>All Rights Reserved.</em></sub>
 </p>
 
+## 知识社区下载资料
+
+[规格书、用户手册、画册与图纸](downloads/knowledge-community/README.md)已直接保存在本仓库；中文下载由阿里云 OSS 同步提供。
+
