@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "assetKind": "object",
+  "coordinateBinding": {
+    "version": 1,
+    "sourceFingerprint": "f619b520daa68db293b8666c9abed7235bc05134583bdccec81b860b627c55dc",
+    "sourceBytes": 32203706,
+    "coordinateRevision": 0,
+    "pivotRevision": 1,
+    "coordinates": null,
+    "sourceOrigin": [
+      0,
+      0,
+      0
+    ],
+    "sourcePivot": [
+      -0.09879512526094913,
+      -0.1065931785851717,
+      -0.12284087017178535
+    ],
+    "modelMatrix": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    "basis": "embed-local-object-framing"
+  },
+  "name": "v2pro_cleaned2",
+  "bounds": {
+    "min": [
+      -0.2441606968641281,
+      -0.26478925347328186,
+      -0.35190409421920776
+    ],
+    "max": [
+      0.04657044634222984,
+      0.05160289630293846,
+      0.10622235387563705
+    ]
+  },
+  "background": [
+    1,
+    1,
+    1
+  ],
+  "view": {
+    "position": [
+      0.29362045431006156,
+      -0.3738892730216059,
+      -0.33410284127613604
+    ],
+    "target": [
+      -0.09879512526094913,
+      -0.1065931785851717,
+      -0.12284087017178535
+    ],
+    "up": [
+      0,
+      -1,
+      0
+    ],
+    "framingTarget": [
+      -0.08164899040380783,
+      -0.08901825425606405,
+      -0.11628567557153631
+    ],
+    "fitAspect": 1.2054135338345862
+  },
+  "poster": "poster.jpg",
+  "orbitLimits": {
+    "minElevationDegrees": 5,
+    "maxElevationDegrees": 89
+  },
+  "floorClip": {
+    "space": "source",
+    "sourceFingerprint": "f619b520daa68db293b8666c9abed7235bc05134583bdccec81b860b627c55dc",
+    "normal": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "offset": 0.035,
+    "supportSigma": 3.5
+  },
+  "showcaseTone": {
+    "exposureGain": 1.0570180405613803,
+    "shadows": 0.55,
+    "saturation": 0.97,
+    "whiteBalance": [
+      1.0026611824696525,
+      0.9876307216330429,
+      1.0102415112439185
+    ]
+  },
+  "posterPortrait": "poster-portrait.jpg"
+}

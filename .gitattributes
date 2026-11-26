@@ -3,3 +3,6 @@
 downloads/knowledge-community/** binary
 downloads/knowledge-community/**/*.md text
 downloads/knowledge-community/**/*.json text
+
+# Preserve exported 3D viewer and model bytes.
+showroom/cameras/** binary
