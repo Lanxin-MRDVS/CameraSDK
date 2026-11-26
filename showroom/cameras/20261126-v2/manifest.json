@@ -125,8 +125,9 @@
     },
     {
       "path": "eagal-s2/chunks/viewer-FMSFZLUH.js",
-      "bytes": 1768735,
-      "sha256": "e866af54694c1fd14390dac153072c22b3b33ea63f858357b341980092fc2968"
+      "bytes": 1768821,
+      "sha256": "0f73ad2bcf562cf17099856964ebfd668067e39d59625fb04f200fe2f83408df",
+      "source_sha256": "e866af54694c1fd14390dac153072c22b3b33ea63f858357b341980092fc2968"
     },
     {
       "path": "eagal-s2/chunks/viewer-NESEZPZW.js",
@@ -635,8 +636,9 @@
     },
     {
       "path": "mid-black/chunks/viewer-FMSFZLUH.js",
-      "bytes": 1768735,
-      "sha256": "e866af54694c1fd14390dac153072c22b3b33ea63f858357b341980092fc2968"
+      "bytes": 1768821,
+      "sha256": "0f73ad2bcf562cf17099856964ebfd668067e39d59625fb04f200fe2f83408df",
+      "source_sha256": "e866af54694c1fd14390dac153072c22b3b33ea63f858357b341980092fc2968"
     },
     {
       "path": "mid-black/chunks/viewer-NESEZPZW.js",
@@ -1360,8 +1362,9 @@
     },
     {
       "path": "s10-pro/chunks/viewer-FMSFZLUH.js",
-      "bytes": 1768735,
-      "sha256": "e866af54694c1fd14390dac153072c22b3b33ea63f858357b341980092fc2968"
+      "bytes": 1768821,
+      "sha256": "0f73ad2bcf562cf17099856964ebfd668067e39d59625fb04f200fe2f83408df",
+      "source_sha256": "e866af54694c1fd14390dac153072c22b3b33ea63f858357b341980092fc2968"
     },
     {
       "path": "s10-pro/chunks/viewer-NESEZPZW.js",
@@ -1925,8 +1928,9 @@
     },
     {
       "path": "small-black/chunks/viewer-FMSFZLUH.js",
-      "bytes": 1768735,
-      "sha256": "e866af54694c1fd14390dac153072c22b3b33ea63f858357b341980092fc2968"
+      "bytes": 1768821,
+      "sha256": "0f73ad2bcf562cf17099856964ebfd668067e39d59625fb04f200fe2f83408df",
+      "source_sha256": "e866af54694c1fd14390dac153072c22b3b33ea63f858357b341980092fc2968"
     },
     {
       "path": "small-black/chunks/viewer-NESEZPZW.js",
@@ -2650,8 +2654,9 @@
     },
     {
       "path": "v2pro/chunks/viewer-FMSFZLUH.js",
-      "bytes": 1768735,
-      "sha256": "e866af54694c1fd14390dac153072c22b3b33ea63f858357b341980092fc2968"
+      "bytes": 1768821,
+      "sha256": "0f73ad2bcf562cf17099856964ebfd668067e39d59625fb04f200fe2f83408df",
+      "source_sha256": "e866af54694c1fd14390dac153072c22b3b33ea63f858357b341980092fc2968"
     },
     {
       "path": "v2pro/chunks/viewer-NESEZPZW.js",
@@ -2898,5 +2903,6 @@
       "bytes": 29009,
       "sha256": "82013bcae02aa18283bbdb816a18a2963f92b610d93f59f4e457e398c523c00c"
     }
-  ]
+  ],
+  "hosting_patch": "Compressed HTTP Content-Length describes encoded transfer bytes, not decoded model size. Skip the header precheck for Content-Encoding; retain streamed decoded-size bounds, final byte count, and SHA-256 verification."
 }
