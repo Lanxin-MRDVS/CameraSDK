@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "assetKind": "object",
+  "coordinateBinding": {
+    "version": 1,
+    "sourceFingerprint": "e40edd2b99d6bec88ab7101ff692a154a29ee15c67f3de194708154789b11b0e",
+    "sourceBytes": 90362573,
+    "coordinateRevision": 0,
+    "pivotRevision": 1,
+    "coordinates": null,
+    "sourceOrigin": [
+      0,
+      0,
+      0
+    ],
+    "sourcePivot": [
+      0.004999999999999977,
+      -0.095,
+      0.07499999999999998
+    ],
+    "modelMatrix": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0,
+      -1,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    "basis": "embed-local-object-framing"
+  },
+  "name": "eagal_s2_cut_cleaned",
+  "bounds": {
+    "min": [
+      -0.46,
+      -0.27,
+      -0.33
+    ],
+    "max": [
+      0.47,
+      0.08,
+      0.48
+    ]
+  },
+  "background": [
+    1,
+    1,
+    1
+  ],
+  "view": {
+    "position": [
+      0.23188452586013733,
+      -0.4180155890074545,
+      -0.600890632428523
+    ],
+    "target": [
+      0.004999999999999977,
+      -0.095,
+      0.07499999999999998
+    ],
+    "up": [
+      0,
+      -1,
+      0
+    ],
+    "framingTarget": [
+      -0.02210219521036913,
+      0.005295612776722997,
+      -0.008254949930674639
+    ],
+    "fitAspect": 1.7149301825993553
+  },
+  "crop": {
+    "space": "source",
+    "sourceFingerprint": "e40edd2b99d6bec88ab7101ff692a154a29ee15c67f3de194708154789b11b0e",
+    "min": [
+      -0.46,
+      -0.27,
+      -0.33
+    ],
+    "max": [
+      0.47,
+      0.08,
+      0.48
+    ],
+    "feather": 0.08
+  },
+  "poster": "poster.jpg",
+  "orbitLimits": {
+    "minElevationDegrees": 20,
+    "maxElevationDegrees": 89
+  },
+  "floorClip": {
+    "space": "source",
+    "sourceFingerprint": "e40edd2b99d6bec88ab7101ff692a154a29ee15c67f3de194708154789b11b0e",
+    "normal": [
+      -0.001266895056039134,
+      0.9991793393356638,
+      0.04048509382060759
+    ],
+    "offset": 0.024,
+    "supportSigma": 3.5,
+    "feather": 0.003,
+    "compressSupport": false
+  },
+  "showcaseTone": {
+    "exposureGain": 1.0210121257071934,
+    "shadows": 0.30000000000000004,
+    "saturation": 0.97,
+    "whiteBalance": [
+      1.0128399442322473,
+      0.998759841837297,
+      0.9889734248405735
+    ]
+  },
+  "tableTone": {
+    "space": "source",
+    "sourceFingerprint": "e40edd2b99d6bec88ab7101ff692a154a29ee15c67f3de194708154789b11b0e",
+    "normal": [
+      -0.001266895056039134,
+      0.9991793393356638,
+      0.04048509382060759
+    ],
+    "offset": 0.014385714001988873,
+    "band": 0.017802210231757164,
+    "strength": 0.65,
+    "balanceHighlights": true
+  },
+  "posterPortrait": "poster-portrait.jpg"
+}
