@@ -2,7 +2,7 @@
 
 Static Lumio 3D Gaussian Splatting viewer exports embedded by the MRDVS knowledge community. The existing CameraSDK GitHub Pages workflow publishes this directory without changing the SDK documentation.
 
-Current asset set: `cameras/20261126-v2/`.
+Current asset set: `cameras/20261126-v3/`.
 
 Model mapping: `mid-black` = S10; `s10-pro` = S10 Pro; `small-black` = S11; `eagal-s2` = M4 Mega; `v2pro` = V2Pro.
 

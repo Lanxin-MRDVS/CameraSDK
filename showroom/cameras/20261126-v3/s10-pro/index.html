@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>LUMIO · 3D Viewer</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./main.js"></script>
+</head>
+<body class="m-0 overflow-hidden bg-base-100 text-base-content">
+  <main id="viewer" class="relative h-dvh w-full overflow-hidden bg-base-100" data-i18n-aria="viewer" aria-label="3D model viewer">
+    <picture>
+      <source id="poster-portrait" media="(max-aspect-ratio: 1/1)">
+      <img id="poster" class="pointer-events-none absolute z-[1] w-full object-contain" alt="Model preview" hidden>
+    </picture>
+    <div id="viewport" class="absolute inset-0 touch-none outline-none focus-visible:ring-2 focus-visible:ring-primary" tabindex="0" role="region" data-i18n-aria="viewport" aria-label="3D model controls"></div>
+    <header id="brand" class="pointer-events-none absolute inset-x-0 top-0 z-10 p-4 sm:p-6">
+      <span class="inline-flex items-center gap-2 text-base-content sm:gap-2.5" role="img" aria-label="Lumio">
+        <svg class="size-6 text-[#7663e8] sm:size-7" viewBox="0 0 72 76" aria-hidden="true"><path d="M53 18a26 26 0 1 0 6 27" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round"/><circle cx="36" cy="35" r="7" fill="currentColor"/></svg>
+        <svg class="h-6 w-[87px] sm:h-7 sm:w-[101.5px]" viewBox="0 0 232 64" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="8" stroke-linejoin="round"><path d="M8 7v47h29M50 23v17c0 9 6 14 14 14s14-5 14-14V23M94 54V23m0 13c0-8 5-13 12-13s12 5 12 13v18m0-18c0-8 5-13 12-13s12 5 12 13v18M159 23v31M190 23h6c10 0 16 6 16 15.5S206 54 196 54h-6c-10 0-16-6-16-15.5S180 23 190 23Z"/></g><circle cx="159" cy="9" r="4.5" fill="currentColor"/></svg>
+      </span>
+    </header>
+    <section id="cover" class="pointer-events-none absolute inset-0 z-20 flex items-end justify-center p-2 pb-[max(8px,env(safe-area-inset-bottom))] sm:px-4" data-i18n-aria="cover" aria-label="Open model">
+      <div class="card glass-surface cover-panel pointer-events-auto w-full max-w-[380px] rounded-3xl">
+        <div class="card-body gap-0 p-5">
+          <div class="flex items-center gap-2 text-base-content">
+            <svg class="size-5 shrink-0 text-base-content/60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Zm0 9 8-4.5M12 12 4 7.5M12 12v9"/></svg>
+            <h1 data-i18n="heading" class="text-base font-medium tracking-tight">Interactive 3D preview</h1>
+          </div>
+          <p id="message" class="mt-2 min-h-5 text-sm leading-5 text-base-content/65" role="status" aria-live="polite">Drag to rotate · Scroll to zoom</p>
+          <div class="cover-actions relative mt-4 h-11 w-full">
+            <div id="loading" class="absolute inset-0 flex items-center gap-3 pr-[80px]" hidden>
+              <span data-i18n="progressLabel" class="sr-only">Loading progress</span>
+              <progress id="progress" class="progress block h-1 flex-1" value="0" max="100" data-i18n-aria="progressAria" aria-label="Model loading progress"></progress>
+              <span id="percent" class="w-10 text-right text-sm font-medium tabular-nums text-base-content">0%</span>
+              <p id="download-detail" class="sr-only" aria-hidden="true"></p>
+            </div>
+            <button id="open" class="btn btn-primary absolute inset-0 h-11 min-h-11 w-full rounded-full border-0 text-sm font-medium shadow-none" disabled><span id="open-label">View in 3D</span></button>
+            <button id="cancel" data-i18n="cancel" class="btn btn-ghost absolute right-0 top-0 h-11 min-h-11 rounded-full px-3 text-sm font-normal text-base-content/70" hidden>Cancel</button>
+          </div>
+        </div>
+      </div>
+    </section>
+    <nav id="toolbar" class="glass-surface absolute right-4 top-4 z-10 flex items-center gap-1 rounded-full p-1.5 sm:right-6 sm:top-6" data-i18n-aria="toolbar" aria-label="Model controls" hidden>
+      <div class="tooltip tooltip-bottom" data-tip="Reset view"><button id="reset" class="btn btn-ghost btn-circle viewer-action" aria-label="Reset view"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 10a7.5 7.5 0 1 1 .8 6.3 M4.5 4.5V10H10"/></svg></button></div>
+      <div class="tooltip tooltip-bottom" data-tip="Full screen"><button id="fullscreen" class="btn btn-ghost btn-circle viewer-action" aria-label="Full screen" aria-pressed="false"><svg class="expand-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v5m11-5h5v5M4 15v5h5m11-5v5h-5"/></svg><svg class="collapse-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h5V4m6 0v5h5M9 20v-5H4m11 5v-5h5"/></svg></button></div>
+      <span class="mx-0.5 h-4 w-px bg-base-content/15" aria-hidden="true"></span>
+      <div class="tooltip tooltip-bottom tooltip-end" data-tip="Close"><button id="close" class="btn btn-ghost btn-circle viewer-action" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button></div>
+    </nav>
+    <p id="hint" class="glass-surface pointer-events-none absolute bottom-5 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded-full px-4 py-2 text-[11px] tracking-wide text-base-content/65 sm:block" hidden><span data-i18n="rotate">Left drag to rotate</span><span class="mx-2 opacity-35">/</span><span data-i18n="pan">Right drag to pan</span><span class="mx-2 opacity-35">/</span><span data-i18n="zoom">Scroll to zoom</span></p>
+    <noscript>Enable JavaScript to view this 3D model. / 请启用 JavaScript 以查看 3D 模型。</noscript>
+  </main>
+</body>
+</html>
